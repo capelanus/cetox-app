@@ -51,3 +51,5 @@ next-env.d.ts
 # Uploaded files
 /public/uploads/
 /public/generated/
+.env*.local
+.env.production

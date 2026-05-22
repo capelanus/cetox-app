@@ -1,0 +1,231 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+model Usuario {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  nombre       String
+  rol          String
+  area         String?
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  cotizacionesCreadas Cotizacion[] @relation("CotCreadaPor")
+  setsCreados         SET[]        @relation("SETCreadoPor")
+  informesAsignados   Informe[]    @relation("InformeAnalista")
+}
+
+model Cliente {
+  id            String   @id @default(cuid())
+  razonSocial   String
+  ruc           String   @unique
+  direccion     String
+  contacto      String?
+  email         String?
+  telefono      String?
+  modalidadPago String   @default("ANTICIPO_50_50")
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  cotizaciones Cotizacion[]
+  sets         SET[]
+}
+
+model Ensayo {
+  id                String   @id @default(cuid())
+  codigo            String   @unique
+  nombre            String
+  prefijoInforme    String
+  area              String
+  metodoNorma       String
+  costoUSD          Float?
+  costoPEN          Float?
+  tiempoEntregaDias Int
+  acreditadoINACAL  Boolean  @default(false)
+  tercerizado       Boolean  @default(false)
+  tipoMuestra       String?
+  plantillaWord     String?
+  alias             String?
+  activo            Boolean  @default(true)
+
+  cotizacionItems CotizacionItem[]
+  odaItems        ODAItem[]
+}
+
+model Cotizacion {
+  id               String   @id @default(cuid())
+  numero           Int
+  anio             Int
+  sufijo           String   @default("")
+  cotizacionPadre  String?
+  fechaEmision     DateTime @default(now())
+  vigenciaHasta    DateTime
+  moneda           String   @default("USD")
+  clienteId        String
+  cliente          Cliente  @relation(fields: [clienteId], references: [id])
+  estado           String   @default("BORRADOR")
+  observaciones    String?
+  contactoNombre   String?
+  contactoEmail    String?
+  contactoTelefono String?
+  contactoRuc      String?
+  formaContacto    String?
+  fechaContacto    String?
+  horaContacto     String?
+  paisOrigen       String?
+  creadoPorId      String
+  creadoPor        Usuario  @relation("CotCreadaPor", fields: [creadoPorId], references: [id])
+  subtotal         Float    @default(0)
+  igv              Float    @default(0)
+  total            Float    @default(0)
+  items            CotizacionItem[]
+  muestras         CotizacionMuestra[]
+  sets             SET[]
+
+  @@unique([numero, anio, sufijo])
+}
+
+model CotizacionMuestra {
+  id           String           @id @default(cuid())
+  cotizacionId String
+  cotizacion   Cotizacion       @relation(fields: [cotizacionId], references: [id], onDelete: Cascade)
+  nombre       String
+  orden        Int              @default(0)
+  items        CotizacionItem[]
+}
+
+model CotizacionItem {
+  id                String             @id @default(cuid())
+  cotizacionId      String
+  cotizacion        Cotizacion         @relation(fields: [cotizacionId], references: [id], onDelete: Cascade)
+  muestraId         String?
+  muestra           CotizacionMuestra? @relation(fields: [muestraId], references: [id])
+  ensayoId          String
+  ensayo            Ensayo             @relation(fields: [ensayoId], references: [id])
+  costo             Float
+  tiempoEntregaDias Int
+}
+
+model SET {
+  id                String    @id @default(cuid())
+  numero            Int
+  anio              Int
+  cotizacionId      String
+  cotizacion        Cotizacion @relation(fields: [cotizacionId], references: [id])
+  clienteId         String
+  cliente           Cliente   @relation(fields: [clienteId], references: [id])
+  fechaIngreso      DateTime  @default(now())
+  nombreComercial   String
+  ingredienteActivo String?
+  formulacion       String?
+  numeroLote        String?
+  fechaFabricacion  DateTime?
+  fechaVencimiento  DateTime?
+  pesoVolumen       String?
+  tipoMuestra       String?
+  codigoMuestra     String    @unique
+  fotoUrl           String?
+  observaciones     String?
+  estado            String    @default("EMITIDA")
+  creadoPorId       String
+  creadoPor         Usuario   @relation("SETCreadoPor", fields: [creadoPorId], references: [id])
+  odas              ODA[]
+  cargoEntrega      CargoEntrega?
+  nombrePaciente         String?
+  ingresoMuestra         String?
+  ingresoMuestraOtro     String?
+  numeroMuestras         Int?
+  devolucionMuestra      String?
+  condicionesAmbientales String?
+  procedenciaDescripcion String?
+  otraIndicacion         String?
+  tipoEnvase             String?
+  materialEnvase         String?
+  etiquetaEnvase         String?
+  seguridadEnvase        String?
+
+  @@unique([numero, anio])
+}
+
+model ODA {
+  id                     String    @id @default(cuid())
+  numero                 Int
+  anio                   Int
+  setId                  String
+  set                    SET       @relation(fields: [setId], references: [id])
+  area                   String
+  fechaRecepcion         DateTime?
+  fechaEntregaCompromiso DateTime
+  estado                 String    @default("EMITIDA")
+  revisado               Boolean   @default(false)
+  edadPaciente           String?
+  items                  ODAItem[]
+  informe                Informe?
+
+  @@unique([numero, anio])
+}
+
+model ODAItem {
+  id                     String   @id @default(cuid())
+  odaId                  String
+  oda                    ODA      @relation(fields: [odaId], references: [id], onDelete: Cascade)
+  ensayoId               String
+  ensayo                 Ensayo   @relation(fields: [ensayoId], references: [id])
+  costo                  Float    @default(0)
+  tiempoEntregaDias      Int      @default(0)
+  fechaEntregaCompromiso DateTime
+}
+
+model Informe {
+  id             String    @id @default(cuid())
+  numero         Int
+  anio           Int
+  prefijo        String
+  odaId          String    @unique
+  oda            ODA       @relation(fields: [odaId], references: [id])
+  analistaId     String
+  analista       Usuario   @relation("InformeAnalista", fields: [analistaId], references: [id])
+  resultadoTexto    String?
+  resultadoImagenes String  @default("[]")
+  archivoDocx       String?
+  archivoPdf        String?
+  estado         String    @default("BORRADOR")
+  firmaCalidad   DateTime?
+  firmaGerencia  DateTime?
+  certificadoQR  Certificado?
+  createdAt      DateTime  @default(now())
+
+  @@unique([numero, anio, prefijo])
+}
+
+model Certificado {
+  id           String   @id @default(cuid())
+  codigo       String   @unique
+  informeId    String   @unique
+  informe      Informe  @relation(fields: [informeId], references: [id])
+  clave        String
+  qrUrl        String
+  fechaEmision DateTime @default(now())
+}
+
+model CargoEntrega {
+  id             String    @id @default(cuid())
+  numero         Int
+  anio           Int
+  setId          String    @unique
+  set            SET       @relation(fields: [setId], references: [id])
+  recibidoPor    String?
+  dniRecibe      String?
+  fechaRecepcion DateTime?
+  firmaUrl       String?
+
+  @@unique([numero, anio])
+}

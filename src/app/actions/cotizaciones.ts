@@ -1,0 +1,249 @@
+'use server'
+
+import { prisma } from '@/lib/prisma'
+import { requireRol } from '@/lib/roles'
+import { siguienteCorrelativo } from '@/lib/correlativo'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { addDays } from 'date-fns'
+
+interface ItemRaw { ensayoId: string; costo: number; tiempoEntregaDias: number }
+interface MuestraRaw { nombre: string; items: ItemRaw[] }
+
+function parseMuestras(formData: FormData): MuestraRaw[] {
+  const muestras: MuestraRaw[] = []
+  let mi = 0
+  while (formData.get(`muestras[${mi}][nombre]`) !== null) {
+    const items: ItemRaw[] = []
+    let ii = 0
+    while (formData.get(`muestras[${mi}][items][${ii}][ensayoId]`)) {
+      items.push({
+        ensayoId: formData.get(`muestras[${mi}][items][${ii}][ensayoId]`) as string,
+        costo: Number(formData.get(`muestras[${mi}][items][${ii}][costo]`)),
+        tiempoEntregaDias: Number(formData.get(`muestras[${mi}][items][${ii}][tiempoEntregaDias]`)),
+      })
+      ii++
+    }
+    muestras.push({ nombre: formData.get(`muestras[${mi}][nombre]`) as string, items })
+    mi++
+  }
+  return muestras
+}
+
+function parseContacto(formData: FormData) {
+  return {
+    contactoNombre: (formData.get('contactoNombre') as string) || null,
+    contactoEmail: (formData.get('contactoEmail') as string) || null,
+    contactoTelefono: (formData.get('contactoTelefono') as string) || null,
+    contactoRuc: (formData.get('contactoRuc') as string) || null,
+    formaContacto: (formData.get('formaContacto') as string) || null,
+    fechaContacto: (formData.get('fechaContacto') as string) || null,
+    horaContacto: (formData.get('horaContacto') as string) || null,
+    paisOrigen: (formData.get('paisOrigen') as string) || null,
+  }
+}
+
+async function crearMuestrasConItems(cotizacionId: string, muestras: MuestraRaw[]) {
+  for (const [orden, m] of muestras.entries()) {
+    const muestra = await prisma.cotizacionMuestra.create({
+      data: { cotizacionId, nombre: m.nombre, orden },
+    })
+    if (m.items.length > 0) {
+      await prisma.cotizacionItem.createMany({
+        data: m.items.map((it) => ({
+          cotizacionId,
+          muestraId: muestra.id,
+          ensayoId: it.ensayoId,
+          costo: it.costo,
+          tiempoEntregaDias: it.tiempoEntregaDias,
+        })),
+      })
+    }
+  }
+}
+
+export async function crearCotizacion(formData: FormData) {
+  const session = await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+  const anio = new Date().getFullYear()
+  const numero = await siguienteCorrelativo('cotizacion', anio)
+
+  const muestras = parseMuestras(formData)
+  const allItems = muestras.flatMap((m) => m.items)
+  const subtotal = allItems.reduce((s, it) => s + it.costo, 0)
+  const igv = subtotal * 0.18
+  const total = subtotal + igv
+
+  const cot = await prisma.cotizacion.create({
+    data: {
+      numero,
+      anio,
+      sufijo: '',
+      moneda: formData.get('moneda') as string,
+      clienteId: formData.get('clienteId') as string,
+      observaciones: (formData.get('observaciones') as string) || null,
+      ...parseContacto(formData),
+      vigenciaHasta: addDays(new Date(), 30),
+      creadoPorId: session.user.id,
+      subtotal,
+      igv,
+      total,
+    },
+  })
+
+  await crearMuestrasConItems(cot.id, muestras)
+
+  revalidatePath('/cotizaciones')
+  redirect(`/cotizaciones/${cot.id}`)
+}
+
+export async function editarCotizacion(id: string, formData: FormData) {
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+
+  const muestras = parseMuestras(formData)
+  const allItems = muestras.flatMap((m) => m.items)
+  const subtotal = allItems.reduce((s, it) => s + it.costo, 0)
+  const igv = subtotal * 0.18
+  const total = subtotal + igv
+
+  // Delete existing items and muestras, then recreate
+  await prisma.cotizacionItem.deleteMany({ where: { cotizacionId: id } })
+  await prisma.cotizacionMuestra.deleteMany({ where: { cotizacionId: id } })
+
+  await prisma.cotizacion.update({
+    where: { id },
+    data: {
+      moneda: formData.get('moneda') as string,
+      clienteId: formData.get('clienteId') as string,
+      observaciones: (formData.get('observaciones') as string) || null,
+      ...parseContacto(formData),
+      subtotal,
+      igv,
+      total,
+    },
+  })
+
+  await crearMuestrasConItems(id, muestras)
+
+  revalidatePath('/cotizaciones')
+  revalidatePath(`/cotizaciones/${id}`)
+  redirect(`/cotizaciones/${id}`)
+}
+
+export async function cambiarEstadoCotizacion(
+  id: string,
+  estado: 'EN_REVISION' | 'ENVIADA' | 'ACEPTADA' | 'RECHAZADA'
+) {
+  const roles: Record<string, ('GERENTE_TECNICO' | 'DIRECTOR_CALIDAD' | 'ADMINISTRACION' | 'ANALISTA')[]> = {
+    EN_REVISION: ['ADMINISTRACION', 'DIRECTOR_CALIDAD'],
+    ENVIADA: ['DIRECTOR_CALIDAD'],
+    ACEPTADA: ['DIRECTOR_CALIDAD'],
+    RECHAZADA: ['DIRECTOR_CALIDAD'],
+  }
+  await requireRol(roles[estado])
+  await prisma.cotizacion.update({ where: { id }, data: { estado } })
+  revalidatePath('/cotizaciones')
+  revalidatePath(`/cotizaciones/${id}`)
+}
+
+async function copiarCotizacion(
+  original: { id: string; numero: number; anio: number; sufijo: string; moneda: string; clienteId: string; observaciones: string | null; contactoNombre: string | null; contactoEmail: string | null; contactoTelefono: string | null; contactoRuc: string | null; formaContacto: string | null; fechaContacto: string | null; horaContacto: string | null; paisOrigen: string | null; subtotal: number; igv: number; total: number },
+  overrides: { numero?: number; sufijo?: string },
+  creadoPorId: string
+) {
+  const muestras = await prisma.cotizacionMuestra.findMany({
+    where: { cotizacionId: original.id },
+    include: { items: true },
+    orderBy: { orden: 'asc' },
+  })
+
+  const nueva = await prisma.cotizacion.create({
+    data: {
+      numero: overrides.numero ?? original.numero,
+      anio: original.anio,
+      sufijo: overrides.sufijo ?? original.sufijo,
+      cotizacionPadre: original.id,
+      moneda: original.moneda,
+      clienteId: original.clienteId,
+      observaciones: original.observaciones,
+      contactoNombre: original.contactoNombre,
+      contactoEmail: original.contactoEmail,
+      contactoTelefono: original.contactoTelefono,
+      contactoRuc: original.contactoRuc,
+      formaContacto: original.formaContacto,
+      fechaContacto: original.fechaContacto,
+      horaContacto: original.horaContacto,
+      paisOrigen: original.paisOrigen,
+      vigenciaHasta: addDays(new Date(), 30),
+      creadoPorId,
+      subtotal: original.subtotal,
+      igv: original.igv,
+      total: original.total,
+      estado: 'BORRADOR',
+    },
+  })
+
+  if (muestras.length > 0) {
+    await crearMuestrasConItems(
+      nueva.id,
+      muestras.map((m) => ({
+        nombre: m.nombre,
+        items: m.items.map((it) => ({
+          ensayoId: it.ensayoId,
+          costo: it.costo,
+          tiempoEntregaDias: it.tiempoEntregaDias,
+        })),
+      }))
+    )
+  } else {
+    // old cotizacion without muestras — copy flat items
+    const items = await prisma.cotizacionItem.findMany({ where: { cotizacionId: original.id } })
+    if (items.length > 0) {
+      await prisma.cotizacionItem.createMany({
+        data: items.map((it) => ({
+          cotizacionId: nueva.id,
+          ensayoId: it.ensayoId,
+          costo: it.costo,
+          tiempoEntregaDias: it.tiempoEntregaDias,
+        })),
+      })
+    }
+  }
+
+  return nueva
+}
+
+export async function duplicarCotizacion(id: string) {
+  const session = await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+  const original = await prisma.cotizacion.findUniqueOrThrow({ where: { id } })
+
+  const SUFIJOS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+  const existentes = await prisma.cotizacion.findMany({
+    where: { numero: original.numero, anio: original.anio, sufijo: { not: '' } },
+    select: { sufijo: true },
+  })
+  const usados = existentes.map((c) => c.sufijo)
+  const siguienteSufijo = SUFIJOS.find((s) => !usados.includes(s))
+  if (!siguienteSufijo) throw new Error('Se alcanzó el límite de duplicaciones')
+
+  const nueva = await copiarCotizacion(original, { sufijo: siguienteSufijo }, session.user.id)
+  revalidatePath('/cotizaciones')
+  redirect(`/cotizaciones/${nueva.id}`)
+}
+
+export async function modificarCotizacionAceptada(id: string) {
+  const session = await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+  const original = await prisma.cotizacion.findUniqueOrThrow({ where: { id } })
+
+  const SUFIJOS = ['A', 'B', 'C', 'D', 'E', 'F']
+  const existentes = await prisma.cotizacion.findMany({
+    where: { numero: original.numero, anio: original.anio, sufijo: { not: '' } },
+    select: { sufijo: true },
+  })
+  const usados = existentes.map((c) => c.sufijo)
+  const siguienteSufijo = SUFIJOS.find((s) => !usados.includes(s))
+  if (!siguienteSufijo) throw new Error('Se alcanzó el límite de modificaciones')
+
+  const nueva = await copiarCotizacion(original, { sufijo: siguienteSufijo }, session.user.id)
+  revalidatePath('/cotizaciones')
+  redirect(`/cotizaciones/${nueva.id}`)
+}

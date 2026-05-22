@@ -1,11 +1,9 @@
 import { PrismaClient } from '../src/generated/prisma/client'
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { hashSync } from 'bcryptjs'
 import { addDays } from 'date-fns'
-import path from 'path'
 
-const dbPath = path.resolve(process.cwd(), 'dev.db')
-const adapter = new PrismaBetterSqlite3({ url: dbPath })
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const prisma = new PrismaClient({ adapter } as any)
 

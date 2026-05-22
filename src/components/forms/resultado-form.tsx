@@ -166,9 +166,9 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }
           </p>
           <div className="flex flex-wrap gap-2">
             {initialImagenes.map((url, i) => (
-              <a key={i} href={`/${url}`} target="_blank" rel="noreferrer">
+              <a key={i} href={url} target="_blank" rel="noreferrer">
                 <img
-                  src={`/${url}`}
+                  src={url}
                   alt={`Resultado ${i + 1}`}
                   className="h-24 w-24 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition-opacity"
                 />

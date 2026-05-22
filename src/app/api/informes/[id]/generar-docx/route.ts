@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import path from 'path'
 import PizZip from 'pizzip'
 import Docxtemplater from 'docxtemplater'
@@ -77,18 +77,7 @@ export async function GET(
     docxBuffer = readFileSync(templatePath)
   }
 
-  // Save to public/generated
-  const genDir = path.resolve(process.cwd(), 'public/generated')
-  mkdirSync(genDir, { recursive: true })
   const filename = `${informe.prefijo}-${informe.numero}-${informe.anio}.docx`
-  const filePath = path.join(genDir, filename)
-  writeFileSync(filePath, docxBuffer)
-
-  // Update record
-  await prisma.informe.update({
-    where: { id },
-    data: { archivoDocx: `generated/${filename}` },
-  })
 
   return new NextResponse(docxBuffer as unknown as BodyInit, {
     headers: {

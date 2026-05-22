@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import QRCode from 'qrcode'
-import { writeFileSync, mkdirSync } from 'fs'
-import path from 'path'
 import { formatFecha, formatNumInforme } from '@/lib/format'
 
 export async function GET(
@@ -131,19 +129,7 @@ export async function GET(
   })
 
   const pdfBytes = await pdfDoc.save()
-
-  // Save to public/generated
-  const genDir = path.resolve(process.cwd(), 'public/generated')
-  mkdirSync(genDir, { recursive: true })
   const filename = `${informe.prefijo}-${informe.numero}-${informe.anio}-cert.pdf`
-  const filePath = path.join(genDir, filename)
-  writeFileSync(filePath, pdfBytes)
-
-  // Update record
-  await prisma.informe.update({
-    where: { id },
-    data: { archivoPdf: `generated/${filename}` },
-  })
 
   return new NextResponse(pdfBytes as unknown as BodyInit, {
     headers: {

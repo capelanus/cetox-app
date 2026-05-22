@@ -5,8 +5,7 @@ import { requireRol } from '@/lib/roles'
 import { siguienteCorrelativo } from '@/lib/correlativo'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { writeFileSync, mkdirSync } from 'fs'
-import path from 'path'
+import { put } from '@vercel/blob'
 
 export async function cargarResultado(odaId: string, formData: FormData) {
   const session = await requireRol(['ANALISTA'])
@@ -16,6 +15,10 @@ export async function cargarResultado(odaId: string, formData: FormData) {
     where: { id: odaId },
     include: { items: { include: { ensayo: true }, take: 1 } },
   })
+
+  if (session.user.area && oda.area !== session.user.area) {
+    throw new Error('No tienes permiso para cargar resultados en esta ODA')
+  }
 
   const prefijo = oda.area
 
@@ -41,31 +44,32 @@ export async function cargarResultado(odaId: string, formData: FormData) {
     })
   }
 
-  // Save uploaded images
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff']
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10 MB
+
   const imageFiles: File[] = []
   for (const [key, value] of formData.entries()) {
     if (key.startsWith('imagen_') && value instanceof File && value.size > 0) {
+      if (!ALLOWED_IMAGE_TYPES.includes(value.type)) continue
+      if (value.size > MAX_IMAGE_SIZE) continue
       imageFiles.push(value)
     }
   }
 
   if (imageFiles.length > 0) {
-    const dir = path.resolve(process.cwd(), 'public/uploads/resultados', informe.id)
-    mkdirSync(dir, { recursive: true })
-
     const existing: string[] = JSON.parse(informe.resultadoImagenes || '[]')
-    const newPaths: string[] = []
+    const newUrls: string[] = []
 
     for (const file of imageFiles) {
       const ext = file.name.split('.').pop()?.replace(/[^a-z0-9]/gi, '') || 'png'
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      writeFileSync(path.join(dir, filename), Buffer.from(await file.arrayBuffer()))
-      newPaths.push(`uploads/resultados/${informe.id}/${filename}`)
+      const filename = `resultados/${informe.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const blob = await put(filename, file, { access: 'public' })
+      newUrls.push(blob.url)
     }
 
     await prisma.informe.update({
       where: { id: informe.id },
-      data: { resultadoImagenes: JSON.stringify([...existing, ...newPaths]) },
+      data: { resultadoImagenes: JSON.stringify([...existing, ...newUrls]) },
     })
   }
 
@@ -81,8 +85,14 @@ export async function cargarResultado(odaId: string, formData: FormData) {
 }
 
 export async function recibirODA(odaId: string, formData: FormData) {
-  await requireRol(['ANALISTA'])
+  const session = await requireRol(['ANALISTA'])
   const edadPaciente = (formData.get('edadPaciente') as string | null)?.trim() || null
+
+  const oda = await prisma.oDA.findUniqueOrThrow({ where: { id: odaId }, select: { area: true } })
+  if (session.user.area && oda.area !== session.user.area) {
+    throw new Error('No tienes permiso para recibir esta ODA')
+  }
+
   await prisma.oDA.update({
     where: { id: odaId },
     data: { estado: 'RECIBIDA', fechaRecepcion: new Date(), edadPaciente },
@@ -91,7 +101,11 @@ export async function recibirODA(odaId: string, formData: FormData) {
 }
 
 export async function iniciarEjecucionODA(odaId: string) {
-  await requireRol(['ANALISTA'])
+  const session = await requireRol(['ANALISTA'])
+  const oda = await prisma.oDA.findUniqueOrThrow({ where: { id: odaId }, select: { area: true } })
+  if (session.user.area && oda.area !== session.user.area) {
+    throw new Error('No tienes permiso para operar esta ODA')
+  }
   await prisma.oDA.update({ where: { id: odaId }, data: { estado: 'EN_EJECUCION' } })
   revalidatePath(`/oda/${odaId}`)
 }

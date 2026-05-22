@@ -27,7 +27,7 @@ export async function firmarGerenciaTecnica(informeId: string) {
   const anio = new Date().getFullYear()
   const num = String(Math.floor(Math.random() * 900) + 100)
   const codigo = `${anio}-${num}`
-  const clave = nanoid(8)
+  const clave = nanoid(16)
   const base = process.env.NEXTAUTH_URL ?? 'https://cetox-app.vercel.app'
   const qrUrl = `${base}/validation/${codigo}`
 

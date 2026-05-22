@@ -28,7 +28,8 @@ export async function firmarGerenciaTecnica(informeId: string) {
   const num = String(Math.floor(Math.random() * 900) + 100)
   const codigo = `${anio}-${num}`
   const clave = nanoid(8)
-  const qrUrl = `http://localhost:3000/validation/${codigo}`
+  const base = process.env.NEXTAUTH_URL ?? 'https://cetox-app.vercel.app'
+  const qrUrl = `${base}/validation/${codigo}`
 
   await prisma.informe.update({
     where: { id: informeId },

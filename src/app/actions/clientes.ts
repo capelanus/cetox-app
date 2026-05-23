@@ -57,3 +57,10 @@ export async function toggleClienteActivo(id: string, activo: boolean) {
   await prisma.cliente.update({ where: { id }, data: { activo } })
   revalidatePath('/clientes')
 }
+
+export async function eliminarCliente(id: string) {
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
+  await prisma.cliente.delete({ where: { id } })
+  revalidatePath('/clientes')
+  redirect('/clientes')
+}

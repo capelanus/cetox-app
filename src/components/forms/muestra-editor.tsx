@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Ensayo } from '@/generated/prisma/client'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, ChevronDown } from 'lucide-react'
 
 interface ItemState {
   ensayoId: string
@@ -20,6 +20,7 @@ interface MuestraState {
   items: ItemState[]
   areaFilter: string
   search: string
+  dropdownOpen: boolean
 }
 
 export interface InitialMuestra {
@@ -37,6 +38,83 @@ interface Props {
 let _counter = 0
 function newKey() { return `m-${++_counter}` }
 
+function EnsayoDropdown({
+  muestraKey,
+  ensayosFiltrados,
+  search,
+  dropdownOpen,
+  onSearch,
+  onToggle,
+  onAdd,
+}: {
+  muestraKey: string
+  ensayosFiltrados: Ensayo[]
+  search: string
+  dropdownOpen: boolean
+  onSearch: (val: string) => void
+  onToggle: (open: boolean) => void
+  onAdd: (id: string) => void
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        onToggle(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [onToggle])
+
+  const isOpen = dropdownOpen || search.length > 0
+
+  return (
+    <div ref={containerRef} className="relative flex-1 min-w-48">
+      <div className="flex">
+        <Input
+          value={search}
+          onChange={(e) => { onSearch(e.target.value); onToggle(true) }}
+          onFocus={() => onToggle(true)}
+          placeholder="Buscar ensayo..."
+          className="h-8 text-sm rounded-r-none border-r-0"
+        />
+        <button
+          type="button"
+          onClick={() => onToggle(!isOpen)}
+          className="h-8 px-2 border border-input border-l-0 rounded-r-md bg-white hover:bg-slate-50 transition-colors"
+        >
+          <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-0.5 bg-white border border-input rounded-md shadow-lg max-h-56 overflow-y-auto">
+          {ensayosFiltrados.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-slate-400">
+              {search ? 'Sin resultados' : 'Todos los ensayos ya agregados'}
+            </p>
+          ) : (
+            ensayosFiltrados.map((e) => (
+              <button
+                key={e.id}
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 transition-colors border-b last:border-0"
+                onMouseDown={(ev) => { ev.preventDefault(); onAdd(e.id); onSearch(''); onToggle(false) }}
+              >
+                <span className="font-medium">{e.nombre}</span>
+                <span className="text-slate-400 ml-2 text-xs">{e.codigo}</span>
+                {e.acreditadoINACAL && <span className="ml-2 text-xs text-green-600">[INACAL]</span>}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Props) {
   const [muestras, setMuestras] = useState<MuestraState[]>(() => {
     if (initialMuestras && initialMuestras.length > 0) {
@@ -45,6 +123,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
         nombre: m.nombre,
         areaFilter: '',
         search: '',
+        dropdownOpen: false,
         items: m.items.map((it) => ({
           ensayoId: it.ensayoId,
           costo: it.costo,
@@ -53,7 +132,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
         })),
       }))
     }
-    return [{ key: newKey(), nombre: '', items: [], areaFilter: '', search: '' }]
+    return [{ key: newKey(), nombre: '', items: [], areaFilter: '', search: '', dropdownOpen: false }]
   })
 
   function notify(next: MuestraState[]) {
@@ -70,7 +149,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
   }
 
   function addMuestra() {
-    setMuestras((prev) => [...prev, { key: newKey(), nombre: '', items: [], areaFilter: '', search: '' }])
+    setMuestras((prev) => [...prev, { key: newKey(), nombre: '', items: [], areaFilter: '', search: '', dropdownOpen: false }])
   }
 
   function removeMuestra(key: string) {
@@ -149,7 +228,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
             </div>
 
             {/* Ensayo selector row */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 items-start">
               <select
                 className="h-8 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm shrink-0"
                 value={muestra.areaFilter}
@@ -160,27 +239,21 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
                 <option value="B">Biología</option>
                 <option value="M">Microbiología</option>
               </select>
-              <Input
-                value={muestra.search}
-                onChange={(e) => update(muestra.key, { search: e.target.value })}
-                placeholder="Buscar ensayo..."
-                className="h-8 text-sm w-40 shrink-0"
+              <EnsayoDropdown
+                muestraKey={muestra.key}
+                ensayosFiltrados={ensayosFiltrados}
+                search={muestra.search}
+                dropdownOpen={muestra.dropdownOpen}
+                onSearch={(val) => update(muestra.key, { search: val })}
+                onToggle={(open) => update(muestra.key, { dropdownOpen: open })}
+                onAdd={(id) => addEnsayo(muestra.key, id)}
               />
-              <select
-                className="h-8 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm flex-1 min-w-48"
-                onChange={(e) => { if (e.target.value) addEnsayo(muestra.key, e.target.value); e.target.value = '' }}
-              >
-                <option value="">+ Agregar ensayo...</option>
-                {ensayosFiltrados.map((e) => (
-                  <option key={e.id} value={e.id}>{e.nombre} ({e.codigo})</option>
-                ))}
-              </select>
             </div>
 
             {/* Items table */}
             {muestra.items.length === 0 ? (
               <div className="border-2 border-dashed rounded-lg p-3 text-center text-slate-400 text-sm">
-                Selecciona ensayos del menú superior
+                Selecciona ensayos del buscador superior
               </div>
             ) : (
               <div className="border rounded-lg overflow-hidden bg-white">

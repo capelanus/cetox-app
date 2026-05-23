@@ -30,14 +30,35 @@ const MATERIAL_OPTIONS = ['Plástico', 'Vidrio', 'Metal / Aluminio', 'Cartón', 
 const ETIQUETA_OPTIONS = ['Comercial', 'Rótulo a mano', 'Rótulo a máquina', 'Otro']
 const SEGURIDAD_OPTIONS = ['Precinto seguridad plástico', 'Tapa cerrada', 'Cerrado con sellado', 'Otro']
 
-function SelectField({ name, label, options }: { name: string; label: string; options: string[] }) {
+function OtroSelect({
+  name,
+  label,
+  options,
+  otroName,
+  otroPlaceholder,
+}: {
+  name: string
+  label: string
+  options: string[]
+  otroName: string
+  otroPlaceholder?: string
+}) {
+  const [value, setValue] = useState('')
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <select name={name} className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+      <select
+        name={name}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+      >
         <option value="">Seleccionar...</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
+      {value === 'Otro' && (
+        <Input name={otroName} placeholder={otroPlaceholder ?? 'Especificar...'} className="mt-1" />
+      )}
     </div>
   )
 }
@@ -109,11 +130,9 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
       {/* Nombre del paciente */}
       <div className="bg-white rounded-xl border shadow-sm p-5">
         <h2 className="font-semibold text-slate-700 mb-4 text-sm">Nombre del paciente <span className="font-normal text-slate-400">(opcional)</span></h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2 col-span-2">
-            <Label>Nombres y apellidos</Label>
-            <Input name="nombrePaciente" placeholder="Solo si aplica" />
-          </div>
+        <div className="space-y-2">
+          <Label>Nombres y apellidos</Label>
+          <Input name="nombrePaciente" placeholder="Solo si aplica" />
         </div>
       </div>
 
@@ -173,13 +192,10 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
               <option value="Courier">Courier</option>
               <option value="Otro">Otro</option>
             </select>
+            {ingresoMuestra === 'Otro' && (
+              <Input name="ingresoMuestraOtro" placeholder="Indicar método de ingreso" className="mt-1" />
+            )}
           </div>
-          {ingresoMuestra === 'Otro' && (
-            <div className="space-y-2">
-              <Label>Especificar ingreso</Label>
-              <Input name="ingresoMuestraOtro" placeholder="Indicar método de ingreso" />
-            </div>
-          )}
 
           <div className="space-y-2">
             <Label>Número de muestras</Label>
@@ -203,11 +219,19 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
           </div>
           <div className="col-span-2 space-y-2">
             <Label>Procedencia / Características / Descripción</Label>
-            <Input name="procedenciaDescripcion" />
+            <textarea
+              name="procedenciaDescripcion"
+              rows={2}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
+            />
           </div>
           <div className="col-span-2 space-y-2">
             <Label>Otra indicación</Label>
-            <Input name="otraIndicacion" />
+            <textarea
+              name="otraIndicacion"
+              rows={2}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
+            />
           </div>
         </div>
       </div>
@@ -228,12 +252,30 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
               {TIPO_ENVASE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
             {tipoEnvase === 'Otro' && (
-              <Input name="tipoEnvaseOtro" placeholder="Especificar tipo de envase" className="mt-2" />
+              <Input name="tipoEnvaseOtro" placeholder="Especificar tipo de envase" className="mt-1" />
             )}
           </div>
-          <SelectField name="materialEnvase" label="Material" options={MATERIAL_OPTIONS} />
-          <SelectField name="etiquetaEnvase" label="Etiqueta" options={ETIQUETA_OPTIONS} />
-          <SelectField name="seguridadEnvase" label="Seguridad" options={SEGURIDAD_OPTIONS} />
+          <OtroSelect
+            name="materialEnvase"
+            label="Material"
+            options={MATERIAL_OPTIONS}
+            otroName="materialEnvaseOtro"
+            otroPlaceholder="Especificar material"
+          />
+          <OtroSelect
+            name="etiquetaEnvase"
+            label="Etiqueta"
+            options={ETIQUETA_OPTIONS}
+            otroName="etiquetaEnvaseOtro"
+            otroPlaceholder="Especificar tipo de etiqueta"
+          />
+          <OtroSelect
+            name="seguridadEnvase"
+            label="Seguridad"
+            options={SEGURIDAD_OPTIONS}
+            otroName="seguridadEnvaseOtro"
+            otroPlaceholder="Especificar medida de seguridad"
+          />
           <div className="col-span-2 space-y-2">
             <Label>Observaciones</Label>
             <textarea

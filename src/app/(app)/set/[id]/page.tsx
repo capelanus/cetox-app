@@ -156,60 +156,77 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
 
         {set.odas.length > 0 ? (
           <>
-            <div className="space-y-3">
-              {set.odas.map((oda) => {
-                const toggleAction = toggleRevisadoODA.bind(null, oda.id, id)
-                const odaCosto = oda.items.reduce((s, i) => s + i.costo, 0)
-                return (
-                  <div key={oda.id} className={`border rounded-lg overflow-hidden ${oda.revisado ? 'border-green-300' : ''}`}>
-                    {/* ODA header */}
-                    <div className={`flex items-center gap-3 px-3 py-2 text-sm ${oda.revisado ? 'bg-green-50' : 'bg-slate-50'}`}>
-                      <Link href={`/oda/${oda.id}`} className="font-mono text-xs font-semibold text-blue-600 hover:underline">
-                        {formatNumODA(oda.numero, oda.anio)}
-                      </Link>
-                      <Badge variant="outline" className="text-xs">{AREA_LABELS[oda.area] ?? oda.area}</Badge>
-                      <Badge variant="outline" className="text-xs">{ESTADO_ODA_LABELS[oda.estado] ?? oda.estado}</Badge>
-                      <span className="text-slate-500 text-xs">Entrega: {formatFecha(oda.fechaEntregaCompromiso)}</span>
-                      <div className="ml-auto flex items-center gap-2">
-                        <form action={toggleAction}>
-                          <button
-                            type="submit"
-                            className={`w-5 h-5 rounded border-2 inline-flex items-center justify-center transition-colors ${
-                              oda.revisado ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 hover:border-slate-500'
-                            }`}
-                            title={oda.revisado ? 'Quitar revisión' : 'Marcar revisado'}
-                          >
-                            {oda.revisado && (
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                    {/* ODA items */}
-                    <table className="w-full text-sm">
-                      <tbody className="divide-y">
-                        {oda.items.map((item) => (
-                          <tr key={item.id}>
-                            <td className="px-3 py-2">{item.ensayo.nombre}</td>
-                            <td className="px-3 py-2 font-mono text-xs text-slate-400">{item.ensayo.codigo}</td>
-                            <td className="px-3 py-2 text-slate-500">{item.tiempoEntregaDias} días</td>
-                            <td className="px-3 py-2 text-slate-500">{formatFecha(item.fechaEntregaCompromiso)}</td>
-                            <td className="px-3 py-2 text-right">{formatMoneda(item.costo, moneda)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {oda.items.length > 1 && (
-                      <div className="px-3 py-1 text-right text-xs text-slate-500 border-t bg-slate-50">
-                        Subtotal área: {formatMoneda(odaCosto, moneda)}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 font-semibold text-slate-600">Ensayo</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-slate-600">Fecha</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-slate-600">Tiempo</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-slate-600">ODA</th>
+                    <th className="px-4 py-2.5 w-8"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {set.odas.map((oda) => {
+                    const toggleAction = toggleRevisadoODA.bind(null, oda.id, id)
+                    const hoy = new Date()
+                    const entrega = new Date(oda.fechaEntregaCompromiso)
+                    const diasRestantes = Math.ceil((entrega.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+                    const ensayoNombre = oda.items.map((i) => i.ensayo.nombre).join(', ')
+                    return (
+                      <tr key={oda.id} className={oda.revisado ? 'bg-green-50' : 'hover:bg-slate-50'}>
+                        <td className="px-4 py-2.5">
+                          <Link href={`/oda/${oda.id}`} className="font-medium text-blue-600 hover:underline">
+                            {ensayoNombre}
+                          </Link>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            <Badge variant="outline" className="text-xs mr-1">{AREA_LABELS[oda.area] ?? oda.area}</Badge>
+                            <Badge variant="outline" className="text-xs">{ESTADO_ODA_LABELS[oda.estado] ?? oda.estado}</Badge>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-600 whitespace-nowrap">
+                          {formatFecha(oda.fechaEntregaCompromiso)}
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className={`text-sm font-medium ${
+                            diasRestantes < 0 ? 'text-red-600' :
+                            diasRestantes <= 3 ? 'text-amber-600' : 'text-slate-600'
+                          }`}>
+                            {diasRestantes < 0
+                              ? `${Math.abs(diasRestantes)}d vencida`
+                              : diasRestantes === 0
+                              ? 'Hoy'
+                              : `${diasRestantes}d`}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className="font-mono font-bold text-slate-800">
+                            {String(oda.numero).padStart(5, '0')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <form action={toggleAction}>
+                            <button
+                              type="submit"
+                              className={`w-5 h-5 rounded border-2 inline-flex items-center justify-center transition-colors ${
+                                oda.revisado ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 hover:border-slate-500'
+                              }`}
+                              title={oda.revisado ? 'Quitar revisión' : 'Marcar revisado'}
+                            >
+                              {oda.revisado && (
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
 
             {/* Totales */}

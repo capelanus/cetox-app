@@ -49,7 +49,7 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], 
       const isImage = ALLOWED_IMAGE.includes(file.type)
       const isDoc = ALLOWED_DOCS.includes(file.type)
       if (!isImage && !isDoc) return
-      const preview = isImage ? URL.createObjectURL(file) : null
+      const preview = (isImage || file.type === 'application/pdf') ? URL.createObjectURL(file) : null
       setPending((p) => [...p, { file, preview, isImage }])
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,6 +225,14 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], 
                     alt={`Nueva ${i + 1}`}
                     className="h-24 w-24 object-cover rounded-lg border border-slate-200"
                   />
+                ) : pf.file.type === 'application/pdf' && pf.preview ? (
+                  <div className="h-24 w-24 rounded-lg border border-slate-200 overflow-hidden bg-white">
+                    <iframe
+                      src={`${pf.preview}#toolbar=0&navpanes=0&scrollbar=0&page=1&view=FitH`}
+                      className="w-full h-full pointer-events-none"
+                      title={pf.file.name}
+                    />
+                  </div>
                 ) : (
                   <div className="h-24 w-24 flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-center">
                     <FileIcon type={pf.file.type} />

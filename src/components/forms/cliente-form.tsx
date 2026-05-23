@@ -29,7 +29,8 @@ export function ClienteForm({ action, cliente }: ClienteFormProps) {
   async function handleSubmit(formData: FormData) {
     try {
       await action(formData)
-    } catch {
+    } catch (e) {
+      if ((e as { digest?: string })?.digest?.startsWith('NEXT_REDIRECT')) throw e
       toast.error('Error al guardar el cliente')
     }
   }
@@ -71,7 +72,8 @@ export function ClienteForm({ action, cliente }: ClienteFormProps) {
         </div>
         <div className="col-span-2 space-y-2">
           <Label htmlFor="email">Email de contacto</Label>
-          <Input id="email" name="email" type="email" defaultValue={cliente?.email ?? ''} />
+          <Input id="email" name="email" type="text" defaultValue={cliente?.email ?? ''} />
+          <p className="text-xs text-slate-400">Separar por comas si hay varios: email1@ejemplo.com, email2@ejemplo.com</p>
         </div>
       </div>
       <div className="flex gap-3 pt-2">

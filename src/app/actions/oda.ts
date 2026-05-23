@@ -45,15 +45,22 @@ export async function cargarResultado(odaId: string, formData: FormData) {
   }
 
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff']
-  const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10 MB
+  const ALLOWED_DOC_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+  ]
+  const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 
   const imageFiles: File[] = []
+  const docFiles: File[] = []
   for (const [key, value] of formData.entries()) {
-    if (key.startsWith('imagen_') && value instanceof File && value.size > 0) {
-      if (!ALLOWED_IMAGE_TYPES.includes(value.type)) continue
-      if (value.size > MAX_IMAGE_SIZE) continue
-      imageFiles.push(value)
-    }
+    if (!(value instanceof File) || value.size === 0) continue
+    if (value.size > MAX_FILE_SIZE) continue
+    if (key.startsWith('imagen_') && ALLOWED_IMAGE_TYPES.includes(value.type)) imageFiles.push(value)
+    if (key.startsWith('archivo_') && ALLOWED_DOC_TYPES.includes(value.type)) docFiles.push(value)
   }
 
   if (imageFiles.length > 0) {
@@ -70,6 +77,23 @@ export async function cargarResultado(odaId: string, formData: FormData) {
     await prisma.informe.update({
       where: { id: informe.id },
       data: { resultadoImagenes: JSON.stringify([...existing, ...newUrls]) },
+    })
+  }
+
+  if (docFiles.length > 0) {
+    const existing: string[] = JSON.parse((informe as { resultadoArchivos?: string }).resultadoArchivos || '[]')
+    const newUrls: string[] = []
+
+    for (const file of docFiles) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const filename = `archivos/${informe.id}/${Date.now()}-${safeName}`
+      const blob = await put(filename, file, { access: 'public' })
+      newUrls.push(blob.url)
+    }
+
+    await prisma.informe.update({
+      where: { id: informe.id },
+      data: { resultadoArchivos: JSON.stringify([...existing, ...newUrls]) },
     })
   }
 

@@ -16,6 +16,7 @@ const ESTADO_LABELS: Record<string, string> = {
 interface Ensayo { nombre: string; alias: string | null }
 interface Item { ensayo: Ensayo }
 interface Cliente { razonSocial: string; ruc: string; telefono: string | null }
+interface Muestra { nombre: string }
 interface CotizacionData {
   id: string
   numero: number
@@ -30,6 +31,7 @@ interface CotizacionData {
   cliente: Cliente
   creadoPor: { nombre: string }
   items: Item[]
+  muestras: Muestra[]
 }
 
 interface Props {
@@ -90,9 +92,11 @@ export function ResumenTable({ cotizaciones }: Props) {
               <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">Atención</th>
               <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">Email</th>
               <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">Teléfono</th>
+              <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">Muestras</th>
               <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">Análisis solicitado</th>
               <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">País</th>
               <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">Estado</th>
+              <th className="text-left px-3 py-3 font-semibold text-slate-600 whitespace-nowrap">Aprobación</th>
               <th className="px-3 py-3"></th>
             </tr>
           </thead>
@@ -114,6 +118,11 @@ export function ResumenTable({ cotizaciones }: Props) {
                   <td className="px-3 py-2">{c.contactoNombre ?? '—'}</td>
                   <td className="px-3 py-2">{c.contactoEmail ?? '—'}</td>
                   <td className="px-3 py-2">{c.contactoTelefono ?? c.cliente.telefono ?? '—'}</td>
+                  <td className="px-3 py-2 max-w-40">
+                    {c.muestras.length > 0
+                      ? c.muestras.map((m) => m.nombre).join(', ')
+                      : '—'}
+                  </td>
                   <td className="px-3 py-2 max-w-48 truncate" title={analisis}>{analisis || '—'}</td>
                   <td className="px-3 py-2">{c.paisOrigen ?? '—'}</td>
                   <td className="px-3 py-2">
@@ -128,6 +137,15 @@ export function ResumenTable({ cotizaciones }: Props) {
                     </Badge>
                   </td>
                   <td className="px-3 py-2">
+                    {c.estado === 'ACEPTADA' ? (
+                      <span className="text-green-700 font-medium text-xs">✓ Aprobada</span>
+                    ) : c.estado === 'RECHAZADA' ? (
+                      <span className="text-red-600 font-medium text-xs">✗ Rechazada</span>
+                    ) : (
+                      <span className="text-slate-400 text-xs">Pendiente</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
                     <Link href={`/cotizaciones/${c.id}`} className="text-blue-600 hover:underline whitespace-nowrap">
                       Ver →
                     </Link>
@@ -137,7 +155,7 @@ export function ResumenTable({ cotizaciones }: Props) {
             })}
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={13} className="px-4 py-8 text-center text-slate-400">
                   No hay resultados
                 </td>
               </tr>

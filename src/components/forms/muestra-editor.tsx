@@ -19,6 +19,7 @@ interface MuestraState {
   nombre: string
   items: ItemState[]
   areaFilter: string
+  search: string
 }
 
 export interface InitialMuestra {
@@ -43,6 +44,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
         key: newKey(),
         nombre: m.nombre,
         areaFilter: '',
+        search: '',
         items: m.items.map((it) => ({
           ensayoId: it.ensayoId,
           costo: it.costo,
@@ -51,7 +53,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
         })),
       }))
     }
-    return [{ key: newKey(), nombre: '', items: [], areaFilter: '' }]
+    return [{ key: newKey(), nombre: '', items: [], areaFilter: '', search: '' }]
   })
 
   function notify(next: MuestraState[]) {
@@ -68,7 +70,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
   }
 
   function addMuestra() {
-    setMuestras((prev) => [...prev, { key: newKey(), nombre: '', items: [], areaFilter: '' }])
+    setMuestras((prev) => [...prev, { key: newKey(), nombre: '', items: [], areaFilter: '', search: '' }])
   }
 
   function removeMuestra(key: string) {
@@ -110,6 +112,10 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
         const ensayosFiltrados = ensayos.filter((e) => {
           if (muestra.items.some((i) => i.ensayoId === e.id)) return false
           if (muestra.areaFilter && e.area !== muestra.areaFilter) return false
+          if (muestra.search) {
+            const q = muestra.search.toLowerCase()
+            if (!e.nombre.toLowerCase().includes(q) && !e.codigo.toLowerCase().includes(q)) return false
+          }
           return true
         })
 
@@ -128,11 +134,12 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
             {/* Header */}
             <div className="flex items-center gap-3">
               <Label className="shrink-0 text-sm font-semibold text-slate-700">Muestra {mi + 1}</Label>
-              <Input
+              <textarea
                 value={muestra.nombre}
                 onChange={(e) => update(muestra.key, { nombre: e.target.value })}
                 placeholder="Nombre de la muestra (ej. Producto A, Lote #123)"
-                className="flex-1 h-8 text-sm bg-white"
+                rows={2}
+                className="flex-1 text-sm bg-white rounded-md border border-input px-3 py-1.5 shadow-sm resize-y min-h-[56px]"
               />
               {muestras.length > 1 && (
                 <button type="button" onClick={() => removeMuestra(muestra.key)} className="shrink-0">
@@ -142,7 +149,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
             </div>
 
             {/* Ensayo selector row */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <select
                 className="h-8 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm shrink-0"
                 value={muestra.areaFilter}
@@ -153,8 +160,14 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
                 <option value="B">Biología</option>
                 <option value="M">Microbiología</option>
               </select>
+              <Input
+                value={muestra.search}
+                onChange={(e) => update(muestra.key, { search: e.target.value })}
+                placeholder="Buscar ensayo..."
+                className="h-8 text-sm w-40 shrink-0"
+              />
               <select
-                className="h-8 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm flex-1"
+                className="h-8 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm flex-1 min-w-48"
                 onChange={(e) => { if (e.target.value) addEnsayo(muestra.key, e.target.value); e.target.value = '' }}
               >
                 <option value="">+ Agregar ensayo...</option>

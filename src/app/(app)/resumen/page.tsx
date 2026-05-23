@@ -9,6 +9,7 @@ export default async function ResumenPage() {
       cliente: true,
       creadoPor: true,
       items: { include: { ensayo: true } },
+      muestras: { select: { nombre: true }, orderBy: { orden: 'asc' } },
     },
     orderBy: [{ anio: 'desc' }, { fechaEmision: 'desc' }],
   })

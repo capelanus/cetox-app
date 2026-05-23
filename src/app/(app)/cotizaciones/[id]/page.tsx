@@ -135,7 +135,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
           {cot.observaciones && (
             <div className="col-span-2">
               <p className="text-slate-500">Observaciones</p>
-              <p>{cot.observaciones}</p>
+              <p className="whitespace-pre-wrap">{cot.observaciones}</p>
             </div>
           )}
         </div>

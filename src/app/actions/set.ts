@@ -35,7 +35,7 @@ export async function crearSET(formData: FormData) {
       clienteId: cot.clienteId,
       codigoMuestra,
       fechaIngreso,
-      nombreComercial: formData.get('nombreComercial') as string,
+      nombreComercial: (formData.get('nombreComercial') as string) || null,
       ingredienteActivo: (formData.get('ingredienteActivo') as string) || null,
       formulacion: (formData.get('formulacion') as string) || null,
       numeroLote: (formData.get('numeroLote') as string) || null,
@@ -48,7 +48,7 @@ export async function crearSET(formData: FormData) {
       nombrePaciente: (formData.get('nombrePaciente') as string) || null,
       ingresoMuestra: (formData.get('ingresoMuestra') as string) || null,
       ingresoMuestraOtro: (formData.get('ingresoMuestraOtro') as string) || null,
-      numeroMuestras: formData.get('numeroMuestras') ? Number(formData.get('numeroMuestras')) : null,
+      numeroMuestras: (formData.get('numeroMuestras') as string) || null,
       devolucionMuestra: (formData.get('devolucionMuestra') as string) || null,
       condicionesAmbientales: (formData.get('condicionesAmbientales') as string) || null,
       procedenciaDescripcion: (formData.get('procedenciaDescripcion') as string) || null,
@@ -76,34 +76,25 @@ export async function generarODAs(setId: string) {
 
   const anio = new Date().getFullYear()
 
-  // Group cotizacion items by area — one ODA per area
-  const porArea = new Map<string, typeof set.cotizacion.items>()
+  // One ODA per cotizacion item (ensayo)
   for (const item of set.cotizacion.items) {
-    const area = item.ensayo.area
-    if (!porArea.has(area)) porArea.set(area, [])
-    porArea.get(area)!.push(item)
-  }
-
-  for (const [area, items] of porArea.entries()) {
     const numero = await siguienteCorrelativo('oda', anio)
-    // fechaEntregaCompromiso = latest delivery date among all items in this area
-    const maxDias = Math.max(...items.map((i) => i.tiempoEntregaDias))
-    const fechaEntregaCompromiso = addDays(set.fechaIngreso, maxDias)
+    const fechaEntregaCompromiso = addDays(set.fechaIngreso, item.tiempoEntregaDias)
 
     await prisma.oDA.create({
       data: {
         numero,
         anio,
         setId,
-        area,
+        area: item.ensayo.area,
         fechaEntregaCompromiso,
         items: {
-          create: items.map((item) => ({
+          create: [{
             ensayoId: item.ensayoId,
             costo: item.costo,
             tiempoEntregaDias: item.tiempoEntregaDias,
-            fechaEntregaCompromiso: addDays(set.fechaIngreso, item.tiempoEntregaDias),
-          })),
+            fechaEntregaCompromiso,
+          }],
         },
       },
     })

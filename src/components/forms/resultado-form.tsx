@@ -4,62 +4,70 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, FileText, FileSpreadsheet } from 'lucide-react'
 import { cargarResultado } from '@/app/actions/oda'
 
-interface PendingImage {
+interface PendingFile {
   file: File
-  preview: string
+  preview: string | null
+  isImage: boolean
 }
 
 interface Props {
   odaId: string
   initialTexto?: string
   initialImagenes?: string[]
+  initialArchivos?: string[]
 }
 
-export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }: Props) {
+function FileIcon({ type }: { type: string }) {
+  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('xlsx')) {
+    return <FileSpreadsheet className="h-8 w-8 text-green-600" />
+  }
+  return <FileText className="h-8 w-8 text-blue-600" />
+}
+
+export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], initialArchivos = [] }: Props) {
   const [texto, setTexto] = useState(initialTexto)
-  const [pending, setPending] = useState<PendingImage[]>([])
+  const [pending, setPending] = useState<PendingFile[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [dragging, setDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
 
+  const ALLOWED_IMAGE = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff']
+  const ALLOWED_DOCS = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+  ]
+
   const addFiles = useCallback((files: File[]) => {
     files.forEach((file) => {
-      const preview = URL.createObjectURL(file)
-      setPending((p) => [...p, { file, preview }])
+      const isImage = ALLOWED_IMAGE.includes(file.type)
+      const isDoc = ALLOWED_DOCS.includes(file.type)
+      if (!isImage && !isDoc) return
+      const preview = isImage ? URL.createObjectURL(file) : null
+      setPending((p) => [...p, { file, preview, isImage }])
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Native drag-and-drop via ref — bypasses React's synthetic event system
   useEffect(() => {
     const el = dropZoneRef.current
     if (!el) return
 
-    const onDragOver = (e: DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragging(true)
-    }
-    const onDragEnter = (e: DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragging(true)
-    }
+    const onDragOver = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragging(true) }
+    const onDragEnter = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragging(true) }
     const onDragLeave = (e: DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      // Only clear if leaving the drop zone entirely (not entering a child)
+      e.preventDefault(); e.stopPropagation()
       if (!el.contains(e.relatedTarget as Node)) setDragging(false)
     }
     const onDrop = (e: DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragging(false)
-      const files = e.dataTransfer?.files
-      if (files && files.length > 0) addFiles(Array.from(files))
+      e.preventDefault(); e.stopPropagation(); setDragging(false)
+      if (e.dataTransfer?.files?.length) addFiles(Array.from(e.dataTransfer.files))
     }
 
     el.addEventListener('dragover', onDragOver)
@@ -76,20 +84,18 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
-      const imageItems = Array.from(e.clipboardData.items).filter((i) =>
-        i.type.startsWith('image/')
-      )
+      const imageItems = Array.from(e.clipboardData.items).filter((i) => i.type.startsWith('image/'))
       if (imageItems.length === 0) return
       e.preventDefault()
-      const files = imageItems.map((i) => i.getAsFile()).filter(Boolean) as File[]
-      addFiles(files)
+      addFiles(imageItems.map((i) => i.getAsFile()).filter(Boolean) as File[])
     },
     [addFiles]
   )
 
   const removePending = (idx: number) => {
     setPending((p) => {
-      URL.revokeObjectURL(p[idx].preview)
+      const item = p[idx]
+      if (item.preview) URL.revokeObjectURL(item.preview)
       return p.filter((_, i) => i !== idx)
     })
   }
@@ -99,7 +105,15 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }
     setSubmitting(true)
     const fd = new FormData()
     fd.set('resultadoTexto', texto)
-    pending.forEach((img, i) => fd.append(`imagen_${i}`, img.file))
+    let imgIdx = 0
+    let docIdx = 0
+    pending.forEach((pf) => {
+      if (pf.isImage) {
+        fd.append(`imagen_${imgIdx++}`, pf.file)
+      } else {
+        fd.append(`archivo_${docIdx++}`, pf.file)
+      }
+    })
     try {
       await cargarResultado(odaId, fd)
     } catch (err) {
@@ -111,7 +125,6 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Text result */}
       <div className="space-y-1.5">
         <Label htmlFor="resultadoTexto">Resultado del ensayo *</Label>
         <Textarea
@@ -129,29 +142,28 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }
         </p>
       </div>
 
-      {/* Drop zone */}
       <div className="space-y-1.5">
-        <Label>Imágenes / Capturas de instrumentos</Label>
+        <Label>Archivos adjuntos</Label>
         <div
           ref={dropZoneRef}
           className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors select-none ${
-            dragging
-              ? 'border-blue-400 bg-blue-50'
-              : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+            dragging ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
           }`}
           onClick={() => fileInputRef.current?.click()}
         >
           <Upload className="h-6 w-6 mx-auto text-slate-400 mb-1.5" />
           <p className="text-sm text-slate-500">
-            Arrastre imágenes aquí o{' '}
+            Arrastre archivos aquí o{' '}
             <span className="text-blue-600 font-medium">seleccione archivos</span>
           </p>
-          <p className="text-xs text-slate-400 mt-1">PNG, JPG, BMP, TIFF — múltiples archivos permitidos</p>
+          <p className="text-xs text-slate-400 mt-1">
+            Imágenes (PNG, JPG, BMP, TIFF) · Documentos (PDF, Word .docx, Excel .xlsx)
+          </p>
         </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           multiple
           className="hidden"
           onChange={(e) => e.target.files && addFiles(Array.from(e.target.files))}
@@ -161,9 +173,7 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }
       {/* Previously saved images */}
       {initialImagenes.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-500">
-            Imágenes guardadas ({initialImagenes.length})
-          </p>
+          <p className="text-xs font-medium text-slate-500">Imágenes guardadas ({initialImagenes.length})</p>
           <div className="flex flex-wrap gap-2">
             {initialImagenes.map((url, i) => (
               <a key={i} href={url} target="_blank" rel="noreferrer">
@@ -178,20 +188,49 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [] }
         </div>
       )}
 
-      {/* Pending new images */}
+      {/* Previously saved docs */}
+      {initialArchivos.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-slate-500">Documentos guardados ({initialArchivos.length})</p>
+          <div className="flex flex-wrap gap-2">
+            {initialArchivos.map((url, i) => {
+              const filename = url.split('/').pop() ?? `archivo-${i + 1}`
+              return (
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 border rounded-lg px-3 py-2 text-sm hover:bg-slate-50 text-slate-700"
+                >
+                  <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                  {filename}
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Pending new files */}
       {pending.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-500">
-            Nuevas imágenes a subir ({pending.length})
-          </p>
+          <p className="text-xs font-medium text-slate-500">Nuevos archivos a subir ({pending.length})</p>
           <div className="flex flex-wrap gap-2">
-            {pending.map((img, i) => (
+            {pending.map((pf, i) => (
               <div key={i} className="relative">
-                <img
-                  src={img.preview}
-                  alt={`Nueva ${i + 1}`}
-                  className="h-24 w-24 object-cover rounded-lg border border-slate-200"
-                />
+                {pf.isImage && pf.preview ? (
+                  <img
+                    src={pf.preview}
+                    alt={`Nueva ${i + 1}`}
+                    className="h-24 w-24 object-cover rounded-lg border border-slate-200"
+                  />
+                ) : (
+                  <div className="h-24 w-24 flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-center">
+                    <FileIcon type={pf.file.type} />
+                    <span className="text-xs text-slate-500 mt-1 truncate w-full text-center">{pf.file.name.split('.').pop()?.toUpperCase()}</span>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => removePending(i)}

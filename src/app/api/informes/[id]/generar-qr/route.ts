@@ -71,7 +71,7 @@ export async function GET(
   const fields = [
     ['Cliente', cliente.razonSocial],
     ['RUC', cliente.ruc],
-    ['Muestra', set.nombreComercial],
+    ['Muestra', set.nombreComercial ?? '—'],
     ['Lote', set.numeroLote ?? '—'],
     ['Ensayos', ensayosNombres],
     ['Analista', informe.analista.nombre],

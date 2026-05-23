@@ -12,44 +12,43 @@ const MESES = [
 interface Ensayo { area: string }
 interface Item { costo: number; ensayo: Ensayo }
 interface Cliente { razonSocial: string }
-interface Cotizacion {
+interface SetData {
   id: string
   numero: number
   anio: number
-  sufijo: string
-  moneda: string
-  total: number
-  subtotal: number
-  fechaEmision: Date | string
+  codigoMuestra: string
+  fechaIngreso: Date | string
+  estado: string
+  nombreComercial: string | null
   cliente: Cliente
-  items: Item[]
+  cotizacion: { items: Item[] }
 }
 
 interface Props {
-  cotizaciones: Cotizacion[]
+  sets: SetData[]
 }
 
-export function IngresosView({ cotizaciones }: Props) {
+export function IngresosView({ sets }: Props) {
   const anioActual = new Date().getFullYear()
-  const aniosDisponibles = [...new Set(cotizaciones.map((c) => c.anio))].sort((a, b) => b - a)
+  const aniosDisponibles = [...new Set(sets.map((s) => s.anio))].sort((a, b) => b - a)
   if (!aniosDisponibles.includes(anioActual)) aniosDisponibles.unshift(anioActual)
 
   const [anio, setAnio] = useState(anioActual)
   const [mes, setMes] = useState(0)
 
-  const filtradas = useMemo(() => {
-    return cotizaciones.filter((c) => {
-      const fecha = new Date(c.fechaEmision)
-      if (c.anio !== anio) return false
+  const filtrados = useMemo(() => {
+    return sets.filter((s) => {
+      const fecha = new Date(s.fechaIngreso)
+      if (s.anio !== anio) return false
       if (mes > 0 && fecha.getMonth() + 1 !== mes) return false
       return true
     })
-  }, [cotizaciones, anio, mes])
+  }, [sets, anio, mes])
 
   const porArea = useMemo(() => {
     const areas: Record<string, { subtotal: number; count: number }> = {}
-    for (const cot of filtradas) {
-      for (const item of cot.items) {
+    for (const s of filtrados) {
+      for (const item of s.cotizacion.items) {
         const area = item.ensayo.area
         if (!areas[area]) areas[area] = { subtotal: 0, count: 0 }
         areas[area].subtotal += item.costo
@@ -57,19 +56,23 @@ export function IngresosView({ cotizaciones }: Props) {
       }
     }
     return areas
-  }, [filtradas])
+  }, [filtrados])
 
   const porMes = useMemo(() => {
     const mesesData: Record<number, number> = {}
     for (let m = 1; m <= 12; m++) mesesData[m] = 0
-    for (const cot of cotizaciones.filter((c) => c.anio === anio)) {
-      const m = new Date(cot.fechaEmision).getMonth() + 1
-      mesesData[m] = (mesesData[m] ?? 0) + cot.subtotal
+    for (const s of sets.filter((s) => s.anio === anio)) {
+      const m = new Date(s.fechaIngreso).getMonth() + 1
+      const subtotal = s.cotizacion.items.reduce((acc, i) => acc + i.costo, 0)
+      mesesData[m] = (mesesData[m] ?? 0) + subtotal
     }
     return mesesData
-  }, [cotizaciones, anio])
+  }, [sets, anio])
 
-  const totalFiltrado = filtradas.reduce((s, c) => s + c.subtotal, 0)
+  const totalFiltrado = filtrados.reduce(
+    (sum, s) => sum + s.cotizacion.items.reduce((acc, i) => acc + i.costo, 0),
+    0
+  )
 
   return (
     <div className="space-y-6">
@@ -120,10 +123,10 @@ export function IngresosView({ cotizaciones }: Props) {
             {formatMoneda(totalFiltrado, 'USD')}
           </p>
         </div>
-        <p className="text-slate-400 text-sm">{filtradas.length} cotización{filtradas.length !== 1 ? 'es' : ''}</p>
+        <p className="text-slate-400 text-sm">{filtrados.length} SET{filtrados.length !== 1 ? 's' : ''}</p>
       </div>
 
-      {/* Gráfico mensual (tabla) */}
+      {/* Gráfico mensual */}
       {mes === 0 && (
         <div className="bg-white rounded-xl border shadow-sm p-6">
           <h3 className="font-semibold text-slate-700 mb-4">Distribución mensual — {anio}</h3>
@@ -151,33 +154,40 @@ export function IngresosView({ cotizaciones }: Props) {
         </div>
       )}
 
-      {/* Detalle de cotizaciones */}
-      {filtradas.length > 0 && (
+      {/* Detalle de SETs */}
+      {filtrados.length > 0 && (
         <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600">Cotización</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">SET</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">Muestra</th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600">Cliente</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600">Fecha</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">Fecha ingreso</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">Estado</th>
                 <th className="text-right px-4 py-3 font-semibold text-slate-600">Subtotal</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtradas.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-xs">
-                    COT-{String(c.numero).padStart(4, '0')}-{c.anio}{c.sufijo}
-                  </td>
-                  <td className="px-4 py-3">{c.cliente.razonSocial}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {new Date(c.fechaEmision).toLocaleDateString('es-PE')}
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    {formatMoneda(c.subtotal, c.moneda as 'USD' | 'PEN')}
-                  </td>
-                </tr>
-              ))}
+              {filtrados.map((s) => {
+                const subtotal = s.cotizacion.items.reduce((acc, i) => acc + i.costo, 0)
+                return (
+                  <tr key={s.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-xs">
+                      SET-{String(s.numero).padStart(4, '0')}-{s.anio}
+                    </td>
+                    <td className="px-4 py-3">{s.nombreComercial ?? s.codigoMuestra}</td>
+                    <td className="px-4 py-3">{s.cliente.razonSocial}</td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {new Date(s.fechaIngreso).toLocaleDateString('es-PE')}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 text-xs">{s.estado}</td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {formatMoneda(subtotal, 'USD')}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

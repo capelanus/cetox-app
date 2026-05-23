@@ -123,7 +123,7 @@ model SET {
   clienteId         String
   cliente           Cliente   @relation(fields: [clienteId], references: [id])
   fechaIngreso      DateTime  @default(now())
-  nombreComercial   String
+  nombreComercial   String?
   ingredienteActivo String?
   formulacion       String?
   numeroLote        String?
@@ -142,7 +142,7 @@ model SET {
   nombrePaciente         String?
   ingresoMuestra         String?
   ingresoMuestraOtro     String?
-  numeroMuestras         Int?
+  numeroMuestras         String?
   devolucionMuestra      String?
   condicionesAmbientales String?
   procedenciaDescripcion String?
@@ -195,6 +195,7 @@ model Informe {
   analista       Usuario   @relation("InformeAnalista", fields: [analistaId], references: [id])
   resultadoTexto    String?
   resultadoImagenes String  @default("[]")
+  resultadoArchivos String  @default("[]")
   archivoDocx       String?
   archivoPdf        String?
   estado         String    @default("BORRADOR")

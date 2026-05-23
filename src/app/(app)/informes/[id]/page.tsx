@@ -112,6 +112,27 @@ export default async function InformeDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
+        {/* Imágenes adjuntas */}
+        {(() => {
+          const imgs: string[] = JSON.parse(informe.resultadoImagenes || '[]')
+          return imgs.length > 0 ? (
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <h2 className="font-semibold text-slate-700 mb-3">Imágenes del ensayo ({imgs.length})</h2>
+              <div className="flex flex-wrap gap-3">
+                {imgs.map((url, i) => (
+                  <a key={i} href={url} target="_blank" rel="noreferrer">
+                    <img
+                      src={url}
+                      alt={`Imagen ${i + 1}`}
+                      className="h-32 w-32 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition-opacity"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null
+        })()}
+
         {/* Documentos */}
         {(informe.archivoDocx || informe.archivoPdf) && (
           <div className="bg-white rounded-xl border shadow-sm p-6">

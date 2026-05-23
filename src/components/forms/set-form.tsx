@@ -44,6 +44,7 @@ function SelectField({ name, label, options }: { name: string; label: string; op
 
 export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Props) {
   const [ingresoMuestra, setIngresoMuestra] = useState('')
+  const [tipoEnvase, setTipoEnvase] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -122,8 +123,8 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2 space-y-2">
-            <Label>Nombre comercial *</Label>
-            <Input name="nombreComercial" required />
+            <Label>Nombre comercial</Label>
+            <Input name="nombreComercial" />
           </div>
           <div className="space-y-2">
             <Label>Ingrediente activo</Label>
@@ -182,7 +183,7 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
 
           <div className="space-y-2">
             <Label>Número de muestras</Label>
-            <Input name="numeroMuestras" type="number" min="1" placeholder="1" />
+            <Input name="numeroMuestras" type="text" placeholder="ej. 3 o 2 x 500 mL" />
           </div>
           <div className="space-y-2">
             <Label>Devolución de muestra sobrante</Label>
@@ -194,7 +195,11 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
           </div>
           <div className="space-y-2">
             <Label>Condiciones ambientales</Label>
-            <Input name="condicionesAmbientales" placeholder="p. ej. Temperatura ambiente" />
+            <select name="condicionesAmbientales" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+              <option value="">Seleccionar...</option>
+              <option value="Temperatura ambiente">Temperatura ambiente</option>
+              <option value="Cadena de frío">Cadena de frío</option>
+            </select>
           </div>
           <div className="col-span-2 space-y-2">
             <Label>Procedencia / Características / Descripción</Label>
@@ -211,7 +216,21 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
       <div className="bg-white rounded-xl border shadow-sm p-5 space-y-4">
         <h2 className="font-semibold text-slate-700 text-sm">Descripción del envase</h2>
         <div className="grid grid-cols-2 gap-4">
-          <SelectField name="tipoEnvase" label="Tipo de envase" options={TIPO_ENVASE_OPTIONS} />
+          <div className="space-y-2">
+            <Label>Tipo de envase</Label>
+            <select
+              name="tipoEnvase"
+              value={tipoEnvase}
+              onChange={(e) => setTipoEnvase(e.target.value)}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+            >
+              <option value="">Seleccionar...</option>
+              {TIPO_ENVASE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+            {tipoEnvase === 'Otro' && (
+              <Input name="tipoEnvaseOtro" placeholder="Especificar tipo de envase" className="mt-2" />
+            )}
+          </div>
           <SelectField name="materialEnvase" label="Material" options={MATERIAL_OPTIONS} />
           <SelectField name="etiquetaEnvase" label="Etiqueta" options={ETIQUETA_OPTIONS} />
           <SelectField name="seguridadEnvase" label="Seguridad" options={SEGURIDAD_OPTIONS} />

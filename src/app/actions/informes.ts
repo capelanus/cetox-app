@@ -110,7 +110,7 @@ export async function firmarGerenciaTecnica(informeId: string) {
   const finalBytes = await pdfDoc.save()
   const finalBlob = await put(
     `informes-finales/${informeId}/informe-firmado-qr.pdf`,
-    finalBytes,
+    Buffer.from(finalBytes),
     { access: 'public' }
   )
 

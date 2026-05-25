@@ -1,4 +1,4 @@
-import { requireNotAnalista } from '@/lib/roles'
+import { requireNotAnalista, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ export default async function CotizacionesPage() {
     orderBy: [{ fechaEmision: 'desc' }],
   })
   const ensayos = await prisma.ensayo.findMany({ where: { activo: true }, orderBy: { nombre: 'asc' } })
-  const canCreate = session?.user.rol === 'ADMINISTRACION' || session?.user.rol === 'DIRECTOR_CALIDAD'
+  const canCreate = hasRol(session?.user.rol ?? '', 'ADMINISTRACION', 'DIRECTOR_CALIDAD')
 
   return (
     <div>

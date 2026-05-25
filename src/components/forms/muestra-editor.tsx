@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -135,17 +135,15 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
     return [{ key: newKey(), nombre: '', items: [], areaFilter: '', search: '', dropdownOpen: false }]
   })
 
-  function notify(next: MuestraState[]) {
-    const allItems = next.flatMap((m) => m.items)
-    onChange?.(allItems.reduce((s, it) => s + it.costo, 0), allItems.length)
-  }
+  const stableOnChange = useCallback(onChange ?? (() => {}), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const allItems = muestras.flatMap((m) => m.items)
+    stableOnChange(allItems.reduce((s, it) => s + it.costo, 0), allItems.length)
+  }, [muestras, stableOnChange])
 
   function update(key: string, patch: Partial<MuestraState>) {
-    setMuestras((prev) => {
-      const next = prev.map((m) => (m.key === key ? { ...m, ...patch } : m))
-      notify(next)
-      return next
-    })
+    setMuestras((prev) => prev.map((m) => (m.key === key ? { ...m, ...patch } : m)))
   }
 
   function addMuestra() {
@@ -153,11 +151,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
   }
 
   function removeMuestra(key: string) {
-    setMuestras((prev) => {
-      const next = prev.filter((m) => m.key !== key)
-      notify(next)
-      return next
-    })
+    setMuestras((prev) => prev.filter((m) => m.key !== key))
   }
 
   function addEnsayo(muestraKey: string, ensayoId: string) {

@@ -14,6 +14,12 @@ const ESTADO_LABELS: Record<string, string> = {
   VENCIDA: 'Vencida',
 }
 
+const ESTADO_DEPTO: Record<string, string> = {
+  BORRADOR: 'Administración',
+  EN_REVISION: 'Director de Calidad',
+  ACEPTADA: 'Administración',
+}
+
 interface Ensayo {
   id: string
   nombre: string
@@ -147,6 +153,9 @@ export function CotizacionesTable({ cotizaciones, ensayos }: Props) {
                   >
                     {ESTADO_LABELS[c.estado] ?? c.estado}
                   </Badge>
+                  {ESTADO_DEPTO[c.estado] && (
+                    <p className="text-xs text-slate-400 mt-0.5">{ESTADO_DEPTO[c.estado]}</p>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <Link href={`/cotizaciones/${c.id}`} className="text-blue-600 hover:underline text-sm">

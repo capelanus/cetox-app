@@ -7,6 +7,7 @@ import { formatFecha, formatNumInforme } from '@/lib/format'
 
 const ESTADO_LABELS: Record<string, string> = {
   BORRADOR: 'Borrador',
+  EN_ELABORACION: 'En elaboración',
   EN_REVISION_CALIDAD: 'En revisión',
   EN_FIRMA_GERENCIA: 'En firma',
   FIRMADO: 'Firmado',
@@ -125,7 +126,8 @@ export function InformesTable({ informes }: Props) {
                     className={
                       inf.estado === 'FIRMADO' ? 'bg-green-100 text-green-700' :
                       inf.estado === 'EN_REVISION_CALIDAD' ? 'bg-amber-100 text-amber-700' :
-                      inf.estado === 'EN_FIRMA_GERENCIA' ? 'bg-blue-100 text-blue-700' : ''
+                      inf.estado === 'EN_FIRMA_GERENCIA' ? 'bg-blue-100 text-blue-700' :
+                      inf.estado === 'EN_ELABORACION' ? 'bg-orange-100 text-orange-700' : ''
                     }
                   >
                     {ESTADO_LABELS[inf.estado] ?? inf.estado}

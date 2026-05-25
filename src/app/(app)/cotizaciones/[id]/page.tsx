@@ -1,10 +1,10 @@
-import { requireNotAnalista } from '@/lib/roles'
+import { requireNotAnalista, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Copy, Pencil, GitBranch } from 'lucide-react'
+import { ArrowLeft, Copy, Pencil, GitBranch, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
 import { cambiarEstadoCotizacion, duplicarCotizacion, modificarCotizacionAceptada } from '@/app/actions/cotizaciones'
 import { redirect } from 'next/navigation'
@@ -45,7 +45,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
   if (!cot) notFound()
 
   const rol = session?.user.rol ?? ''
-  const canEdit = rol === 'ADMINISTRACION' || rol === 'DIRECTOR_CALIDAD'
+  const canEdit = hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD')
 
   async function enviar() {
     'use server'
@@ -106,7 +106,58 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      <div className="bg-white rounded-xl border shadow-sm p-6 space-y-6">
+      {/* Flujo de aprobación */}
+      {cot.estado !== 'RECHAZADA' && cot.estado !== 'VENCIDA' ? (
+        <div className="bg-white rounded-xl border shadow-sm p-5">
+          <h2 className="font-semibold text-slate-700 text-sm mb-4">Flujo de aprobación</h2>
+          {(() => {
+            const pasos = [
+              { label: 'Borrador', depto: 'Administración', dot: 'bg-slate-500', color: 'text-slate-600', done: true },
+              { label: 'Revisión', depto: 'Director de Calidad', dot: 'bg-amber-500', color: 'text-amber-700', done: ['EN_REVISION', 'ACEPTADA'].includes(cot.estado), activo: cot.estado === 'EN_REVISION' },
+              { label: 'Aceptada', depto: 'Administración', dot: 'bg-green-500', color: 'text-green-700', done: cot.estado === 'ACEPTADA', activo: cot.estado === 'ACEPTADA' },
+            ]
+            return (
+              <div className="flex items-start">
+                {pasos.map((paso, i) => (
+                  <div key={i} className="flex-1 flex items-start">
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="flex items-center w-full">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${paso.activo ? paso.dot : paso.done ? 'bg-slate-400' : 'bg-slate-100'}`}>
+                          {paso.done
+                            ? <CheckCircle2 className="w-4 h-4 text-white" />
+                            : paso.activo
+                            ? <Clock className="w-3.5 h-3.5 text-white" />
+                            : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                        </div>
+                        {i < pasos.length - 1 && (
+                          <div className={`flex-1 h-0.5 mx-1 ${paso.done ? 'bg-slate-300' : 'bg-slate-200'}`} />
+                        )}
+                      </div>
+                      <div className="mt-2 pr-2 w-full">
+                        <p className={`text-xs font-semibold ${paso.activo ? paso.color : paso.done ? 'text-slate-500' : 'text-slate-300'}`}>{paso.label}</p>
+                        <p className={`text-xs mt-0.5 ${paso.activo ? paso.color : paso.done ? 'text-slate-400' : 'text-slate-300'}`}>{paso.depto}</p>
+                        {paso.activo && !paso.done && <p className="text-xs mt-0.5 font-medium" style={{ color: 'inherit' }}>Pendiente</p>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+        </div>
+      ) : (
+        <div className={`rounded-xl border p-4 flex items-center gap-3 ${cot.estado === 'RECHAZADA' ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+          <XCircle className={`h-5 w-5 shrink-0 ${cot.estado === 'RECHAZADA' ? 'text-red-500' : 'text-slate-400'}`} />
+          <div>
+            <p className={`text-sm font-semibold ${cot.estado === 'RECHAZADA' ? 'text-red-700' : 'text-slate-500'}`}>
+              {cot.estado === 'RECHAZADA' ? 'Cotización rechazada' : 'Cotización vencida'}
+            </p>
+            <p className="text-xs text-slate-400">Director de Calidad</p>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border shadow-sm p-6 space-y-6 mt-4">
         {/* Info principal */}
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
@@ -266,12 +317,12 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
 
         {/* Actions */}
         <div className="border-t pt-4 flex gap-3 flex-wrap">
-          {cot.estado === 'BORRADOR' && (rol === 'ADMINISTRACION' || rol === 'DIRECTOR_CALIDAD') && (
+          {cot.estado === 'BORRADOR' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD') && (
             <form action={enviar}>
               <Button type="submit" variant="outline">Enviar a revisión</Button>
             </form>
           )}
-          {cot.estado === 'EN_REVISION' && rol === 'DIRECTOR_CALIDAD' && (
+          {cot.estado === 'EN_REVISION' && hasRol(rol, 'DIRECTOR_CALIDAD') && (
             <>
               <form action={aceptar}>
                 <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">Aceptar</Button>
@@ -281,7 +332,15 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
               </form>
             </>
           )}
-          {cot.estado === 'ACEPTADA' && rol === 'ADMINISTRACION' && cot.sets.length === 0 && (
+          {cot.estado === 'ACEPTADA' && (
+            <a href={`/api/cotizaciones/${id}/generar-pdf`} download>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Descargar cotización PDF
+              </Button>
+            </a>
+          )}
+          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.sets.length === 0 && (
             <Link href={`/set/nuevo?cotizacionId=${cot.id}`}>
               <Button style={{ backgroundColor: '#1F4E79' }}>Generar SET</Button>
             </Link>

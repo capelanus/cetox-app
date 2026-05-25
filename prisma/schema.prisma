@@ -163,9 +163,11 @@ model ODA {
   set                    SET       @relation(fields: [setId], references: [id])
   area                   String
   fechaRecepcion         DateTime?
+  fechaInicioEjecucion   DateTime?
   fechaEntregaCompromiso DateTime
   estado                 String    @default("EMITIDA")
   revisado               Boolean   @default(false)
+  fechaRevisado          DateTime?
   edadPaciente           String?
   items                  ODAItem[]
   informe                Informe?
@@ -196,13 +198,16 @@ model Informe {
   resultadoTexto    String?
   resultadoImagenes String  @default("[]")
   resultadoArchivos String  @default("[]")
-  archivoDocx       String?
-  archivoPdf        String?
-  estado         String    @default("BORRADOR")
-  firmaCalidad   DateTime?
-  firmaGerencia  DateTime?
-  certificadoQR  Certificado?
-  createdAt      DateTime  @default(now())
+  archivoDocx              String?
+  archivoPdf               String?
+  archivoFirmadoGerencia   String?
+  estado                   String    @default("BORRADOR")
+  fechaEnvioResultados     DateTime?
+  observacionesCalidad     String?
+  firmaCalidad          DateTime?
+  firmaGerencia         DateTime?
+  certificadoQR         Certificado?
+  createdAt             DateTime  @default(now())
 
   @@unique([numero, anio, prefijo])
 }

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, Clock } from 'lucide-react'
 import { formatFecha, formatNumODA, formatNumInforme } from '@/lib/format'
 import { recibirODA, iniciarEjecucionODA } from '@/app/actions/oda'
 import { ResultadoForm } from '@/components/forms/resultado-form'
@@ -34,9 +34,9 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
   if (!oda) notFound()
 
   const rol = session?.user.rol ?? ''
-  const esAnalista = rol === 'ANALISTA'
+  const esAnalista = rol === 'ANALISTA' || rol === 'SUPER_ADMIN'
   const miArea = session?.user.area
-  const puedoCargar = esAnalista && miArea === oda.area && oda.estado === 'EN_EJECUCION'
+  const puedoCargar = esAnalista && (miArea === oda.area || rol === 'SUPER_ADMIN') && oda.estado === 'EN_EJECUCION'
   const set = oda.set
 
   const recibirAction = recibirODA.bind(null, id)
@@ -68,6 +68,62 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       <div className="space-y-5">
+        {/* Flujo de aprobación ODA */}
+        {(() => {
+          const estados = ['EMITIDA', 'RECIBIDA', 'EN_EJECUCION', 'CON_RESULTADO', 'INFORME_EMITIDO']
+          const idxActual = estados.indexOf(oda.estado)
+          const todosPasos = [
+            { label: 'Emitida', depto: 'Administración', dot: 'bg-slate-500' },
+            { label: 'Recibida', depto: 'Analista', dot: 'bg-purple-500', color: 'text-purple-700', fecha: oda.fechaRecepcion ?? null },
+            { label: 'En ejecución', depto: 'Analista', dot: 'bg-blue-500', color: 'text-blue-700' },
+            { label: 'Informe enviado', depto: 'Analista', dot: 'bg-amber-500', color: 'text-amber-700' },
+            { label: 'Informe emitido', depto: 'Gerente Técnico', dot: 'bg-green-500', color: 'text-green-700' },
+          ]
+          const pasos = esAnalista ? todosPasos.slice(0, 4) : todosPasos
+          return (
+            <div className="bg-white rounded-xl border shadow-sm p-5">
+              <h2 className="font-semibold text-slate-700 text-sm mb-4">Flujo de ejecución</h2>
+              <div className="flex items-start">
+                {pasos.map((paso, i) => {
+                  const done = i < idxActual
+                  const activo = i === idxActual
+                  return (
+                    <div key={i} className="flex-1 flex items-start">
+                      <div className="flex flex-col items-center flex-1">
+                        <div className="flex items-center w-full">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                            activo ? paso.dot : done ? 'bg-slate-400' : 'bg-slate-100'
+                          }`}>
+                            {done
+                              ? <CheckCircle2 className="w-4 h-4 text-white" />
+                              : activo
+                              ? <Clock className="w-3.5 h-3.5 text-white" />
+                              : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                          </div>
+                          {i < pasos.length - 1 && (
+                            <div className={`flex-1 h-0.5 mx-1 ${done ? 'bg-slate-300' : 'bg-slate-200'}`} />
+                          )}
+                        </div>
+                        <div className="mt-2 pr-1 w-full">
+                          <p className={`text-xs font-semibold ${activo ? (paso.color ?? 'text-slate-600') : done ? 'text-slate-500' : 'text-slate-300'}`}>
+                            {paso.label}
+                          </p>
+                          <p className={`text-xs mt-0.5 ${activo ? (paso.color ?? 'text-slate-500') : done ? 'text-slate-400' : 'text-slate-300'}`}>
+                            {paso.depto}
+                          </p>
+                          {paso.fecha && done && (
+                            <p className="text-xs text-slate-400 mt-0.5">{formatFecha(paso.fecha)}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Información general */}
         <div className="bg-white rounded-xl border shadow-sm p-5">
           <h2 className="font-semibold text-slate-700 mb-4 text-sm">Información</h2>

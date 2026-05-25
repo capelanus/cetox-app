@@ -34,7 +34,7 @@ const allNavItems = [
   { href: '/cotizaciones', label: 'Cotizaciones', icon: FileText, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/set', label: 'SET', icon: ClipboardList, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/oda', label: 'ODA', icon: TestTube, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
-  { href: '/informes', label: 'Informes', icon: FileCheck, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/informes', label: 'Informes', icon: FileCheck, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
   { href: '/cargos', label: 'Cargos de Entrega', icon: Package, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/ingresos', label: 'Ingresos', icon: TrendingUp, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/resumen', label: 'Resumen', icon: TableProperties, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
@@ -42,7 +42,7 @@ const allNavItems = [
 
 export function Sidebar({ userName, userEmail, userRol, userArea }: SidebarProps) {
   const pathname = usePathname()
-  const navItems = allNavItems.filter((item) => item.roles.includes(userRol))
+  const navItems = userRol === 'SUPER_ADMIN' ? allNavItems : allNavItems.filter((item) => item.roles.includes(userRol))
 
   return (
     <aside

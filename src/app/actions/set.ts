@@ -70,14 +70,23 @@ export async function generarODAs(setId: string) {
   const set = await prisma.sET.findUniqueOrThrow({
     where: { id: setId },
     include: {
-      cotizacion: { include: { items: { include: { ensayo: true } } } },
+      cotizacion: {
+        include: {
+          items: { include: { ensayo: true } },
+          muestras: { include: { items: { include: { ensayo: true } } } },
+        },
+      },
     },
   })
 
   const anio = new Date().getFullYear()
+  const cot = set.cotizacion
+  const sourceItems = cot.muestras.length > 0
+    ? cot.muestras.flatMap((m) => m.items)
+    : cot.items
 
-  // One ODA per cotizacion item (ensayo)
-  for (const item of set.cotizacion.items) {
+  // One ODA per ensayo item
+  for (const item of sourceItems) {
     const numero = await siguienteCorrelativo('oda', anio)
     const fechaEntregaCompromiso = addDays(set.fechaIngreso, item.tiempoEntregaDias)
 
@@ -109,7 +118,11 @@ export async function generarODAs(setId: string) {
 export async function toggleRevisadoODA(odaId: string, setId: string) {
   await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ANALISTA'])
   const oda = await prisma.oDA.findUniqueOrThrow({ where: { id: odaId }, select: { revisado: true } })
-  await prisma.oDA.update({ where: { id: odaId }, data: { revisado: !oda.revisado } })
+  const nuevoRevisado = !oda.revisado
+  await prisma.oDA.update({
+    where: { id: odaId },
+    data: { revisado: nuevoRevisado, fechaRevisado: nuevoRevisado ? new Date() : null },
+  })
   revalidatePath(`/set/${setId}`)
 }
 

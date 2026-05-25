@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Upload, X, FileText, FileSpreadsheet } from 'lucide-react'
+import { Upload, X, FileText, FileSpreadsheet, FileType } from 'lucide-react'
 import { cargarResultado } from '@/app/actions/oda'
 
 interface PendingFile {
@@ -18,16 +18,20 @@ interface Props {
   initialTexto?: string
   initialImagenes?: string[]
   initialArchivos?: string[]
+  buttonLabel?: string
 }
 
 function FileIcon({ type }: { type: string }) {
   if (type.includes('spreadsheet') || type.includes('excel') || type.includes('xlsx')) {
     return <FileSpreadsheet className="h-8 w-8 text-green-600" />
   }
+  if (type === 'application/pdf') {
+    return <FileType className="h-8 w-8 text-red-600" />
+  }
   return <FileText className="h-8 w-8 text-blue-600" />
 }
 
-export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], initialArchivos = [] }: Props) {
+export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], initialArchivos = [], buttonLabel = 'Guardar resultado y crear informe' }: Props) {
   const [texto, setTexto] = useState(initialTexto)
   const [pending, setPending] = useState<PendingFile[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -49,7 +53,7 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], 
       const isImage = ALLOWED_IMAGE.includes(file.type)
       const isDoc = ALLOWED_DOCS.includes(file.type)
       if (!isImage && !isDoc) return
-      const preview = (isImage || file.type === 'application/pdf') ? URL.createObjectURL(file) : null
+      const preview = isImage ? URL.createObjectURL(file) : null
       setPending((p) => [...p, { file, preview, isImage }])
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,14 +229,6 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], 
                     alt={`Nueva ${i + 1}`}
                     className="h-24 w-24 object-cover rounded-lg border border-slate-200"
                   />
-                ) : pf.file.type === 'application/pdf' && pf.preview ? (
-                  <div className="h-24 w-24 rounded-lg border border-slate-200 overflow-hidden bg-white">
-                    <iframe
-                      src={`${pf.preview}#toolbar=0&navpanes=0&scrollbar=0&page=1&view=FitH`}
-                      className="w-full h-full pointer-events-none"
-                      title={pf.file.name}
-                    />
-                  </div>
                 ) : (
                   <div className="h-24 w-24 flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-center">
                     <FileIcon type={pf.file.type} />
@@ -253,7 +249,7 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], 
       )}
 
       <Button type="submit" disabled={submitting} style={{ backgroundColor: '#1F4E79' }}>
-        {submitting ? 'Guardando...' : 'Guardar resultado y crear informe'}
+        {submitting ? 'Guardando...' : buttonLabel}
       </Button>
     </form>
   )

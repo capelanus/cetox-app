@@ -1,0 +1,1 @@
+ALTER TABLE "ODA" ADD COLUMN "fechaRevisado" TIMESTAMP(3);

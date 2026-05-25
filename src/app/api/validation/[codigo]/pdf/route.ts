@@ -1,0 +1,136 @@
+import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import QRCode from 'qrcode'
+import { formatFecha, formatNumInforme } from '@/lib/format'
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ codigo: string }> }
+) {
+  const { codigo } = await params
+  const clave = req.nextUrl.searchParams.get('clave')
+
+  if (!clave) {
+    return NextResponse.json({ error: 'Clave requerida' }, { status: 400 })
+  }
+
+  const cert = await prisma.certificado.findUnique({
+    where: { codigo },
+    include: {
+      informe: {
+        include: {
+          analista: true,
+          oda: {
+            include: {
+              items: { include: { ensayo: true } },
+              set: { include: { cliente: true } },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!cert || cert.clave !== clave) {
+    return NextResponse.json({ error: 'Certificado no válido' }, { status: 403 })
+  }
+
+  const informe = cert.informe
+  const set = informe.oda.set
+  const cliente = set.cliente
+  const ensayosNombres = informe.oda.items.map((i) => i.ensayo.nombre).join(', ')
+
+  const qrBuffer = await QRCode.toBuffer(cert.qrUrl, { width: 200, margin: 2 })
+
+  const pdfDoc = await PDFDocument.create()
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+  const page = pdfDoc.addPage([595, 842])
+  const { width, height } = page.getSize()
+
+  const blue = rgb(0.122, 0.306, 0.475)
+  const black = rgb(0, 0, 0)
+  const gray = rgb(0.4, 0.4, 0.4)
+
+  page.drawRectangle({ x: 0, y: height - 80, width, height: 80, color: blue })
+  page.drawText('CETOX LAB', { x: 40, y: height - 45, size: 24, font: fontBold, color: rgb(1, 1, 1) })
+  page.drawText('Centro Toxicológico S.A.C. — LE-044', {
+    x: 40, y: height - 62, size: 10, font, color: rgb(0.8, 0.9, 1),
+  })
+
+  page.drawText('CERTIFICADO DE ANÁLISIS', {
+    x: 40, y: height - 120, size: 18, font: fontBold, color: blue,
+  })
+  page.drawText(formatNumInforme(informe.prefijo, informe.numero, informe.anio), {
+    x: 40, y: height - 145, size: 13, font: fontBold, color: black,
+  })
+
+  let y = height - 190
+  const fields: [string, string][] = [
+    ['Cliente', cliente.razonSocial],
+    ['RUC', cliente.ruc],
+    ['Muestra', set.nombreComercial ?? '—'],
+    ['Lote', set.numeroLote ?? '—'],
+    ['Ensayos', ensayosNombres],
+    ['Analista', informe.analista.nombre],
+    ['Revisión calidad', informe.firmaCalidad ? formatFecha(informe.firmaCalidad) : '—'],
+    ['Firma gerencia', informe.firmaGerencia ? formatFecha(informe.firmaGerencia) : '—'],
+  ]
+
+  for (const [label, value] of fields) {
+    page.drawText(`${label}:`, { x: 40, y, size: 10, font: fontBold, color: gray })
+    page.drawText(value, { x: 200, y, size: 10, font, color: black })
+    y -= 22
+  }
+
+  y -= 10
+  page.drawText('Resultado:', { x: 40, y, size: 10, font: fontBold, color: gray })
+  y -= 18
+  const lines = (informe.resultadoTexto ?? 'Véase el informe completo').split('\n').slice(0, 5)
+  for (const line of lines) {
+    page.drawText(line.substring(0, 90), { x: 40, y, size: 9, font, color: black })
+    y -= 15
+  }
+
+  const qrImage = await pdfDoc.embedPng(qrBuffer)
+  const qrSize = 140
+  page.drawImage(qrImage, {
+    x: width - qrSize - 40,
+    y: height - 350,
+    width: qrSize,
+    height: qrSize,
+  })
+  page.drawText('Escanee para verificar', {
+    x: width - qrSize - 40,
+    y: height - 365,
+    size: 8,
+    font,
+    color: gray,
+  })
+
+  page.drawRectangle({
+    x: 40, y: 80, width: width - 80, height: 60,
+    borderColor: blue, borderWidth: 1,
+  })
+  page.drawText('Este documento ha sido emitido por CETOX LAB (LE-044) y puede ser', {
+    x: 50, y: 120, size: 8, font, color: gray,
+  })
+  page.drawText('verificado en: ' + cert.qrUrl, {
+    x: 50, y: 108, size: 8, font, color: gray,
+  })
+  page.drawText(`Código: ${cert.codigo}  |  Emitido: ${formatFecha(cert.fechaEmision)}`, {
+    x: 50, y: 92, size: 8, font: fontBold, color: blue,
+  })
+
+  const pdfBytes = await pdfDoc.save()
+  const filename = `${informe.prefijo}-${informe.numero}-${informe.anio}-cert.pdf`
+
+  return new NextResponse(pdfBytes as unknown as BodyInit, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    },
+  })
+}

@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label'
 import { PAISES } from '@/lib/paises'
 
 const FORMA_CONTACTO_OPTIONS = [
-  { value: 'EMAIL',     label: 'Email'      },
-  { value: 'WHATSAPP',  label: 'WhatsApp'   },
-  { value: 'TELEFONICA',label: 'Telefónica' },
-  { value: 'PERSONAL',  label: 'Personal'   },
-  { value: 'OTROS',     label: 'Otros'      },
+  { value: 'EMAIL',      label: 'Email'      },
+  { value: 'WHATSAPP',   label: 'WhatsApp'   },
+  { value: 'TELEFONICA', label: 'Telefónica' },
+  { value: 'PERSONAL',   label: 'Personal'   },
+  { value: 'OTROS',      label: 'Otros'      },
 ]
 
 interface ContactoFieldsProps {
@@ -27,6 +27,12 @@ interface ContactoFieldsProps {
 }
 
 export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
+  const [nombre, setNombre] = useState(defaults.contactoNombre ?? '')
+  const [email, setEmail] = useState(defaults.contactoEmail ?? '')
+  const [ruc, setRuc] = useState(defaults.contactoRuc ?? '')
+  const [formaContacto, setFormaContacto] = useState(defaults.formaContacto ?? '')
+  const [fecha, setFecha] = useState(defaults.fechaContacto ?? new Date().toISOString().split('T')[0])
+  const [hora, setHora] = useState(defaults.horaContacto ?? '')
   const [pais, setPais] = useState(defaults.paisOrigen ?? 'PE')
   const [prefijo, setPrefijo] = useState('')
   const [telefono, setTelefono] = useState(defaults.contactoTelefono ?? '')
@@ -35,10 +41,8 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
     const found = PAISES.find((p) => p.codigo === pais)
     const nuevoPrefijo = found?.prefijo ?? '+'
     setPrefijo(nuevoPrefijo)
-    // Si el teléfono actual empieza con un prefijo anterior, lo reemplaza
     setTelefono((prev) => {
       if (!prev || prev === nuevoPrefijo) return nuevoPrefijo + ' '
-      // Si ya tenía un prefijo diferente, reemplázalo
       const sinPrefijo = prev.replace(/^\+[\d-]+ ?/, '')
       return nuevoPrefijo + ' ' + sinPrefijo
     })
@@ -51,7 +55,8 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Label>Nombre del contacto</Label>
         <Input
           name="contactoNombre"
-          defaultValue={defaults.contactoNombre ?? ''}
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
           placeholder="Nombre completo"
         />
       </div>
@@ -62,7 +67,8 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Input
           name="contactoEmail"
           type="email"
-          defaultValue={defaults.contactoEmail ?? ''}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="correo@empresa.com"
         />
       </div>
@@ -87,7 +93,8 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Label>RUC / Documento <span className="text-slate-400 font-normal">(opcional)</span></Label>
         <Input
           name="contactoRuc"
-          defaultValue={defaults.contactoRuc ?? ''}
+          value={ruc}
+          onChange={(e) => setRuc(e.target.value)}
           placeholder="20330791501"
         />
       </div>
@@ -114,7 +121,8 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Label>Forma de contacto</Label>
         <select
           name="formaContacto"
-          defaultValue={defaults.formaContacto ?? ''}
+          value={formaContacto}
+          onChange={(e) => setFormaContacto(e.target.value)}
           className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
         >
           <option value="">Seleccionar...</option>
@@ -130,7 +138,8 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Input
           name="fechaContacto"
           type="date"
-          defaultValue={defaults.fechaContacto ?? new Date().toISOString().split('T')[0]}
+          value={fecha}
+          onChange={(e) => setFecha(e.target.value)}
         />
       </div>
 
@@ -140,7 +149,8 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Input
           name="horaContacto"
           type="time"
-          defaultValue={defaults.horaContacto ?? ''}
+          value={hora}
+          onChange={(e) => setHora(e.target.value)}
         />
       </div>
     </div>

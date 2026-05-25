@@ -1,4 +1,4 @@
-import { requireNotAnalista } from '@/lib/roles'
+import { requireNotAnalista, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
@@ -7,14 +7,18 @@ import { formatFecha, formatNumSET } from '@/lib/format'
 
 export default async function CargosPage() {
   const session = await requireNotAnalista()
-  // Show all SETs that are FINALIZADA or ENTREGADA (eligible for cargo)
   const sets = await prisma.sET.findMany({
-    where: { estado: { in: ['FINALIZADA', 'ENTREGADA'] } },
+    where: {
+      OR: [
+        { estado: { in: ['INFORME_EMITIDO', 'FINALIZADA', 'ENTREGADA'] } },
+        { odas: { some: { informe: { is: { estado: 'FIRMADO' } } } } },
+      ],
+    },
     include: { cliente: true, cargoEntrega: true },
     orderBy: [{ anio: 'desc' }, { numero: 'desc' }],
   })
 
-  const canGenerate = session.user.rol === 'ADMINISTRACION'
+  const canGenerate = hasRol(session.user.rol, 'ADMINISTRACION')
 
   return (
     <div>
@@ -44,16 +48,16 @@ export default async function CargosPage() {
                 <td className="px-4 py-3">{s.cargoEntrega?.recibidoPor ?? '—'}</td>
                 <td className="px-4 py-3">{s.cargoEntrega?.fechaRecepcion ? formatFecha(s.cargoEntrega.fechaRecepcion) : '—'}</td>
                 <td className="px-4 py-3">
-                  <Badge className={s.cargoEntrega ? 'bg-green-100 text-green-700' : ''} variant={s.cargoEntrega ? 'default' : 'secondary'}>
-                    {s.cargoEntrega ? 'Entregado' : 'Pendiente'}
-                  </Badge>
+                  {s.cargoEntrega?.fechaRecepcion ? (
+                    <Badge className="bg-green-100 text-green-700">Entregado</Badge>
+                  ) : (
+                    <Badge className="bg-blue-100 text-blue-700">Listo para entregar</Badge>
+                  )}
                 </td>
                 <td className="px-4 py-3">
-                  {canGenerate && (
-                    <Link href={`/cargos/${s.id}`} className="text-blue-600 hover:underline text-sm">
-                      {s.cargoEntrega ? 'Ver' : 'Generar'}
-                    </Link>
-                  )}
+                  <Link href={`/cargos/${s.id}`} className="text-blue-600 hover:underline text-sm">
+                    {canGenerate && !s.cargoEntrega?.recibidoPor ? 'Completar' : 'Ver'}
+                  </Link>
                 </td>
               </tr>
             ))}

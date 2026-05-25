@@ -24,7 +24,7 @@ export default async function ODAPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Órdenes de Análisis (ODA)</h1>
       </div>
-      <ODATable odas={odas} userArea={userArea ?? null} isAnalista={rol === 'ANALISTA'} />
+      <ODATable odas={odas} userArea={userArea ?? null} isAnalista={rol === 'ANALISTA' || rol === 'SUPER_ADMIN'} />
     </div>
   )
 }

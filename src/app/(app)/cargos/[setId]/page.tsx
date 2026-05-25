@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireRol, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -10,7 +10,8 @@ import { formatFecha, formatNumSET } from '@/lib/format'
 import { crearCargoEntrega } from '@/app/actions/cargos'
 
 export default async function CargoDetailPage({ params }: { params: Promise<{ setId: string }> }) {
-  await requireRol(['ADMINISTRACION'])
+  const session = await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO'])
+  const puedeEditar = hasRol(session.user.rol, 'ADMINISTRACION')
   const { setId } = await params
 
   const set = await prisma.sET.findUnique({
@@ -23,7 +24,7 @@ export default async function CargoDetailPage({ params }: { params: Promise<{ se
   })
   if (!set) notFound()
 
-  const action = crearCargoEntrega.bind(null, setId)
+  const action = puedeEditar ? crearCargoEntrega.bind(null, setId) : null
 
   return (
     <div className="max-w-2xl">
@@ -67,47 +68,66 @@ export default async function CargoDetailPage({ params }: { params: Promise<{ se
         </div>
       </div>
 
-      {/* Cargo form */}
+      {/* Cargo form — editable solo por Administración */}
       <div className="bg-white rounded-xl border shadow-sm p-6">
         <h2 className="font-semibold text-slate-700 mb-4">Datos del receptor</h2>
-        <form action={action} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="recibidoPor">Recibido por (nombre)</Label>
-              <Input
-                id="recibidoPor"
-                name="recibidoPor"
-                defaultValue={set.cargoEntrega?.recibidoPor ?? ''}
-                placeholder="Nombre completo"
-              />
+        {puedeEditar && action ? (
+          <form action={action} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="recibidoPor">Recibido por (nombre)</Label>
+                <Input
+                  id="recibidoPor"
+                  name="recibidoPor"
+                  defaultValue={set.cargoEntrega?.recibidoPor ?? ''}
+                  placeholder="Nombre completo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dniRecibe">DNI</Label>
+                <Input
+                  id="dniRecibe"
+                  name="dniRecibe"
+                  defaultValue={set.cargoEntrega?.dniRecibe ?? ''}
+                  placeholder="12345678"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fechaRecepcion">Fecha de recepción</Label>
+                <Input
+                  id="fechaRecepcion"
+                  name="fechaRecepcion"
+                  type="date"
+                  defaultValue={
+                    set.cargoEntrega?.fechaRecepcion
+                      ? new Date(set.cargoEntrega.fechaRecepcion).toISOString().split('T')[0]
+                      : new Date().toISOString().split('T')[0]
+                  }
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="dniRecibe">DNI</Label>
-              <Input
-                id="dniRecibe"
-                name="dniRecibe"
-                defaultValue={set.cargoEntrega?.dniRecibe ?? ''}
-                placeholder="12345678"
-              />
+            <Button type="submit" style={{ backgroundColor: '#1F4E79' }}>
+              {set.cargoEntrega?.recibidoPor ? 'Actualizar cargo' : 'Registrar entrega'}
+            </Button>
+          </form>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-slate-500">Recibido por</p>
+              <p className="font-medium">{set.cargoEntrega?.recibidoPor ?? '—'}</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="fechaRecepcion">Fecha de recepción</Label>
-              <Input
-                id="fechaRecepcion"
-                name="fechaRecepcion"
-                type="date"
-                defaultValue={
-                  set.cargoEntrega?.fechaRecepcion
-                    ? new Date(set.cargoEntrega.fechaRecepcion).toISOString().split('T')[0]
-                    : new Date().toISOString().split('T')[0]
-                }
-              />
+            <div>
+              <p className="text-slate-500">DNI</p>
+              <p className="font-medium">{set.cargoEntrega?.dniRecibe ?? '—'}</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Fecha de recepción</p>
+              <p className="font-medium">
+                {set.cargoEntrega?.fechaRecepcion ? formatFecha(set.cargoEntrega.fechaRecepcion) : '—'}
+              </p>
             </div>
           </div>
-          <Button type="submit" style={{ backgroundColor: '#1F4E79' }}>
-            {set.cargoEntrega ? 'Actualizar cargo' : 'Registrar entrega'}
-          </Button>
-        </form>
+        )}
       </div>
     </div>
   )

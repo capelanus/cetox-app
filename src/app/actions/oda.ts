@@ -130,6 +130,6 @@ export async function iniciarEjecucionODA(odaId: string) {
   if (session.user.area && oda.area !== session.user.area) {
     throw new Error('No tienes permiso para operar esta ODA')
   }
-  await prisma.oDA.update({ where: { id: odaId }, data: { estado: 'EN_EJECUCION' } })
+  await prisma.oDA.update({ where: { id: odaId }, data: { estado: 'EN_EJECUCION', fechaInicioEjecucion: new Date() } })
   revalidatePath(`/oda/${odaId}`)
 }

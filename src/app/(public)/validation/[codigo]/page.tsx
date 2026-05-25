@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ShieldCheck, XCircle } from 'lucide-react'
+import { ShieldCheck, XCircle, Download } from 'lucide-react'
 
 interface ValidationResult {
   valid: boolean
@@ -17,7 +17,6 @@ interface ValidationResult {
     cliente: string
     analista: string
     firmaGerencia: string
-    pdfUrl?: string
   }
 }
 
@@ -126,13 +125,16 @@ export default function ValidationPage({ params }: { params: Promise<{ codigo: s
                   <p>{result.informe.firmaGerencia}</p>
                 </div>
               </div>
-              {result.informe.pdfUrl && (
-                <a href={result.informe.pdfUrl} target="_blank">
-                  <Button className="w-full mt-2" variant="outline">
-                    Descargar PDF
-                  </Button>
-                </a>
-              )}
+              <a
+                href={`/api/validation/${codigo}/pdf?clave=${encodeURIComponent(clave)}`}
+                download
+                className="block mt-2"
+              >
+                <Button className="w-full" style={{ backgroundColor: '#1F4E79' }}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Descargar certificado PDF
+                </Button>
+              </a>
               <Button
                 variant="ghost"
                 className="w-full"

@@ -9,6 +9,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['@prisma/client', '@prisma/adapter-pg', 'pg'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '25mb',
+    },
+  },
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }]
   },

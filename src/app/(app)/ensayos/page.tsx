@@ -1,4 +1,4 @@
-import { requireNotAnalista } from '@/lib/roles'
+import { requireNotAnalista, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 
 export default async function EnsayosPage() {
   const session = await requireNotAnalista()
   const ensayos = await prisma.ensayo.findMany({ orderBy: { codigo: 'asc' } })
-  const canEdit = ['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'].includes(session?.user.rol ?? '')
+  const canEdit = hasRol(session?.user.rol ?? '', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION')
 
   return (
     <div>

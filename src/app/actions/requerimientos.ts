@@ -76,6 +76,36 @@ export async function enviarRequerimiento(id: string) {
   revalidatePath(`/operaciones/requerimientos/${id}`)
 }
 
+export async function eliminarRequerimiento(id: string) {
+  const session = await requireRol([...TODOS_LOS_ROLES])
+
+  // Verificar que el requerimiento pertenece al usuario (o es operaciones)
+  const req = await prisma.requerimiento.findUnique({
+    where: { id },
+    select: { creadoPorId: true, estado: true, ordenesCompra: { select: { id: true }, take: 1 } },
+  })
+  if (!req) throw new Error('Requerimiento no encontrado')
+
+  const esPropio = req.creadoPorId === session.user.id
+  if (!esPropio) throw new Error('No tienes permiso para eliminar esta solicitud')
+
+  // No permitir eliminar si ya hay OC emitida o está avanzado
+  const estadosNoEliminables = ['OC_EMITIDA', 'EN_TRANSITO', 'RECEPCIONADO', 'CERRADO']
+  if (estadosNoEliminables.includes(req.estado)) {
+    throw new Error('No se puede eliminar una solicitud en este estado')
+  }
+  if (req.ordenesCompra.length > 0) {
+    throw new Error('No se puede eliminar: ya tiene una orden de compra asociada')
+  }
+
+  await prisma.requerimientoItem.deleteMany({ where: { requerimientoId: id } })
+  await prisma.requerimiento.delete({ where: { id } })
+
+  revalidatePath('/solicitudes')
+  revalidatePath('/operaciones/requerimientos')
+  redirect('/solicitudes')
+}
+
 export async function actualizarRequerimiento(id: string, formData: FormData) {
   await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
   const areaSolicitante = formData.get('areaSolicitante') as string

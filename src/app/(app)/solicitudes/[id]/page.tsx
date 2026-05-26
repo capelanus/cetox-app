@@ -3,9 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle2, Circle, Clock } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, Clock, Trash2 } from 'lucide-react'
 import { formatNumRequerimiento, formatFecha } from '@/lib/format'
 import { AREA_SOLICITANTE_LABELS, ESTADO_REQUERIMIENTO_LABELS } from '@/lib/constants'
+import { eliminarRequerimiento } from '@/app/actions/requerimientos'
 
 const TODOS_LOS_ROLES = ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] as const
 
@@ -47,9 +48,12 @@ export default async function SolicitudDetallePage({ params }: { params: Promise
 
   const estadoActualIdx = ORDEN_ESTADO[req.estado] ?? 0
   const cancelado = req.estado === 'CANCELADO'
+  const puedeEliminar = ['ENVIADO', 'BORRADOR'].includes(req.estado) && req.ordenesCompra.length === 0
 
   const oc = req.ordenesCompra[0]
   const cotAprobada = req.cotizacionesProveedor[0]
+
+  const eliminar = eliminarRequerimiento.bind(null, id)
 
   return (
     <div className="p-6 max-w-3xl space-y-6">
@@ -71,6 +75,22 @@ export default async function SolicitudDetallePage({ params }: { params: Promise
           </div>
           <p className="text-gray-600 text-sm mt-1">{req.descripcion}</p>
         </div>
+
+        {/* Botón eliminar — solo si el proceso no ha avanzado */}
+        {puedeEliminar && (
+          <form action={eliminar}>
+            <button
+              type="submit"
+              onClick={e => {
+                if (!confirm('¿Eliminar esta solicitud? Esta acción no se puede deshacer.')) e.preventDefault()
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-red-600 border border-red-200 hover:bg-red-50 transition-colors flex-shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar
+            </button>
+          </form>
+        )}
       </div>
 
       {/* Tracker de progreso */}

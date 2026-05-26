@@ -108,9 +108,8 @@ export async function cargarResultado(odaId: string, formData: FormData) {
   redirect(`/informes/${informe.id}`)
 }
 
-export async function recibirODA(odaId: string, formData: FormData) {
+export async function recibirODA(odaId: string, _formData: FormData) {
   const session = await requireRol(['ANALISTA'])
-  const edadPaciente = (formData.get('edadPaciente') as string | null)?.trim() || null
 
   const oda = await prisma.oDA.findUniqueOrThrow({ where: { id: odaId }, select: { area: true } })
   if (session.user.area && oda.area !== session.user.area) {
@@ -119,7 +118,7 @@ export async function recibirODA(odaId: string, formData: FormData) {
 
   await prisma.oDA.update({
     where: { id: odaId },
-    data: { estado: 'RECIBIDA', fechaRecepcion: new Date(), edadPaciente },
+    data: { estado: 'RECIBIDA', fechaRecepcion: new Date() },
   })
   revalidatePath(`/oda/${odaId}`)
 }

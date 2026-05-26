@@ -1,0 +1,2 @@
+ALTER TABLE "Cotizacion" ADD COLUMN "modalidadPago" TEXT NOT NULL DEFAULT 'ANTICIPO_50_50';
+ALTER TABLE "Cliente" DROP COLUMN "modalidadPago";

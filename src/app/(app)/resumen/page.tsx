@@ -5,6 +5,7 @@ import { ResumenTable } from '@/components/resumen-table'
 export default async function ResumenPage() {
   await requireNotAnalista()
   const cotizaciones = await prisma.cotizacion.findMany({
+    where: { deletedAt: null },
     include: {
       cliente: true,
       creadoPor: true,

@@ -23,14 +23,13 @@ export async function GET(
       odas: {
         include: { items: { include: { ensayo: true } } },
         orderBy: { numero: 'asc' },
-        where: { revisado: true },
       },
     },
   })
   if (!set) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 
-  const moneda = set.cotizacion.moneda as 'USD' | 'PEN'
-  const odas = set.odas // already filtered to revisado: true
+  const moneda = (set.cotizacion?.moneda ?? 'USD') as 'USD' | 'PEN'
+  const odas = set.odas
 
   const pdfDoc = await PDFDocument.create()
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -72,9 +71,9 @@ export async function GET(
     ['Razón social', set.cliente.razonSocial],
     ['RUC', set.cliente.ruc],
     ...(set.cliente.direccion ? [['Dirección', set.cliente.direccion] as [string, string]] : []),
-    ...(set.cotizacion.contactoNombre ? [['Contacto', set.cotizacion.contactoNombre] as [string, string]] : []),
-    ...(set.cotizacion.contactoEmail ? [['Email', set.cotizacion.contactoEmail] as [string, string]] : []),
-    ...(set.cotizacion.contactoTelefono ? [['Teléfono', set.cotizacion.contactoTelefono] as [string, string]] : []),
+    ...(set.cotizacion?.contactoNombre ? [['Contacto', set.cotizacion.contactoNombre] as [string, string]] : []),
+    ...(set.cotizacion?.contactoEmail ? [['Email', set.cotizacion.contactoEmail] as [string, string]] : []),
+    ...(set.cotizacion?.contactoTelefono ? [['Teléfono', set.cotizacion.contactoTelefono] as [string, string]] : []),
   ]
   for (const [label, value] of clienteRows) {
     page.drawText(`${label}:`, { x: 40, y, size: 8.5, font: fontBold, color: gray })
@@ -135,7 +134,7 @@ export async function GET(
     ;[page, y] = ensurePage(y)
     page.drawText('Procedencia:', { x: 40, y, size: 8.5, font: fontBold, color: gray })
     y -= 12
-    for (const line of set.procedenciaDescripcion.split('\n').slice(0, 3)) {
+    for (const line of set.procedenciaDescripcion.split(/\r?\n/).slice(0, 3)) {
       page.drawText(line.substring(0, 90), { x: 40, y, size: 8, font, color: black })
       y -= 11
     }
@@ -147,11 +146,11 @@ export async function GET(
 
   // ── Sección: ensayos revisados con ODA ───────────────────────────────────
   ;[page, y] = ensurePage(y, 80)
-  page.drawText(`ENSAYOS REVISADOS (${odas.length})`, { x: 40, y, size: 8, font: fontBold, color: blue })
+  page.drawText(`ENSAYOS (${odas.length})`, { x: 40, y, size: 8, font: fontBold, color: blue })
   y -= 13
 
   if (odas.length === 0) {
-    page.drawText('No hay ensayos marcados como revisados.', { x: 40, y, size: 9, font, color: gray })
+    page.drawText('No hay ensayos asociados a este SET.', { x: 40, y, size: 9, font, color: gray })
     y -= 14
   } else {
     // Table header
@@ -176,7 +175,7 @@ export async function GET(
 
       page.drawText(String(oda.numero).padStart(5, '0'), { x: 44, y, size: 8, font: fontBold, color: black })
       page.drawText(ensayoNombre.substring(0, 48), { x: 95, y, size: 8, font, color: black })
-      page.drawText(AREA_LABELS[area] ?? area, { x: 310, y, size: 8, font, color: gray })
+      page.drawText(area, { x: 318, y, size: 8, font: fontBold, color: gray })
       page.drawText(fecha, { x: 375, y, size: 8, font, color: black })
       page.drawText(formatMoneda(costo, moneda), { x: width - 85, y, size: 8, font, color: black })
       y -= 14

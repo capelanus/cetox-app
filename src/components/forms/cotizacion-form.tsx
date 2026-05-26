@@ -41,7 +41,7 @@ export function NuevaCotizacionForm({ clientes, ensayos }: NuevaCotizacionFormPr
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="col-span-2 space-y-2">
           <Label>Cliente *</Label>
           <select
             name="clienteId"
@@ -64,6 +64,22 @@ export function NuevaCotizacionForm({ clientes, ensayos }: NuevaCotizacionFormPr
           >
             <option value="USD">USD (Dólares)</option>
             <option value="PEN">PEN (Soles)</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label>Modalidad de pago *</Label>
+          <select
+            name="modalidadPago"
+            defaultValue="ANTICIPO_50_50"
+            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+          >
+            <option value="ANTICIPO_50_50">Anticipo 50/50</option>
+            <option value="ANTICIPO_100">Anticipo 100%</option>
+            <option value="CREDITO_100">Crédito 100%</option>
+            <option value="CREDITO_50_50">Crédito 50/50</option>
+            <option value="CREDITO_MENSUAL">Crédito mensual</option>
+            <option value="CREDITO_QUINCENAL">Crédito quincenal</option>
+            <option value="AL_CULMINAR">Al culminar</option>
           </select>
         </div>
       </div>

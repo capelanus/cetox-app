@@ -174,45 +174,69 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], 
         />
       </div>
 
-      {/* Previously saved images */}
+      {/* Previously saved images — scrollable full-size preview */}
       {initialImagenes.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-500">Imágenes guardadas ({initialImagenes.length})</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Imágenes guardadas ({initialImagenes.length}) — desplázate para revisar todas
+          </p>
+          <div
+            className="overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 divide-y divide-slate-200"
+            style={{ maxHeight: '480px' }}
+          >
             {initialImagenes.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noreferrer">
-                <img
-                  src={url}
-                  alt={`Resultado ${i + 1}`}
-                  className="h-24 w-24 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition-opacity"
-                />
-              </a>
+              <div key={i} className="p-3">
+                <p className="text-xs text-slate-400 mb-1.5">Imagen {i + 1} de {initialImagenes.length}</p>
+                <a href={url} target="_blank" rel="noreferrer" title="Abrir en pestaña nueva">
+                  <img
+                    src={url}
+                    alt={`Resultado ${i + 1}`}
+                    className="w-full rounded-md object-contain border border-slate-200 hover:opacity-90 transition-opacity"
+                    style={{ maxHeight: '400px' }}
+                  />
+                </a>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Previously saved docs */}
+      {/* Previously saved docs — embedded PDF viewer + download link */}
       {initialArchivos.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-500">Documentos guardados ({initialArchivos.length})</p>
-          <div className="flex flex-wrap gap-2">
-            {initialArchivos.map((url, i) => {
-              const filename = url.split('/').pop() ?? `archivo-${i + 1}`
-              return (
-                <a
-                  key={i}
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 border rounded-lg px-3 py-2 text-sm hover:bg-slate-50 text-slate-700"
-                >
-                  <FileText className="h-4 w-4 text-blue-600 shrink-0" />
-                  {filename}
-                </a>
-              )
-            })}
-          </div>
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Documentos guardados ({initialArchivos.length})
+          </p>
+          {initialArchivos.map((url, i) => {
+            const filename = decodeURIComponent(url.split('/').pop() ?? `archivo-${i + 1}`)
+            const isPdf = url.toLowerCase().includes('.pdf') || filename.toLowerCase().endsWith('.pdf')
+            return (
+              <div key={i} className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-200">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                    <span className="text-sm text-slate-700 truncate">{filename}</span>
+                  </div>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 hover:underline shrink-0 ml-2"
+                  >
+                    Abrir ↗
+                  </a>
+                </div>
+                {isPdf && (
+                  <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`}
+                    className="w-full bg-white"
+                    style={{ height: '480px' }}
+                    title={filename}
+                  />
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 

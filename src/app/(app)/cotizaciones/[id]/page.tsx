@@ -4,9 +4,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Copy, Pencil, GitBranch, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
+import { ArrowLeft, Copy, Pencil, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
-import { cambiarEstadoCotizacion, duplicarCotizacion, modificarCotizacionAceptada } from '@/app/actions/cotizaciones'
+import { cambiarEstadoCotizacion, duplicarCotizacion } from '@/app/actions/cotizaciones'
+import { DeleteCotizacionButton } from '@/components/delete-cotizacion-button'
 import { redirect } from 'next/navigation'
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -84,7 +85,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
           {ESTADO_LABELS[cot.estado] ?? cot.estado}
         </Badge>
         {canEdit && (
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex gap-2 flex-wrap">
             <Link href={`/cotizaciones/${id}/editar`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-3 w-3 mr-1" />Editar
@@ -95,13 +96,11 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
                 <Copy className="h-3 w-3 mr-1" />Duplicar
               </Button>
             </form>
-            {cot.estado === 'ACEPTADA' && (
-              <form action={modificarCotizacionAceptada.bind(null, id)}>
-                <Button variant="outline" size="sm" type="submit">
-                  <GitBranch className="h-3 w-3 mr-1" />Modificar
-                </Button>
-              </form>
-            )}
+            <DeleteCotizacionButton
+              id={id}
+              hasSets={cot.sets.length > 0}
+              numCotizacion={formatNumCotizacion(cot.numero, cot.anio, cot.sufijo)}
+            />
           </div>
         )}
       </div>

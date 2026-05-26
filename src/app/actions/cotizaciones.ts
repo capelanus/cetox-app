@@ -78,12 +78,13 @@ export async function crearCotizacion(formData: FormData) {
       numero,
       anio,
       sufijo: '',
-      moneda: formData.get('moneda') as string,
-      clienteId: formData.get('clienteId') as string,
+      moneda:        formData.get('moneda') as string,
+      modalidadPago: (formData.get('modalidadPago') as string) || 'ANTICIPO_50_50',
+      clienteId:     formData.get('clienteId') as string,
       observaciones: (formData.get('observaciones') as string) || null,
       ...parseContacto(formData),
       vigenciaHasta: addDays(new Date(), 30),
-      creadoPorId: session.user.id,
+      creadoPorId:   session.user.id,
       subtotal,
       igv,
       total,
@@ -112,8 +113,9 @@ export async function editarCotizacion(id: string, formData: FormData) {
   await prisma.cotizacion.update({
     where: { id },
     data: {
-      moneda: formData.get('moneda') as string,
-      clienteId: formData.get('clienteId') as string,
+      moneda:        formData.get('moneda') as string,
+      modalidadPago: (formData.get('modalidadPago') as string) || 'ANTICIPO_50_50',
+      clienteId:     formData.get('clienteId') as string,
       observaciones: (formData.get('observaciones') as string) || null,
       ...parseContacto(formData),
       subtotal,
@@ -228,6 +230,36 @@ export async function duplicarCotizacion(id: string) {
   const nueva = await copiarCotizacion(original, { sufijo: siguienteSufijo }, session.user.id)
   revalidatePath('/cotizaciones')
   redirect(`/cotizaciones/${nueva.id}`)
+}
+
+export async function eliminarCotizacion(id: string) {
+  const session = await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+
+  const sets = await prisma.sET.count({ where: { cotizacionId: id } })
+  if (sets > 0) throw new Error('No se puede eliminar: la cotización tiene SETs asociados.')
+
+  await prisma.cotizacion.update({ where: { id }, data: { deletedAt: new Date(), deletedById: session.user.id } })
+
+  revalidatePath('/cotizaciones')
+  revalidatePath('/cotizaciones/papelera')
+  redirect('/cotizaciones')
+}
+
+export async function restaurarCotizacion(id: string) {
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+  await prisma.cotizacion.update({ where: { id }, data: { deletedAt: null, deletedById: null } })
+  revalidatePath('/cotizaciones')
+  revalidatePath('/cotizaciones/papelera')
+  redirect(`/cotizaciones/${id}`)
+}
+
+export async function eliminarDefinitivamente(id: string) {
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+  await prisma.cotizacionItem.deleteMany({ where: { cotizacionId: id } })
+  await prisma.cotizacionMuestra.deleteMany({ where: { cotizacionId: id } })
+  await prisma.cotizacion.delete({ where: { id } })
+  revalidatePath('/cotizaciones/papelera')
+  redirect('/cotizaciones/papelera')
 }
 
 export async function modificarCotizacionAceptada(id: string) {

@@ -113,19 +113,25 @@ export async function GET(
     color: gray,
   })
 
-  // Certification box
+  // Certification box — pie del documento con código, clave y URL de verificación
   page.drawRectangle({
-    x: 40, y: 80, width: width - 80, height: 60,
+    x: 40, y: 55, width: width - 80, height: 80,
     borderColor: blue, borderWidth: 1,
   })
-  page.drawText('Este documento ha sido emitido por CETOX LAB (LE-044) y puede ser', {
-    x: 50, y: 120, size: 8, font, color: gray,
+  page.drawText('Este documento ha sido emitido por CETOX LAB (LE-044) y puede ser verificado en:', {
+    x: 50, y: 118, size: 8, font, color: gray,
   })
-  page.drawText('verificado en: ' + cert.qrUrl, {
-    x: 50, y: 108, size: 8, font, color: gray,
+  page.drawText(cert.qrUrl, {
+    x: 50, y: 106, size: 8, font, color: gray,
   })
-  page.drawText(`Código: ${cert.codigo}  |  Emitido: ${formatFecha(cert.fechaEmision)}`, {
-    x: 50, y: 92, size: 8, font: fontBold, color: blue,
+  page.drawText(`Código: ${cert.codigo}`, {
+    x: 50, y: 90, size: 8, font: fontBold, color: blue,
+  })
+  page.drawText(`Clave de validación: ${cert.clave}`, {
+    x: 50, y: 78, size: 8, font: fontBold, color: blue,
+  })
+  page.drawText(`Emitido: ${formatFecha(cert.fechaEmision)}`, {
+    x: 50, y: 64, size: 8, font, color: gray,
   })
 
   const pdfBytes = await pdfDoc.save()

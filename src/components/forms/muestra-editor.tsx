@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Ensayo } from '@/generated/prisma/client'
-import { Trash2, Plus, ChevronDown } from 'lucide-react'
+import { Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface ItemState {
   ensayoId: string
@@ -179,6 +179,16 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
     })
   }
 
+  function moveItem(muestraKey: string, index: number, dir: -1 | 1) {
+    const muestra = muestras.find((m) => m.key === muestraKey)
+    if (!muestra) return
+    const items = [...muestra.items]
+    const target = index + dir
+    if (target < 0 || target >= items.length) return
+    ;[items[index], items[target]] = [items[target], items[index]]
+    update(muestraKey, { items })
+  }
+
   return (
     <div className="space-y-3">
       {muestras.map((muestra, mi) => {
@@ -254,6 +264,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50">
                     <tr>
+                      <th className="px-2 py-2 w-8"></th>
                       <th className="text-left px-3 py-2 font-medium text-slate-600">Ensayo</th>
                       <th className="text-left px-3 py-2 font-medium text-slate-600 w-32">Plazo (días)</th>
                       <th className="text-left px-3 py-2 font-medium text-slate-600 w-32">Costo ({moneda})</th>
@@ -261,8 +272,29 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {muestra.items.map((it) => (
-                      <tr key={it.ensayoId}>
+                    {muestra.items.map((it, ii) => (
+                      <tr key={it.ensayoId} className="group">
+                        {/* Botones de orden */}
+                        <td className="px-2 py-2">
+                          <div className="flex flex-col gap-0.5">
+                            <button
+                              type="button"
+                              disabled={ii === 0}
+                              onClick={() => moveItem(muestra.key, ii, -1)}
+                              className="rounded p-0.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 disabled:opacity-0 transition-all"
+                            >
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={ii === muestra.items.length - 1}
+                              onClick={() => moveItem(muestra.key, ii, 1)}
+                              className="rounded p-0.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 disabled:opacity-0 transition-all"
+                            >
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
                         <td className="px-3 py-2">{it.nombre}</td>
                         <td className="px-3 py-2">
                           <Input

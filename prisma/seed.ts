@@ -218,7 +218,6 @@ async function main() {
       ruc: '20330791501',
       direccion: 'Av. Néstor Gambetta 8583, Callao',
       contacto: 'Área de Aseguramiento de Calidad',
-      modalidadPago: 'ANTICIPO_50_50',
     },
   })
 
@@ -229,7 +228,6 @@ async function main() {
       razonSocial: 'MEPLAB SAC',
       ruc: '20123456789',
       direccion: 'Lima',
-      modalidadPago: 'CREDITO_MENSUAL',
     },
   })
 
@@ -240,7 +238,6 @@ async function main() {
       razonSocial: 'ACUAPET ARIHATZU',
       ruc: '10404743983',
       direccion: 'Jr. Ayacucho 550, Lima',
-      modalidadPago: 'ANTICIPO_100',
     },
   })
 

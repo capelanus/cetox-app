@@ -4,8 +4,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ArrowLeft, CheckCircle2, Circle, Clock } from 'lucide-react'
 import { formatFecha, formatNumODA, formatNumInforme } from '@/lib/format'
 import { recibirODA, iniciarEjecucionODA } from '@/app/actions/oda'
@@ -46,7 +44,8 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
     { label: 'Tipo de muestra', value: set.tipoMuestra },
     { label: 'Ingrediente activo', value: set.ingredienteActivo },
     { label: 'Formulación', value: set.formulacion },
-    { label: 'Edad del paciente', value: oda.edadPaciente },
+    // Edad solo aplica para muestras de paciente (área Química); Biología recibe productos
+    ...(oda.area === 'Q' ? [{ label: 'Edad del paciente', value: set.edadPaciente }] : []),
     { label: 'Condiciones ambientales', value: set.condicionesAmbientales },
     { label: 'N° de muestras', value: set.numeroMuestras?.toString() },
     { label: 'Peso / Volumen', value: set.pesoVolumen },
@@ -72,12 +71,14 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
         {(() => {
           const estados = ['EMITIDA', 'RECIBIDA', 'EN_EJECUCION', 'CON_RESULTADO', 'INFORME_EMITIDO']
           const idxActual = estados.indexOf(oda.estado)
+          const informeFirmado = ['FIRMADO', 'ENTREGADO'].includes(oda.informe?.estado ?? '')
           const todosPasos = [
             { label: 'Emitida', depto: 'Administración', dot: 'bg-slate-500' },
             { label: 'Recibida', depto: 'Analista', dot: 'bg-purple-500', color: 'text-purple-700', fecha: oda.fechaRecepcion ?? null },
             { label: 'En ejecución', depto: 'Analista', dot: 'bg-blue-500', color: 'text-blue-700' },
             { label: 'Informe enviado', depto: 'Analista', dot: 'bg-amber-500', color: 'text-amber-700' },
             { label: 'Informe emitido', depto: 'Gerente Técnico', dot: 'bg-green-500', color: 'text-green-700' },
+            { label: 'Informe firmado', depto: 'Administración', dot: 'bg-emerald-500', color: 'text-emerald-700' },
           ]
           const pasos = esAnalista ? todosPasos.slice(0, 4) : todosPasos
           return (
@@ -85,8 +86,9 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
               <h2 className="font-semibold text-slate-700 text-sm mb-4">Flujo de ejecución</h2>
               <div className="flex items-start">
                 {pasos.map((paso, i) => {
-                  const done = i < idxActual
-                  const activo = i === idxActual
+                  const esUltimoPaso = i === todosPasos.length - 1
+                  const done = esUltimoPaso ? false : (i < idxActual || (i === idxActual && idxActual === estados.length - 1 && informeFirmado))
+                  const activo = esUltimoPaso ? (idxActual === estados.length - 1 && informeFirmado) : (i === idxActual && !informeFirmado)
                   return (
                     <div key={i} className="flex-1 flex items-start">
                       <div className="flex flex-col items-center flex-1">
@@ -152,13 +154,9 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
             </div>
           </div>
 
-          {/* Marcar como recibida — form with optional edadPaciente */}
+          {/* Marcar como recibida */}
           {esAnalista && oda.estado === 'EMITIDA' && (
-            <form action={recibirAction} className="mt-5 space-y-3 border-t pt-4">
-              <div className="space-y-1">
-                <Label htmlFor="edadPaciente" className="text-sm">Edad del paciente <span className="text-slate-400 font-normal">(opcional)</span></Label>
-                <Input id="edadPaciente" name="edadPaciente" placeholder="Ej: 35 años" className="max-w-xs" />
-              </div>
+            <form action={recibirAction} className="mt-5 border-t pt-4">
               <Button type="submit" variant="outline">Marcar como recibida</Button>
             </form>
           )}

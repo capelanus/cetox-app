@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Download, QrCode, CheckCircle2, Circle, Clock, XCircle } from 'lucide-react'
 import { formatFecha, formatNumInforme, formatNumODA } from '@/lib/format'
 import { ResultadoForm } from '@/components/forms/resultado-form'
+import { EnviarElaboracionButton } from '@/components/enviar-elaboracion-button'
 import {
   firmarConformidadCalidad,
   firmarGerenciaTecnica,
-  enviarAElaboracion,
   enviarARevision,
   subirInformeElaborado,
   subirDocumentoFirmado,
@@ -54,8 +54,7 @@ export default async function InformeDetailPage({ params }: { params: Promise<{ 
   const esCalidad = hasRol(rol, 'DIRECTOR_CALIDAD')
   const esGerente = hasRol(rol, 'GERENTE_TECNICO')
 
-  const enviarElaboracionAction = enviarAElaboracion.bind(null, id)
-  const enviarRevisionAction = enviarARevision.bind(null, id)
+const enviarRevisionAction = enviarARevision.bind(null, id)
   const subirInformeAction = subirInformeElaborado.bind(null, id)
   const subirFirmadoAction = subirDocumentoFirmado.bind(null, id)
   const firmarCalidadAction = firmarConformidadCalidad.bind(null, id)
@@ -122,7 +121,16 @@ export default async function InformeDetailPage({ params }: { params: Promise<{ 
               dot: 'bg-blue-500',
               fecha: informe.firmaGerencia ?? null,
               done: !!informe.firmaGerencia,
-              activo: informe.estado === 'EN_FIRMA_GERENCIA' || !!informe.firmaGerencia,
+              activo: informe.estado === 'EN_FIRMA_GERENCIA',
+            },
+            {
+              label: 'Informe firmado',
+              depto: 'Administración',
+              color: 'text-emerald-700',
+              dot: 'bg-emerald-500',
+              fecha: null,
+              done: informe.estado === 'ENTREGADO',
+              activo: informe.estado === 'FIRMADO',
             },
           ]
           return (
@@ -181,10 +189,12 @@ export default async function InformeDetailPage({ params }: { params: Promise<{ 
                 {formatNumODA(informe.oda.numero, informe.oda.anio)}
               </Link>
             </div>
-            <div>
-              <p className="text-slate-500">Cliente</p>
-              <p className="font-medium">{informe.oda.set.cliente.razonSocial}</p>
-            </div>
+            {!esAnalista && (
+              <div>
+                <p className="text-slate-500">Cliente</p>
+                <p className="font-medium">{informe.oda.set.cliente.razonSocial}</p>
+              </div>
+            )}
             <div>
               <p className="text-slate-500">Analista</p>
               <p className="font-medium">{informe.analista.nombre}</p>
@@ -224,25 +234,80 @@ export default async function InformeDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        {/* Imágenes adjuntas — solo lectura, ocultas cuando el analista edita */}
+        {/* Archivos adjuntos — solo lectura, ocultos cuando el analista edita en borrador */}
         {!(esAnalista && informe.estado === 'BORRADOR') && (() => {
           const imgs: string[] = JSON.parse(informe.resultadoImagenes || '[]')
-          return imgs.length > 0 ? (
-            <div className="bg-white rounded-xl border shadow-sm p-6">
-              <h2 className="font-semibold text-slate-700 mb-3">Imágenes del ensayo ({imgs.length})</h2>
-              <div className="flex flex-wrap gap-3">
-                {imgs.map((url, i) => (
-                  <a key={i} href={url} target="_blank" rel="noreferrer">
-                    <img
-                      src={url}
-                      alt={`Imagen ${i + 1}`}
-                      className="h-32 w-32 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition-opacity"
-                    />
-                  </a>
-                ))}
-              </div>
+          const docs: string[] = JSON.parse(informe.resultadoArchivos || '[]')
+          if (imgs.length === 0 && docs.length === 0) return null
+          return (
+            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-5">
+              <h2 className="font-semibold text-slate-700">
+                Archivos adjuntos{imgs.length + docs.length > 0 ? ` (${imgs.length + docs.length})` : ''}
+              </h2>
+
+              {/* Imágenes — scrollable a tamaño real */}
+              {imgs.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Imágenes ({imgs.length}) — desplázate para revisar todas
+                  </p>
+                  <div
+                    className="overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 divide-y divide-slate-200"
+                    style={{ maxHeight: '480px' }}
+                  >
+                    {imgs.map((url, i) => (
+                      <div key={i} className="p-3">
+                        <p className="text-xs text-slate-400 mb-1.5">Imagen {i + 1} de {imgs.length}</p>
+                        <a href={url} target="_blank" rel="noreferrer" title="Abrir en pestaña nueva">
+                          <img
+                            src={url}
+                            alt={`Imagen ${i + 1}`}
+                            className="w-full rounded-md object-contain border border-slate-200 hover:opacity-90 transition-opacity"
+                            style={{ maxHeight: '400px' }}
+                          />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Documentos — visor PDF embebido para PDFs */}
+              {docs.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Documentos ({docs.length})
+                  </p>
+                  {docs.map((url, i) => {
+                    const filename = decodeURIComponent(url.split('/').pop() ?? `archivo-${i + 1}`)
+                    const isPdf = filename.toLowerCase().endsWith('.pdf') || url.toLowerCase().includes('.pdf')
+                    return (
+                      <div key={i} className="rounded-lg border border-slate-200 overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-200">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Download className="h-4 w-4 text-blue-600 shrink-0" />
+                            <span className="text-sm text-slate-700 truncate">{filename}</span>
+                          </div>
+                          <a href={url} target="_blank" rel="noreferrer"
+                            className="text-xs text-blue-600 hover:underline shrink-0 ml-2">
+                            Abrir ↗
+                          </a>
+                        </div>
+                        {isPdf && (
+                          <iframe
+                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`}
+                            className="w-full bg-white"
+                            style={{ height: '480px' }}
+                            title={filename}
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          ) : null
+          )
         })()}
 
 
@@ -464,11 +529,7 @@ export default async function InformeDetailPage({ params }: { params: Promise<{ 
               <a href={`/api/informes/${id}/generar-docx`}>
                 <Button variant="outline">Generar Word</Button>
               </a>
-              <form action={enviarElaboracionAction}>
-                <Button type="submit" style={{ backgroundColor: '#1F4E79' }}>
-                  Enviar a elaboración
-                </Button>
-              </form>
+              <EnviarElaboracionButton informeId={id} />
             </>
           )}
           {esCalidad && informe.estado === 'EN_REVISION_CALIDAD' && (

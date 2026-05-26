@@ -53,3 +53,5 @@ next-env.d.ts
 /public/generated/
 .env*.local
 .env.production
+.claude/
+.env.local

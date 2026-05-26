@@ -1,0 +1,1 @@
+ALTER TABLE "Cotizacion" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);

@@ -66,11 +66,25 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Label>Email del contacto</Label>
         <Input
           name="contactoEmail"
-          type="email"
+          type="text"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="correo@empresa.com"
         />
+        {email.includes(',') && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {email.split(',').map((e) => e.trim()).filter(Boolean).map((addr, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-mono"
+                style={{ backgroundColor: '#EAF4F4', color: '#13602C' }}
+              >
+                {addr}
+              </span>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-slate-400">Separar por comas si hay varios destinatarios</p>
       </div>
 
       {/* 3. País */}

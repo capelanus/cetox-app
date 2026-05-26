@@ -18,9 +18,10 @@ model Usuario {
   activo       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
-  cotizacionesCreadas Cotizacion[] @relation("CotCreadaPor")
-  setsCreados         SET[]        @relation("SETCreadoPor")
-  informesAsignados   Informe[]    @relation("InformeAnalista")
+  cotizacionesCreadas   Cotizacion[] @relation("CotCreadaPor")
+  cotizacionesEliminadas Cotizacion[] @relation("CotEliminadaPor")
+  setsCreados           SET[]        @relation("SETCreadoPor")
+  informesAsignados     Informe[]    @relation("InformeAnalista")
 }
 
 model Cliente {
@@ -28,10 +29,10 @@ model Cliente {
   razonSocial   String
   ruc           String   @unique
   direccion     String
+  pais          String   @default("PE")
   contacto      String?
   email         String?
   telefono      String?
-  modalidadPago String   @default("ANTICIPO_50_50")
   activo        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
@@ -69,6 +70,7 @@ model Cotizacion {
   fechaEmision     DateTime @default(now())
   vigenciaHasta    DateTime
   moneda           String   @default("USD")
+  modalidadPago    String   @default("ANTICIPO_50_50")
   clienteId        String
   cliente          Cliente  @relation(fields: [clienteId], references: [id])
   estado           String   @default("BORRADOR")
@@ -86,6 +88,9 @@ model Cotizacion {
   subtotal         Float    @default(0)
   igv              Float    @default(0)
   total            Float    @default(0)
+  deletedAt        DateTime?
+  deletedById      String?
+  deletedBy        Usuario?  @relation("CotEliminadaPor", fields: [deletedById], references: [id])
   items            CotizacionItem[]
   muestras         CotizacionMuestra[]
   sets             SET[]
@@ -115,14 +120,15 @@ model CotizacionItem {
 }
 
 model SET {
-  id                String    @id @default(cuid())
+  id                String     @id @default(cuid())
   numero            Int
   anio              Int
-  cotizacionId      String
-  cotizacion        Cotizacion @relation(fields: [cotizacionId], references: [id])
+  cotizacionId      String?
+  cotizacion        Cotizacion? @relation(fields: [cotizacionId], references: [id])
   clienteId         String
-  cliente           Cliente   @relation(fields: [clienteId], references: [id])
-  fechaIngreso      DateTime  @default(now())
+  cliente           Cliente    @relation(fields: [clienteId], references: [id])
+  motivoCero        String?
+  fechaIngreso      DateTime   @default(now())
   nombreComercial   String?
   ingredienteActivo String?
   formulacion       String?
@@ -131,15 +137,16 @@ model SET {
   fechaVencimiento  DateTime?
   pesoVolumen       String?
   tipoMuestra       String?
-  codigoMuestra     String    @unique
+  codigoMuestra     String     @unique
   fotoUrl           String?
   observaciones     String?
-  estado            String    @default("EMITIDA")
+  estado            String     @default("EMITIDA")
   creadoPorId       String
-  creadoPor         Usuario   @relation("SETCreadoPor", fields: [creadoPorId], references: [id])
+  creadoPor         Usuario    @relation("SETCreadoPor", fields: [creadoPorId], references: [id])
   odas              ODA[]
   cargoEntrega      CargoEntrega?
   nombrePaciente         String?
+  edadPaciente           String?
   ingresoMuestra         String?
   ingresoMuestraOtro     String?
   numeroMuestras         String?

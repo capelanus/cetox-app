@@ -1,8 +1,10 @@
-import { requireNotAnalista } from '@/lib/roles'
+import { requireNotAnalista, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { formatFecha, formatNumSET } from '@/lib/format'
+import { Plus } from 'lucide-react'
 
 const ESTADO_LABELS: Record<string, string> = {
   EMITIDA: 'Emitida',
@@ -20,17 +22,32 @@ const ESTADO_COLORS: Record<string, string> = {
   ENTREGADA: 'default',
 }
 
+const MOTIVO_LABELS: Record<string, string> = {
+  REENSAYO: 'Reensayo',
+  INGRESOS_INTERNOS: 'Interno',
+  MODIFICACION_SIN_COSTO: 'Modificación',
+}
+
 export default async function SETPage() {
-  await requireNotAnalista()
+  const session = await requireNotAnalista()
   const sets = await prisma.sET.findMany({
     include: { cliente: true, creadoPor: true, odas: true },
     orderBy: [{ anio: 'desc' }, { numero: 'desc' }],
   })
+  const canCreate = hasRol(session?.user.rol ?? '', 'ADMINISTRACION')
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Solicitudes de Ensayo (SET)</h1>
+        {canCreate && (
+          <Link href="/set/nuevo-cero">
+            <Button variant="outline" className="border-dashed" style={{ borderColor: '#4AC3B2', color: '#13602C' }}>
+              <Plus className="h-4 w-4 mr-2" />
+              SET sin costo
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
@@ -50,8 +67,16 @@ export default async function SETPage() {
           <tbody className="divide-y">
             {sets.map((s) => (
               <tr key={s.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-mono text-xs font-medium">
-                  {formatNumSET(s.numero, s.anio)}
+                <td className="px-4 py-3">
+                  <span className="font-mono text-xs font-medium">{formatNumSET(s.numero, s.anio)}</span>
+                  {s.motivoCero && (
+                    <span
+                      className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                      style={{ backgroundColor: '#DCF0E4', color: '#13602C' }}
+                    >
+                      {MOTIVO_LABELS[s.motivoCero] ?? s.motivoCero}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">{s.cliente.razonSocial}</td>
                 <td className="px-4 py-3 font-medium">{s.nombreComercial}</td>

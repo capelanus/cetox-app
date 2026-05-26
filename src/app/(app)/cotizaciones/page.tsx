@@ -8,6 +8,7 @@ import { CotizacionesTable } from '@/components/cotizaciones-table'
 export default async function CotizacionesPage() {
   const session = await requireNotAnalista()
   const cotizaciones = await prisma.cotizacion.findMany({
+    where: { deletedAt: null },
     include: {
       cliente: true,
       creadoPor: true,

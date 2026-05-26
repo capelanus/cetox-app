@@ -21,7 +21,7 @@ interface SetData {
   estado: string
   nombreComercial: string | null
   cliente: Cliente
-  cotizacion: { items: Item[] }
+  cotizacion: { items: Item[] } | null
 }
 
 interface Props {
@@ -48,7 +48,7 @@ export function IngresosView({ sets }: Props) {
   const porArea = useMemo(() => {
     const areas: Record<string, { subtotal: number; count: number }> = {}
     for (const s of filtrados) {
-      for (const item of s.cotizacion.items) {
+      for (const item of (s.cotizacion?.items ?? [])) {
         const area = item.ensayo.area
         if (!areas[area]) areas[area] = { subtotal: 0, count: 0 }
         areas[area].subtotal += item.costo
@@ -63,14 +63,14 @@ export function IngresosView({ sets }: Props) {
     for (let m = 1; m <= 12; m++) mesesData[m] = 0
     for (const s of sets.filter((s) => s.anio === anio)) {
       const m = new Date(s.fechaIngreso).getMonth() + 1
-      const subtotal = s.cotizacion.items.reduce((acc, i) => acc + i.costo, 0)
+      const subtotal = (s.cotizacion?.items ?? []).reduce((acc, i) => acc + i.costo, 0)
       mesesData[m] = (mesesData[m] ?? 0) + subtotal
     }
     return mesesData
   }, [sets, anio])
 
   const totalFiltrado = filtrados.reduce(
-    (sum, s) => sum + s.cotizacion.items.reduce((acc, i) => acc + i.costo, 0),
+    (sum, s) => sum + (s.cotizacion?.items ?? []).reduce((acc, i) => acc + i.costo, 0),
     0
   )
 
@@ -170,7 +170,7 @@ export function IngresosView({ sets }: Props) {
             </thead>
             <tbody className="divide-y">
               {filtrados.map((s) => {
-                const subtotal = s.cotizacion.items.reduce((acc, i) => acc + i.costo, 0)
+                const subtotal = (s.cotizacion?.items ?? []).reduce((acc, i) => acc + i.costo, 0)
                 return (
                   <tr key={s.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-mono text-xs">

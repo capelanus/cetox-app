@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { SetPdfButton } from '@/components/set-pdf-button'
 import { formatFecha, formatNumSET, formatNumODA, formatMoneda } from '@/lib/format'
-import { generarODAs, toggleRevisadoODA } from '@/app/actions/set'
+import { generarODAs } from '@/app/actions/set'
 import { revalidatePath } from 'next/cache'
 
 const ESTADO_ODA_LABELS: Record<string, string> = {
@@ -25,7 +25,7 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
       <p className="text-slate-500 text-xs">{label}</p>
-      <p className="font-medium text-sm">{value}</p>
+      <p className="font-medium text-sm whitespace-pre-wrap">{value}</p>
     </div>
   )
 }
@@ -54,22 +54,23 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
   if (!set) notFound()
 
   const rol = session?.user.rol ?? ''
-  const puedoGenerarODAs = hasRol(rol, 'ADMINISTRACION') && set.estado === 'EMITIDA' && set.odas.length === 0
+  const puedoGenerarODAs = hasRol(rol, 'ADMINISTRACION') && set.estado === 'EMITIDA' && set.odas.length === 0 && !!set.cotizacion
   const generateAction = generarODAs.bind(null, id)
 
   const cot = set.cotizacion
-  const moneda = cot.moneda as 'USD' | 'PEN'
+  const esCero = !cot // SET sin cotización (gratuito)
+  const moneda = (cot?.moneda ?? 'USD') as 'USD' | 'PEN'
 
   // Build display rows for ensayos: match ODA (if exists) by position with cotizacion items
-  const cotItems = cot.items
-  const precioNeto = cot.subtotal
-  const igv = cot.igv
-  const total = cot.total
+  const cotItems = cot?.items ?? []
+  const precioNeto = cot?.subtotal ?? 0
+  const igv = cot?.igv ?? 0
+  const total = cot?.total ?? 0
 
   return (
     <div className="max-w-3xl space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link href="/set">
           <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />SET</Button>
         </Link>
@@ -77,6 +78,14 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
         <Badge className={set.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' : ''}>
           {set.estado.replace(/_/g, ' ')}
         </Badge>
+        {esCero && set.motivoCero && (
+          <span
+            className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ backgroundColor: '#DCF0E4', color: '#13602C' }}
+          >
+            $0 · {set.motivoCero === 'REENSAYO' ? 'Reensayo' : set.motivoCero === 'INGRESOS_INTERNOS' ? 'Interno' : 'Modificación sin costo'}
+          </span>
+        )}
         <span className="ml-auto font-mono text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{set.codigoMuestra}</span>
       </div>
 
@@ -87,17 +96,20 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
           <InfoRow label="Cliente" value={set.cliente.razonSocial} />
           <InfoRow label="RUC" value={set.cliente.ruc} />
           <InfoRow label="Dirección" value={set.cliente.direccion} />
-          <InfoRow label="Nombre del contacto" value={cot.contactoNombre} />
-          <InfoRow label="Email" value={cot.contactoEmail} />
-          <InfoRow label="Teléfono" value={cot.contactoTelefono} />
+          {cot && <InfoRow label="Nombre del contacto" value={cot.contactoNombre} />}
+          {cot && <InfoRow label="Email" value={cot.contactoEmail} />}
+          {cot && <InfoRow label="Teléfono" value={cot.contactoTelefono} />}
         </div>
       </div>
 
-      {/* 2. Nombre del paciente */}
-      {set.nombrePaciente && (
+      {/* 2. Datos del paciente */}
+      {(set.nombrePaciente || set.edadPaciente) && (
         <div className="bg-white rounded-xl border shadow-sm p-5">
-          <h2 className="font-semibold text-slate-700 mb-2 text-sm">Nombre del paciente</h2>
-          <p className="text-sm">{set.nombrePaciente}</p>
+          <h2 className="font-semibold text-slate-700 mb-3 text-sm">Datos del paciente</h2>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            <InfoRow label="Nombre" value={set.nombrePaciente} />
+            <InfoRow label="Edad" value={set.edadPaciente} />
+          </div>
         </div>
       )}
 
@@ -148,10 +160,7 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
           <h2 className="font-semibold text-slate-700 text-sm">Ensayos</h2>
           <div className="flex items-center gap-2">
             {set.odas.length > 0 && (
-              <SetPdfButton
-                href={`/api/set/${id}/generar-pdf`}
-                hayRevisadas={set.odas.some((o) => o.revisado)}
-              />
+              <SetPdfButton href={`/api/set/${id}/generar-pdf`} />
             )}
             {puedoGenerarODAs && (
               <form action={generateAction}>
@@ -180,19 +189,17 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
                     <th className="text-left px-4 py-2.5 font-semibold text-slate-600">Tiempo</th>
                     <th className="text-left px-4 py-2.5 font-semibold text-slate-600">ODA</th>
                     <th className="text-right px-4 py-2.5 font-semibold text-slate-600">Costo</th>
-                    <th className="text-left px-4 py-2.5 font-semibold text-slate-600">Revisión</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {set.odas.map((oda) => {
-                    const toggleAction = toggleRevisadoODA.bind(null, oda.id, id)
                     const hoy = new Date()
                     const entrega = new Date(oda.fechaEntregaCompromiso)
                     const diasRestantes = Math.ceil((entrega.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
                     const ensayoNombre = oda.items.map((i) => i.ensayo.nombre).join(', ')
                     const costo = oda.items.reduce((s, i) => s + i.costo, 0)
                     return (
-                      <tr key={oda.id} className={oda.revisado ? 'bg-green-50' : 'hover:bg-slate-50'}>
+                      <tr key={oda.id} className="hover:bg-slate-50">
                         <td className="px-4 py-2.5">
                           <Link href={`/oda/${oda.id}`} className="font-medium text-blue-600 hover:underline">
                             {ensayoNombre}
@@ -225,30 +232,6 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
                         <td className="px-4 py-2.5 text-right text-slate-700 whitespace-nowrap">
                           {formatMoneda(costo, moneda)}
                         </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex items-center gap-2">
-                            <form action={toggleAction}>
-                              <button
-                                type="submit"
-                                className={`w-5 h-5 rounded border-2 inline-flex items-center justify-center transition-colors ${
-                                  oda.revisado ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 hover:border-slate-500'
-                                }`}
-                                title={oda.revisado ? 'Quitar revisión' : 'Marcar revisado'}
-                              >
-                                {oda.revisado && (
-                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </button>
-                            </form>
-                            {oda.revisado && oda.fechaRevisado && (
-                              <span className="text-xs text-green-700 whitespace-nowrap">
-                                {formatFecha(oda.fechaRevisado)}
-                              </span>
-                            )}
-                          </div>
-                        </td>
                       </tr>
                     )
                   })}
@@ -257,62 +240,63 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
                   <tr>
                     <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-sm">Precio neto</td>
                     <td className="px-4 py-2 text-right text-slate-700 text-sm whitespace-nowrap">{formatMoneda(precioNeto, moneda)}</td>
-                    <td />
                   </tr>
                   <tr>
                     <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-sm">IGV (18%)</td>
                     <td className="px-4 py-2 text-right text-slate-700 text-sm whitespace-nowrap">{formatMoneda(igv, moneda)}</td>
-                    <td />
                   </tr>
                   <tr className="border-t">
                     <td colSpan={4} className="px-4 py-2.5 text-right font-bold text-slate-800">TOTAL</td>
                     <td className="px-4 py-2.5 text-right font-bold text-slate-800 whitespace-nowrap">{formatMoneda(total, moneda)}</td>
-                    <td />
                   </tr>
                 </tfoot>
               </table>
             </div>
           </>
         ) : (
-          // Sin ODAs: mostrar items de la cotización con costos
-          <>
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left px-3 py-2 font-medium text-slate-600">Ensayo</th>
-                    <th className="text-left px-3 py-2 font-medium text-slate-600">Área</th>
-                    <th className="text-left px-3 py-2 font-medium text-slate-600">Plazo</th>
-                    <th className="text-right px-3 py-2 font-medium text-slate-600">Costo</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {cotItems.map((it) => (
-                    <tr key={it.id}>
-                      <td className="px-3 py-2">{it.ensayo.nombre}</td>
-                      <td className="px-3 py-2 text-slate-500">{AREA_LABELS[it.ensayo.area] ?? it.ensayo.area}</td>
-                      <td className="px-3 py-2">{it.tiempoEntregaDias} días</td>
-                      <td className="px-3 py-2 text-right">{formatMoneda(it.costo, moneda)}</td>
+          // Sin ODAs: mostrar items de la cotización con costos (solo si hay cotización)
+          cotItems.length > 0 ? (
+            <>
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="text-left px-3 py-2 font-medium text-slate-600">Ensayo</th>
+                      <th className="text-left px-3 py-2 font-medium text-slate-600">Área</th>
+                      <th className="text-left px-3 py-2 font-medium text-slate-600">Plazo</th>
+                      <th className="text-right px-3 py-2 font-medium text-slate-600">Costo</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-4 border-t pt-4 space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Precio neto</span>
-                <span>{formatMoneda(precioNeto, moneda)}</span>
+                  </thead>
+                  <tbody className="divide-y">
+                    {cotItems.map((it) => (
+                      <tr key={it.id}>
+                        <td className="px-3 py-2">{it.ensayo.nombre}</td>
+                        <td className="px-3 py-2 text-slate-500">{AREA_LABELS[it.ensayo.area] ?? it.ensayo.area}</td>
+                        <td className="px-3 py-2">{it.tiempoEntregaDias} días</td>
+                        <td className="px-3 py-2 text-right">{formatMoneda(it.costo, moneda)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">IGV (18%)</span>
-                <span>{formatMoneda(igv, moneda)}</span>
+              <div className="mt-4 border-t pt-4 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Precio neto</span>
+                  <span>{formatMoneda(precioNeto, moneda)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">IGV (18%)</span>
+                  <span>{formatMoneda(igv, moneda)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-base border-t pt-2 mt-1">
+                  <span>TOTAL</span>
+                  <span>{formatMoneda(total, moneda)}</span>
+                </div>
               </div>
-              <div className="flex justify-between font-bold text-base border-t pt-2 mt-1">
-                <span>TOTAL</span>
-                <span>{formatMoneda(total, moneda)}</span>
-              </div>
-            </div>
-          </>
+            </>
+          ) : (
+            <p className="text-sm text-slate-400 py-2">No hay ensayos registrados aún.</p>
+          )
         )}
       </div>
 

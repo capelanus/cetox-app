@@ -8,25 +8,25 @@ import z from 'zod'
 
 const ClienteSchema = z.object({
   razonSocial: z.string().min(2),
-  ruc: z.string().min(8).max(11),
-  direccion: z.string().min(2),
-  contacto: z.string().optional(),
-  email: z.string().optional(),
-  telefono: z.string().optional(),
-  modalidadPago: z.string(),
+  ruc:         z.string().min(8).max(11),
+  direccion:   z.string().min(2),
+  pais:        z.string().default('PE'),
+  contacto:    z.string().optional(),
+  email:       z.string().optional(),
+  telefono:    z.string().optional(),
 })
 
 export async function crearCliente(formData: FormData) {
   await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
 
   const data = ClienteSchema.parse({
-    razonSocial: formData.get('razonSocial'),
-    ruc: formData.get('ruc'),
-    direccion: formData.get('direccion'),
+    razonSocial:   formData.get('razonSocial'),
+    ruc:           formData.get('ruc'),
+    direccion:     formData.get('direccion'),
+    pais:     formData.get('pais') || 'PE',
     contacto: formData.get('contacto') || undefined,
-    email: formData.get('email') || undefined,
+    email:    formData.get('email') || undefined,
     telefono: formData.get('telefono') || undefined,
-    modalidadPago: formData.get('modalidadPago'),
   })
 
   await prisma.cliente.create({ data })
@@ -38,13 +38,13 @@ export async function actualizarCliente(id: string, formData: FormData) {
   await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
 
   const data = ClienteSchema.parse({
-    razonSocial: formData.get('razonSocial'),
-    ruc: formData.get('ruc'),
-    direccion: formData.get('direccion'),
+    razonSocial:   formData.get('razonSocial'),
+    ruc:           formData.get('ruc'),
+    direccion:     formData.get('direccion'),
+    pais:     formData.get('pais') || 'PE',
     contacto: formData.get('contacto') || undefined,
-    email: formData.get('email') || undefined,
+    email:    formData.get('email') || undefined,
     telefono: formData.get('telefono') || undefined,
-    modalidadPago: formData.get('modalidadPago'),
   })
 
   await prisma.cliente.update({ where: { id }, data })

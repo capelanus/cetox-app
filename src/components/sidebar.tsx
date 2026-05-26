@@ -64,6 +64,7 @@ const operacionesNavItems = [
   { href: '/operaciones/devoluciones',              label: 'Devoluciones',       icon: RotateCcw,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/facturas',                  label: 'Facturas',           icon: Receipt,         roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
   { href: '/operaciones/pagos',                     label: 'Gestión de Pagos',   icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/inventario',                label: 'Inventario',         icon: Microscope,      roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
 ]
 
 /* ─── Sidebar Cetox ──────────────────────────────────────────────────────── */

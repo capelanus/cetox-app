@@ -513,3 +513,17 @@ model Pago {
 
   @@unique([numero, anio])
 }
+
+model InventarioItem {
+  id          String   @id @default(cuid())
+  codOrden    String?  @unique
+  descripcion String
+  categoria   String?
+  unidad      String?
+  stock       Float    @default(0)
+  stockMinimo Float?
+  activo      Boolean  @default(true)
+  notas       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

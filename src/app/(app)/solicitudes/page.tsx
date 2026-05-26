@@ -4,8 +4,8 @@ import { formatNumRequerimiento, formatFecha } from '@/lib/format'
 import { AREA_SOLICITANTE_LABELS, ESTADO_REQUERIMIENTO_LABELS, URGENCIA_LABELS } from '@/lib/constants'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Plus, CheckCircle2, Clock, AlertCircle, Circle, Trash2 } from 'lucide-react'
-import { eliminarRequerimiento } from '@/app/actions/requerimientos'
+import { Plus, CheckCircle2, Clock, AlertCircle, Circle } from 'lucide-react'
+import DeleteRequerimientoButton from './delete-button'
 
 const TODOS_LOS_ROLES = ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] as const
 
@@ -90,8 +90,7 @@ export default async function MisSolicitudesPage() {
           {reqs.map(req => {
             const cfg = estadoConfig[req.estado]
             const Icon = cfg?.icon ?? Circle
-            const puedeEliminar = ['ENVIADO', 'BORRADOR'].includes(req.estado) && req.items.length >= 0
-            const eliminar = eliminarRequerimiento.bind(null, req.id)
+            const puedeEliminar = ['ENVIADO', 'BORRADOR'].includes(req.estado)
             return (
               <div key={req.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-4 hover:shadow-sm hover:border-gray-300 transition-all">
                 <div className={`p-2 rounded-lg flex-shrink-0 ${cfg?.bg ?? 'bg-gray-100'}`}>
@@ -121,20 +120,7 @@ export default async function MisSolicitudesPage() {
                   </div>
                 </Link>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {puedeEliminar && (
-                    <form action={eliminar}>
-                      <button
-                        type="submit"
-                        onClick={e => {
-                          if (!confirm('¿Eliminar esta solicitud?')) e.preventDefault()
-                        }}
-                        title="Eliminar solicitud"
-                        className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </form>
-                  )}
+                  {puedeEliminar && <DeleteRequerimientoButton id={req.id} variant="icon" />}
                   <span className="text-gray-400 text-xs">Ver →</span>
                 </div>
               </div>

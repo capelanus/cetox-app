@@ -254,16 +254,21 @@ model CargoEntrega {
 }
 
 model Proveedor {
-  id          String   @id @default(cuid())
-  razonSocial String
-  ruc         String   @unique
-  direccion   String?
-  contacto    String?
-  email       String?
-  telefono    String?
-  rubro       String?
-  activo      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  razonSocial    String
+  ruc            String?  @unique
+  especialidad   String?
+  direccion      String?
+  contacto       String?
+  telefono       String?
+  telefono2      String?
+  telefono3      String?
+  email          String?
+  email2         String?
+  email3         String?
+  cuentaBancaria String?
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
 
   cotizacionesProveedor CotizacionProveedor[]
   ordenesCompra         OrdenCompra[]

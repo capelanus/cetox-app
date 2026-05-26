@@ -1,50 +1,74 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { requireRol } from '@/lib/roles'
+import { requireOperaciones } from '@/lib/roles'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-export async function crearProveedor(formData: FormData) {
-  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
-  const razonSocial = formData.get('razonSocial') as string
-  const ruc = formData.get('ruc') as string
-  const direccion = formData.get('direccion') as string
-  const contacto = formData.get('contacto') as string
-  const email = formData.get('email') as string
-  const telefono = formData.get('telefono') as string
-  const rubro = formData.get('rubro') as string
+function trim(s: FormData, key: string): string | null {
+  const v = (s.get(key) as string ?? '').trim()
+  return v.length > 0 ? v : null
+}
 
-  if (!razonSocial || !ruc) throw new Error('Razón social y RUC son requeridos')
+export async function crearProveedor(formData: FormData) {
+  await requireOperaciones()
+
+  const razonSocial = trim(formData, 'razonSocial')
+  if (!razonSocial) throw new Error('Razón social es requerida')
 
   const proveedor = await prisma.proveedor.create({
-    data: { razonSocial, ruc, direccion: direccion || null, contacto: contacto || null, email: email || null, telefono: telefono || null, rubro: rubro || null },
+    data: {
+      razonSocial,
+      ruc:            trim(formData, 'ruc'),
+      especialidad:   trim(formData, 'especialidad'),
+      direccion:      trim(formData, 'direccion'),
+      contacto:       trim(formData, 'contacto'),
+      telefono:       trim(formData, 'telefono'),
+      telefono2:      trim(formData, 'telefono2'),
+      telefono3:      trim(formData, 'telefono3'),
+      email:          trim(formData, 'email'),
+      email2:         trim(formData, 'email2'),
+      email3:         trim(formData, 'email3'),
+      cuentaBancaria: trim(formData, 'cuentaBancaria'),
+    },
   })
+
   revalidatePath('/operaciones/proveedores')
   redirect(`/operaciones/proveedores/${proveedor.id}`)
 }
 
 export async function actualizarProveedor(id: string, formData: FormData) {
-  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
-  const razonSocial = formData.get('razonSocial') as string
-  const ruc = formData.get('ruc') as string
-  const direccion = formData.get('direccion') as string
-  const contacto = formData.get('contacto') as string
-  const email = formData.get('email') as string
-  const telefono = formData.get('telefono') as string
-  const rubro = formData.get('rubro') as string
+  await requireOperaciones()
+
+  const razonSocial = trim(formData, 'razonSocial')
+  if (!razonSocial) throw new Error('Razón social es requerida')
 
   await prisma.proveedor.update({
     where: { id },
-    data: { razonSocial, ruc, direccion: direccion || null, contacto: contacto || null, email: email || null, telefono: telefono || null, rubro: rubro || null },
+    data: {
+      razonSocial,
+      ruc:            trim(formData, 'ruc'),
+      especialidad:   trim(formData, 'especialidad'),
+      direccion:      trim(formData, 'direccion'),
+      contacto:       trim(formData, 'contacto'),
+      telefono:       trim(formData, 'telefono'),
+      telefono2:      trim(formData, 'telefono2'),
+      telefono3:      trim(formData, 'telefono3'),
+      email:          trim(formData, 'email'),
+      email2:         trim(formData, 'email2'),
+      email3:         trim(formData, 'email3'),
+      cuentaBancaria: trim(formData, 'cuentaBancaria'),
+    },
   })
+
   revalidatePath('/operaciones/proveedores')
   revalidatePath(`/operaciones/proveedores/${id}`)
   redirect(`/operaciones/proveedores/${id}`)
 }
 
 export async function toggleProveedorActivo(id: string, activo: boolean) {
-  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  await requireOperaciones()
   await prisma.proveedor.update({ where: { id }, data: { activo } })
   revalidatePath('/operaciones/proveedores')
+  revalidatePath(`/operaciones/proveedores/${id}`)
 }

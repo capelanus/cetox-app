@@ -25,6 +25,7 @@ import {
   Receipt,
   CreditCard,
   Building2,
+  ShoppingBag,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -50,6 +51,7 @@ const allNavItems = [
   { href: '/cargos',                    label: 'Cargos de Entrega', icon: Package,         roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/ingresos',                  label: 'Ingresos',          icon: TrendingUp,      roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/resumen',                   label: 'Resumen',           icon: TableProperties, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/solicitudes',               label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
 ]
 
 const operacionesNavItems = [

@@ -6,8 +6,14 @@ import { siguienteCorrelativo } from '@/lib/correlativo'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
+// Todos los roles pueden crear solicitudes; el destino de redirect varía
+const TODOS_LOS_ROLES = [
+  'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA',
+  'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'SUPER_ADMIN',
+] as const
+
 export async function crearRequerimiento(formData: FormData) {
-  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  const session = await requireRol([...TODOS_LOS_ROLES])
   const anio = new Date().getFullYear()
   const numero = await siguienteCorrelativo('requerimiento', anio)
 
@@ -23,6 +29,9 @@ export async function crearRequerimiento(formData: FormData) {
 
   if (!areaSolicitante || !descripcion) throw new Error('Área y descripción son requeridos')
 
+  const rol = session.user.rol
+  const esOperaciones = rol === 'JEFE_OPERACIONES' || rol === 'ASISTENTE_LOGISTICA'
+
   const req = await prisma.requerimiento.create({
     data: {
       numero,
@@ -31,7 +40,8 @@ export async function crearRequerimiento(formData: FormData) {
       descripcion,
       justificacion: justificacion || null,
       urgencia: urgencia || 'NORMAL',
-      estado: 'BORRADOR',
+      // Las áreas envían directamente, operaciones puede guardar en borrador
+      estado: esOperaciones ? 'BORRADOR' : 'ENVIADO',
       fechaRequerida: fechaRequerida ? new Date(fechaRequerida) : null,
       creadoPorId: session.user.id,
       items: {
@@ -47,7 +57,13 @@ export async function crearRequerimiento(formData: FormData) {
   })
 
   revalidatePath('/operaciones/requerimientos')
-  redirect(`/operaciones/requerimientos/${req.id}`)
+  revalidatePath('/solicitudes')
+
+  if (esOperaciones) {
+    redirect(`/operaciones/requerimientos/${req.id}`)
+  } else {
+    redirect(`/solicitudes/${req.id}`)
+  }
 }
 
 export async function enviarRequerimiento(id: string) {

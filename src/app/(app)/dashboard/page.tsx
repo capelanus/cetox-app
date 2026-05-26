@@ -85,8 +85,8 @@ export default async function DashboardPage() {
   const normalize = (rows: { estado: string; _count: { estado: number } }[]): StageCount[] =>
     rows.map(r => ({ estado: r.estado, count: r._count.estado }))
 
-  const hora = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
-  const fecha = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const hora = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })
+  const fecha = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Lima' })
 
   return (
     <div>

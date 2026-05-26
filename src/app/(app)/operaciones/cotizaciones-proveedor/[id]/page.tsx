@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, ShoppingCart } from 'lucide-react'
 import { formatNumCotizacionProveedor, formatFecha } from '@/lib/format'
 import { ESTADO_COT_PROVEEDOR_LABELS } from '@/lib/constants'
-import { enviarCotizacionACalidad, aprobarCotizacionProveedor, rechazarCotizacionProveedor } from '@/app/actions/cotizaciones-proveedor'
+import { enviarCotizacionACalidad } from '@/app/actions/cotizaciones-proveedor'
+import AprobacionControls from '../aprobacion-client'
 
 export default async function CotizacionProveedorDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
@@ -26,8 +27,6 @@ export default async function CotizacionProveedorDetallePage({ params }: { param
   if (!cot) notFound()
 
   const enviar = enviarCotizacionACalidad.bind(null, id)
-  const aprobar = aprobarCotizacionProveedor.bind(null, id)
-  const rechazar = rechazarCotizacionProveedor.bind(null, id)
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
@@ -174,19 +173,7 @@ export default async function CotizacionProveedorDetallePage({ params }: { param
 
         {/* Approve/Reject (director calidad) */}
         {hasRol(rol, 'DIRECTOR_CALIDAD') && cot.estado === 'ENVIADA_CALIDAD' && (
-          <>
-            <form action={aprobar}>
-              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
-                Aprobar cotización
-              </Button>
-            </form>
-            <form action={rechazar} className="flex gap-2">
-              <input name="motivo" placeholder="Motivo de rechazo..." className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-              <Button type="submit" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
-                Rechazar
-              </Button>
-            </form>
-          </>
+          <AprobacionControls cotId={id} />
         )}
 
         {/* Create OC if approved */}

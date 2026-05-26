@@ -282,6 +282,29 @@ async function main() {
     })
   }
 
+  // Usuarios de Operaciones
+  await prisma.usuario.upsert({
+    where: { email: 'r.campos@cetox.com.pe' },
+    update: {},
+    create: {
+      email: 'r.campos@cetox.com.pe',
+      passwordHash: password,
+      nombre: 'Reddy Fortunato Campos Soto',
+      rol: 'JEFE_OPERACIONES',
+    },
+  })
+
+  await prisma.usuario.upsert({
+    where: { email: 'operaciones2@cetox.com.pe' },
+    update: {},
+    create: {
+      email: 'operaciones2@cetox.com.pe',
+      passwordHash: password,
+      nombre: 'Sandro Cahuana',
+      rol: 'ASISTENTE_LOGISTICA',
+    },
+  })
+
   console.log('✅ Seed completado exitosamente')
 }
 

@@ -22,6 +22,16 @@ model Usuario {
   cotizacionesEliminadas Cotizacion[] @relation("CotEliminadaPor")
   setsCreados           SET[]        @relation("SETCreadoPor")
   informesAsignados     Informe[]    @relation("InformeAnalista")
+
+  requerimientosCreados     Requerimiento[]       @relation("ReqCreadoPor")
+  cotizacionesProvCreadas   CotizacionProveedor[] @relation("CotProvCreadaPor")
+  cotizacionesProvAprobadas CotizacionProveedor[] @relation("CotProvAprobadaPor")
+  ordenesCompraEmitidas     OrdenCompra[]         @relation("OCEmitidaPor")
+  recepcionesRealizadas     Recepcion[]           @relation("RecepcionPor")
+  devolucionesGestionadas   Devolucion[]          @relation("DevolucionPor")
+  facturasRegistradas       Factura[]             @relation("FacturaPor")
+  provisionesAprobadas      ProvisionPago[]       @relation("ProvisionPor")
+  pagosAprobados            Pago[]                @relation("PagoPor")
 }
 
 model Cliente {
@@ -239,6 +249,267 @@ model CargoEntrega {
   dniRecibe      String?
   fechaRecepcion DateTime?
   firmaUrl       String?
+
+  @@unique([numero, anio])
+}
+
+model Proveedor {
+  id          String   @id @default(cuid())
+  razonSocial String
+  ruc         String   @unique
+  direccion   String?
+  contacto    String?
+  email       String?
+  telefono    String?
+  rubro       String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  cotizacionesProveedor CotizacionProveedor[]
+  ordenesCompra         OrdenCompra[]
+}
+
+model Requerimiento {
+  id              String    @id @default(cuid())
+  numero          Int
+  anio            Int
+  areaSolicitante String
+  descripcion     String
+  justificacion   String?
+  urgencia        String    @default("NORMAL")
+  estado          String    @default("BORRADOR")
+  fechaRequerida  DateTime?
+  creadoPorId     String
+  creadoPor       Usuario   @relation("ReqCreadoPor", fields: [creadoPorId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  items                 RequerimientoItem[]
+  cotizacionesProveedor CotizacionProveedor[]
+  ordenesCompra         OrdenCompra[]
+
+  @@unique([numero, anio])
+}
+
+model RequerimientoItem {
+  id               String        @id @default(cuid())
+  requerimientoId  String
+  requerimiento    Requerimiento @relation(fields: [requerimientoId], references: [id], onDelete: Cascade)
+  descripcion      String
+  cantidad         Float
+  unidad           String
+  especificaciones String?
+  orden            Int           @default(0)
+}
+
+model CotizacionProveedor {
+  id               String        @id @default(cuid())
+  numero           Int
+  anio             Int
+  requerimientoId  String
+  requerimiento    Requerimiento @relation(fields: [requerimientoId], references: [id])
+  proveedorId      String
+  proveedor        Proveedor     @relation(fields: [proveedorId], references: [id])
+  moneda           String        @default("PEN")
+  subtotal         Float         @default(0)
+  igv              Float         @default(0)
+  total            Float         @default(0)
+  plazoEntregaDias Int?
+  condicionesPago  String?
+  validezDias      Int?
+  archivoUrl       String?
+  estado           String        @default("BORRADOR")
+  observaciones    String?
+  aprobadoPorId    String?
+  aprobadoPor      Usuario?      @relation("CotProvAprobadaPor", fields: [aprobadoPorId], references: [id])
+  fechaAprobacion  DateTime?
+  motivoRechazo    String?
+  creadoPorId      String
+  creadoPor        Usuario       @relation("CotProvCreadaPor", fields: [creadoPorId], references: [id])
+  createdAt        DateTime      @default(now())
+
+  items         CotizacionProveedorItem[]
+  ordenesCompra OrdenCompra[]
+
+  @@unique([numero, anio])
+}
+
+model CotizacionProveedorItem {
+  id                    String              @id @default(cuid())
+  cotizacionProveedorId String
+  cotizacionProveedor   CotizacionProveedor @relation(fields: [cotizacionProveedorId], references: [id], onDelete: Cascade)
+  descripcion           String
+  cantidad              Float
+  unidad                String
+  precioUnitario        Float
+  subtotal              Float
+  orden                 Int                 @default(0)
+}
+
+model OrdenCompra {
+  id                         String               @id @default(cuid())
+  numero                     Int
+  anio                       Int
+  requerimientoId            String
+  requerimiento              Requerimiento        @relation(fields: [requerimientoId], references: [id])
+  cotizacionProveedorId      String?
+  cotizacionProveedor        CotizacionProveedor? @relation(fields: [cotizacionProveedorId], references: [id])
+  proveedorId                String
+  proveedor                  Proveedor            @relation(fields: [proveedorId], references: [id])
+  moneda                     String               @default("PEN")
+  subtotal                   Float                @default(0)
+  igv                        Float                @default(0)
+  total                      Float                @default(0)
+  condicionesPago            String?
+  lugarEntrega               String?
+  fechaEntregaEstimada       DateTime?
+  estado                     String               @default("EMITIDA")
+  observaciones              String?
+  archivoPdfUrl              String?
+  fechaConfirmacionProveedor DateTime?
+  emitidoPorId               String
+  emitidoPor                 Usuario              @relation("OCEmitidaPor", fields: [emitidoPorId], references: [id])
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+
+  items       OrdenCompraItem[]
+  recepciones Recepcion[]
+  facturas    Factura[]
+
+  @@unique([numero, anio])
+}
+
+model OrdenCompraItem {
+  id               String      @id @default(cuid())
+  ordenCompraId    String
+  ordenCompra      OrdenCompra @relation(fields: [ordenCompraId], references: [id], onDelete: Cascade)
+  descripcion      String
+  cantidad         Float
+  cantidadRecibida Float       @default(0)
+  unidad           String
+  precioUnitario   Float
+  subtotal         Float
+  orden            Int         @default(0)
+}
+
+model Recepcion {
+  id                   String      @id @default(cuid())
+  numero               Int
+  anio                 Int
+  ordenCompraId        String
+  ordenCompra          OrdenCompra @relation(fields: [ordenCompraId], references: [id])
+  fechaRecepcion       DateTime    @default(now())
+  recibidoPorId        String
+  recibidoPor          Usuario     @relation("RecepcionPor", fields: [recibidoPorId], references: [id])
+  estado               String      @default("PENDIENTE")
+  observaciones        String?
+  entregadoAlAreaFecha DateTime?
+  entregadoAlAreaPor   String?
+  conformeArea         Boolean?
+  observacionesArea    String?
+  documentoUrl         String?
+
+  items        RecepcionItem[]
+  devoluciones Devolucion[]
+
+  @@unique([numero, anio])
+}
+
+model RecepcionItem {
+  id               String    @id @default(cuid())
+  recepcionId      String
+  recepcion        Recepcion @relation(fields: [recepcionId], references: [id], onDelete: Cascade)
+  descripcion      String
+  cantidadEsperada Float
+  cantidadRecibida Float
+  unidad           String
+  conforme         Boolean   @default(true)
+  observacion      String?
+}
+
+model Devolucion {
+  id              String     @id @default(cuid())
+  numero          Int
+  anio            Int
+  recepcionId     String
+  recepcion       Recepcion  @relation(fields: [recepcionId], references: [id])
+  tipo            String     @default("TOTAL")
+  motivo          String
+  fechaDevolucion DateTime   @default(now())
+  gestionadoPorId String
+  gestionadoPor   Usuario    @relation("DevolucionPor", fields: [gestionadoPorId], references: [id])
+  documentoUrl    String?
+  estado          String     @default("PENDIENTE")
+
+  items DevolucionItem[]
+
+  @@unique([numero, anio])
+}
+
+model DevolucionItem {
+  id           String     @id @default(cuid())
+  devolucionId String
+  devolucion   Devolucion @relation(fields: [devolucionId], references: [id], onDelete: Cascade)
+  descripcion  String
+  cantidad     Float
+  unidad       String
+  motivo       String?
+}
+
+model Factura {
+  id               String      @id @default(cuid())
+  serie            String?
+  numero           String
+  ordenCompraId    String
+  ordenCompra      OrdenCompra @relation(fields: [ordenCompraId], references: [id])
+  moneda           String      @default("PEN")
+  subtotal         Float
+  igv              Float
+  total            Float
+  fechaEmision     DateTime
+  fechaVencimiento DateTime?
+  estado           String      @default("REGISTRADA")
+  archivoUrl       String?
+  registradoPorId  String
+  registradoPor    Usuario     @relation("FacturaPor", fields: [registradoPorId], references: [id])
+  createdAt        DateTime    @default(now())
+
+  provision ProvisionPago?
+}
+
+model ProvisionPago {
+  id              String   @id @default(cuid())
+  facturaId       String   @unique
+  factura         Factura  @relation(fields: [facturaId], references: [id])
+  monto           Float
+  concepto        String?
+  condicionPago   String   @default("CREDITO_30")
+  aprobadoPorId   String
+  aprobadoPor     Usuario  @relation("ProvisionPor", fields: [aprobadoPorId], references: [id])
+  fechaAprobacion DateTime @default(now())
+  observaciones   String?
+
+  pago Pago?
+}
+
+model Pago {
+  id                  String        @id @default(cuid())
+  numero              Int
+  anio                Int
+  provisionId         String        @unique
+  provision           ProvisionPago @relation(fields: [provisionId], references: [id])
+  monto               Float
+  moneda              String        @default("PEN")
+  medioPago           String        @default("TRANSFERENCIA")
+  fechaPago           DateTime
+  referencia          String?
+  estado              String        @default("PENDIENTE")
+  aprobadoPorId       String
+  aprobadoPor         Usuario       @relation("PagoPor", fields: [aprobadoPorId], references: [id])
+  confirmadoProveedor Boolean       @default(false)
+  fechaConfirmacion   DateTime?
+  voucherUrl          String?
+  createdAt           DateTime      @default(now())
 
   @@unique([numero, anio])
 }

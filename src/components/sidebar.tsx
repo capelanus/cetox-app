@@ -19,6 +19,12 @@ import {
   TableProperties,
   Microscope,
   Trash2,
+  ShoppingCart,
+  PackageCheck,
+  RotateCcw,
+  Receipt,
+  CreditCard,
+  Building2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -46,13 +52,35 @@ const allNavItems = [
   { href: '/resumen',                   label: 'Resumen',           icon: TableProperties, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
 ]
 
+const operacionesNavItems = [
+  { href: '/operaciones',                           label: 'Panel Operaciones',  icon: LayoutDashboard, roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/requerimientos',            label: 'Requerimientos',     icon: ClipboardList,   roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/proveedores',               label: 'Proveedores',        icon: Building2,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/cotizaciones-proveedor',    label: 'Cotiz. Proveedor',   icon: FileText,        roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/ordenes-compra',            label: 'Órdenes de Compra',  icon: ShoppingCart,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/recepciones',               label: 'Recepciones',        icon: PackageCheck,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/devoluciones',              label: 'Devoluciones',       icon: RotateCcw,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/facturas',                  label: 'Facturas',           icon: Receipt,         roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/pagos',                     label: 'Gestión de Pagos',   icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
+]
+
 /* ─── Sidebar Cetox ──────────────────────────────────────────────────────── */
 
 export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
-  const navItems = userRol === 'SUPER_ADMIN'
-    ? allNavItems
-    : allNavItems.filter(item => item.roles.includes(userRol))
+
+  let navItems: typeof allNavItems
+  if (userRol === 'SUPER_ADMIN') {
+    navItems = [...allNavItems, ...operacionesNavItems]
+  } else if (userRol === 'JEFE_OPERACIONES' || userRol === 'ASISTENTE_LOGISTICA') {
+    navItems = operacionesNavItems.filter(item => item.roles.includes(userRol))
+  } else if (userRol === 'DIRECTOR_CALIDAD') {
+    const mainItems = allNavItems.filter(item => item.roles.includes(userRol))
+    const opItems = operacionesNavItems.filter(item => item.roles.includes(userRol))
+    navItems = [...mainItems, ...opItems]
+  } else {
+    navItems = allNavItems.filter(item => item.roles.includes(userRol))
+  }
 
   return (
     <aside

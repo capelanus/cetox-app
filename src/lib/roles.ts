@@ -2,17 +2,25 @@ import { auth } from './auth'
 import { prisma } from './prisma'
 import { redirect } from 'next/navigation'
 
-export type Rol = 'GERENTE_TECNICO' | 'DIRECTOR_CALIDAD' | 'ADMINISTRACION' | 'ANALISTA' | 'SUPER_ADMIN'
+export type Rol =
+  | 'GERENTE_TECNICO'
+  | 'DIRECTOR_CALIDAD'
+  | 'ADMINISTRACION'
+  | 'ANALISTA'
+  | 'SUPER_ADMIN'
+  | 'JEFE_OPERACIONES'
+  | 'ASISTENTE_LOGISTICA'
 
 export async function requireRol(roles: Rol[]) {
   const session = await auth()
   if (!session) redirect('/login')
   if (session.user.rol === 'SUPER_ADMIN') return session
   if (!roles.includes(session.user.rol as Rol)) {
-    redirect(session.user.rol === 'ANALISTA' ? '/oda' : '/dashboard')
+    const rol = session.user.rol
+    if (rol === 'ANALISTA') redirect('/oda')
+    if (rol === 'JEFE_OPERACIONES' || rol === 'ASISTENTE_LOGISTICA') redirect('/operaciones')
+    redirect('/dashboard')
   }
-  // Resolve the real DB user ID by email — the JWT-stored id can go stale
-  // if the database is reseeded while a session is still active.
   const email = session.user.email
   if (email) {
     const dbUser = await prisma.usuario.findUnique({ where: { email }, select: { id: true } })
@@ -23,6 +31,10 @@ export async function requireRol(roles: Rol[]) {
 
 export async function requireNotAnalista() {
   return requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
+}
+
+export async function requireOperaciones() {
+  return requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
 }
 
 export async function getSession() {

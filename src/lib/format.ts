@@ -33,3 +33,27 @@ export function formatNumODA(numero: number, anio: number): string {
 export function formatNumInforme(prefijo: string, numero: number, anio: number): string {
   return `${prefijo}-${numero}-${anio}`
 }
+
+export function formatNumRequerimiento(numero: number, anio: number): string {
+  return `REQ-${String(numero).padStart(4, '0')}-${anio}`
+}
+
+export function formatNumCotizacionProveedor(numero: number, anio: number): string {
+  return `COTP-${String(numero).padStart(4, '0')}-${anio}`
+}
+
+export function formatNumOrdenCompra(numero: number, anio: number): string {
+  return `OC-${String(numero).padStart(4, '0')}-${anio}`
+}
+
+export function formatNumRecepcion(numero: number, anio: number): string {
+  return `REC-${String(numero).padStart(4, '0')}-${anio}`
+}
+
+export function formatNumDevolucion(numero: number, anio: number): string {
+  return `DEV-${String(numero).padStart(4, '0')}-${anio}`
+}
+
+export function formatNumPago(numero: number, anio: number): string {
+  return `PAG-${String(numero).padStart(4, '0')}-${anio}`
+}

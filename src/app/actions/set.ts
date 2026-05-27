@@ -82,13 +82,21 @@ export async function generarODAs(setId: string) {
 
   const anio = new Date().getFullYear()
   const cot = set.cotizacion
-  if (!cot) throw new Error('Este SET no tiene cotización asociada. Las ODAs ya fueron generadas al crearlo.')
+  if (!cot) throw new Error('Este SET no tiene cotización asociada.')
 
-  const sourceItems = cot.muestras.length > 0
-    ? cot.muestras.flatMap((m) => m.items)
-    : cot.items
+  // Si el SET tiene muestraId, usar solo los ensayos de esa muestra
+  // Si no, usar todos los items de la cotización (cotizaciones sin muestras)
+  let sourceItems
+  if (set.muestraId) {
+    const muestra = cot.muestras.find((m) => m.id === set.muestraId)
+    sourceItems = muestra?.items ?? []
+  } else if (cot.muestras.length > 0) {
+    // Compatibilidad: SET sin muestraId pero cotización con muestras → todos los items
+    sourceItems = cot.muestras.flatMap((m) => m.items)
+  } else {
+    sourceItems = cot.items
+  }
 
-  // One ODA per ensayo item
   for (const item of sourceItems) {
     const numero = await siguienteCorrelativo('oda', anio)
     const fechaEntregaCompromiso = addDays(set.fechaIngreso, item.tiempoEntregaDias)
@@ -116,6 +124,85 @@ export async function generarODAs(setId: string) {
   revalidatePath('/set')
   revalidatePath(`/set/${setId}`)
   revalidatePath('/oda')
+}
+
+// Helper para construir datos de SET a partir de FormData (prefijados o no)
+function buildSETData(fd: FormData, prefix = '') {
+  const g = (k: string) => (fd.get(`${prefix}${k}`) as string) || null
+  return {
+    nombreComercial: g('nombreComercial'),
+    ingredienteActivo: g('ingredienteActivo'),
+    formulacion: g('formulacion'),
+    numeroLote: g('numeroLote'),
+    fechaFabricacion: g('fechaFabricacion') ? new Date(g('fechaFabricacion')!) : null,
+    fechaVencimiento: g('fechaVencimiento') ? new Date(g('fechaVencimiento')!) : null,
+    pesoVolumen: g('pesoVolumen'),
+    tipoMuestra: g('tipoMuestra'),
+    observaciones: g('observaciones'),
+    nombrePaciente: g('nombrePaciente'),
+    edadPaciente: g('edadPaciente'),
+    ingresoMuestra: g('ingresoMuestra'),
+    ingresoMuestraOtro: g('ingresoMuestraOtro'),
+    numeroMuestras: g('numeroMuestras'),
+    devolucionMuestra: g('devolucionMuestra'),
+    condicionesAmbientales: g('condicionesAmbientales'),
+    procedenciaDescripcion: g('procedenciaDescripcion'),
+    otraIndicacion: g('otraIndicacion'),
+    tipoEnvase: g('tipoEnvase'),
+    materialEnvase: g('materialEnvase'),
+    etiquetaEnvase: g('etiquetaEnvase'),
+    seguridadEnvase: g('seguridadEnvase'),
+  }
+}
+
+/**
+ * Crea un SET por cada muestra de la cotización.
+ * FormData contiene campos prefijados por índice: "0_nombreComercial", "1_nombreComercial", etc.
+ * y campos compartidos: "fechaIngreso", "cotizacionId", "muestraIds" (JSON array)
+ */
+export async function crearSETsFromMuestras(formData: FormData) {
+  const session = await requireRol(['ADMINISTRACION'])
+  const cotizacionId = formData.get('cotizacionId') as string
+  const muestraIdsJson = formData.get('muestraIds') as string
+  const muestraIds: string[] = JSON.parse(muestraIdsJson)
+
+  const cot = await prisma.cotizacion.findUniqueOrThrow({
+    where: { id: cotizacionId },
+    select: { clienteId: true, estado: true },
+  })
+  if (cot.estado !== 'ACEPTADA') throw new Error('La cotización debe estar aceptada')
+
+  const anio = new Date().getFullYear()
+  const fechaIngresoRaw = formData.get('fechaIngreso') as string
+  const fechaIngreso = fechaIngresoRaw ? new Date(fechaIngresoRaw) : new Date()
+
+  const setIds: string[] = []
+
+  for (let i = 0; i < muestraIds.length; i++) {
+    const muestraId = muestraIds[i]
+    const numero = await siguienteCorrelativo('set', anio)
+    const codigoMuestra = `MU-${anio}-${String(numero).padStart(4, '0')}`
+
+    const set = await prisma.sET.create({
+      data: {
+        numero,
+        anio,
+        cotizacionId,
+        muestraId,
+        clienteId: cot.clienteId,
+        codigoMuestra,
+        fechaIngreso,
+        creadoPorId: session.user.id,
+        ...buildSETData(formData, `${i}_`),
+      },
+    })
+    setIds.push(set.id)
+  }
+
+  revalidatePath('/set')
+  revalidatePath(`/cotizaciones/${cotizacionId}`)
+  // Redirigir al primer SET si solo hay uno, a la lista si son varios
+  redirect(setIds.length === 1 ? `/set/${setIds[0]}` : '/set')
 }
 
 export async function crearSETCero(formData: FormData) {

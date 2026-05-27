@@ -115,6 +115,7 @@ model CotizacionMuestra {
   nombre       String
   orden        Int              @default(0)
   items        CotizacionItem[]
+  sets         SET[]
 }
 
 model CotizacionItem {
@@ -135,6 +136,8 @@ model SET {
   anio              Int
   cotizacionId      String?
   cotizacion        Cotizacion? @relation(fields: [cotizacionId], references: [id])
+  muestraId         String?
+  muestra           CotizacionMuestra? @relation(fields: [muestraId], references: [id])
   clienteId         String
   cliente           Cliente    @relation(fields: [clienteId], references: [id])
   motivoCero        String?

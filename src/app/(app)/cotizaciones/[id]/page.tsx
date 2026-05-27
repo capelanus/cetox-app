@@ -341,14 +341,18 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
           )}
           {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.sets.length === 0 && (
             <Link href={`/set/nuevo?cotizacionId=${cot.id}`}>
-              <Button style={{ backgroundColor: '#1F4E79' }}>Generar SET</Button>
+              <Button style={{ backgroundColor: '#1F4E79' }}>
+                {cot.muestras.length > 0
+                  ? `Generar ${cot.muestras.length} SET${cot.muestras.length !== 1 ? 's' : ''}`
+                  : 'Generar SET'}
+              </Button>
             </Link>
           )}
           {cot.sets.length > 0 && (
-            <div className="flex gap-2 items-center text-sm text-slate-600">
-              <span>SET generado:</span>
+            <div className="flex flex-wrap gap-2 items-center text-sm text-slate-600">
+              <span>{cot.sets.length === 1 ? 'SET generado:' : 'SETs generados:'}</span>
               {cot.sets.map((s) => (
-                <Link key={s.id} href={`/set/${s.id}`} className="text-blue-600 hover:underline">
+                <Link key={s.id} href={`/set/${s.id}`} className="text-blue-600 hover:underline font-mono text-xs">
                   SET-{String(s.numero).padStart(4, '0')}-{s.anio}
                 </Link>
               ))}

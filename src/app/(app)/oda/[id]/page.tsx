@@ -50,7 +50,14 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
     { label: 'N° de muestras', value: set.numeroMuestras?.toString() },
     { label: 'Peso / Volumen', value: set.pesoVolumen },
     { label: 'Código de muestra', value: set.codigoMuestra },
-    { label: 'Otra indicación', value: set.otraIndicacion },
+    // Indicación específica para el área de esta ODA (nuevo); fallback al campo único legacy
+    {
+      label: 'Otra indicación',
+      value: oda.area === 'Q' ? (set.otraIndicacionQ ?? set.otraIndicacion)
+           : oda.area === 'B' ? (set.otraIndicacionB ?? set.otraIndicacion)
+           : oda.area === 'M' ? (set.otraIndicacionM ?? set.otraIndicacion)
+           : set.otraIndicacion,
+    },
   ]
 
   return (

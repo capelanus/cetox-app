@@ -22,6 +22,7 @@ export default async function NuevoSETPage({
     where: { id: cotizacionId },
     include: {
       cliente: true,
+      items: { include: { ensayo: true } },
       muestras: {
         include: {
           items: { include: { ensayo: true } },
@@ -34,6 +35,9 @@ export default async function NuevoSETPage({
 
   const numCotizacion = formatNumCotizacion(cot.numero, cot.anio, cot.sufijo)
   const tieneMuestras = cot.muestras.length > 0
+
+  // Áreas involucradas en la cotización (para cotizaciones sin muestras)
+  const areasFlat = [...new Set(cot.items.map((i) => i.ensayo.area))].sort()
 
   return (
     <div className="max-w-2xl">
@@ -74,6 +78,7 @@ export default async function NuevoSETPage({
         <SetForm
           cotizacionId={cotizacionId}
           numCotizacion={numCotizacion}
+          areas={areasFlat}
           cliente={{
             razonSocial: cot.cliente.razonSocial,
             ruc: cot.cliente.ruc,

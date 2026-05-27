@@ -28,6 +28,9 @@ export default async function EditarSETPage({ params }: { params: Promise<{ id: 
   })
   if (!set) notFound()
 
+  // Áreas únicas de las ODAs del SET
+  const areas = [...new Set(set.odas.map((o) => o.area))].sort()
+
   return (
     <div className="max-w-3xl space-y-5">
       {/* Header */}
@@ -46,7 +49,7 @@ export default async function EditarSETPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Formulario SET (muestra + envase) */}
-      <SetEditarForm set={set} />
+      <SetEditarForm set={set} areas={areas} />
 
       {/* ODAs */}
       {set.odas.length > 0 && (

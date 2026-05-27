@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { actualizarSET } from '@/app/actions/set'
 import { useRouter } from 'next/navigation'
+import { OtraIndicacionFields } from '@/components/forms/otra-indicacion-fields'
 
 interface SETData {
   id: string
@@ -28,6 +29,9 @@ interface SETData {
   condicionesAmbientales: string | null
   procedenciaDescripcion: string | null
   otraIndicacion: string | null
+  otraIndicacionQ: string | null
+  otraIndicacionB: string | null
+  otraIndicacionM: string | null
   tipoEnvase: string | null
   materialEnvase: string | null
   etiquetaEnvase: string | null
@@ -36,6 +40,8 @@ interface SETData {
 
 interface Props {
   set: SETData
+  /** Áreas de laboratorio con ODAs asignadas a este SET */
+  areas: string[]
 }
 
 const TIPO_ENVASE_OPTIONS = ['Envase original', 'Envase simple', 'Trasvasado', 'Ampolla', 'Bidón', 'Bolsa', 'Botella', 'Caja', 'Otro']
@@ -48,7 +54,7 @@ function toDateInput(d: Date | null | undefined): string {
   return new Date(d).toISOString().split('T')[0]
 }
 
-export function SetEditarForm({ set }: Props) {
+export function SetEditarForm({ set, areas }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -189,15 +195,26 @@ export function SetEditarForm({ set }: Props) {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
             />
           </div>
-          <div className="col-span-2 space-y-2">
-            <Label>Otra indicación</Label>
-            <textarea
-              name="otraIndicacion"
-              rows={2}
-              defaultValue={set.otraIndicacion ?? ''}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
+          {areas.length > 0 ? (
+            <OtraIndicacionFields
+              areas={areas}
+              defaultValues={{
+                Q: set.otraIndicacionQ,
+                B: set.otraIndicacionB,
+                M: set.otraIndicacionM,
+              }}
             />
-          </div>
+          ) : (
+            <div className="col-span-2 space-y-2">
+              <Label>Otra indicación</Label>
+              <textarea
+                name="otraIndicacion"
+                rows={2}
+                defaultValue={set.otraIndicacion ?? ''}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
+              />
+            </div>
+          )}
         </div>
       </div>
 

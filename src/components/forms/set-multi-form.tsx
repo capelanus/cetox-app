@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { crearSETsFromMuestras } from '@/app/actions/set'
 import { ChevronDown, ChevronUp, Package } from 'lucide-react'
+import { OtraIndicacionFields } from './otra-indicacion-fields'
 
 interface Muestra {
   id: string
@@ -35,6 +36,7 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
   const [open, setOpen] = useState(index === 0)
   const [ingresoMuestra, setIngresoMuestra] = useState('')
   const [tipoEnvase, setTipoEnvase] = useState('')
+  const areas = [...new Set(muestra.items.map((i) => i.ensayo.area))].sort()
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
@@ -171,14 +173,18 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[56px]"
                 />
               </div>
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-xs">Otra indicación</Label>
-                <textarea
-                  name={`${prefix}otraIndicacion`}
-                  rows={2}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[56px]"
-                />
-              </div>
+              {areas.length > 0 ? (
+                <OtraIndicacionFields areas={areas} prefix={prefix} labelSize="xs" />
+              ) : (
+                <div className="col-span-2 space-y-1.5">
+                  <Label className="text-xs">Otra indicación</Label>
+                  <textarea
+                    name={`${prefix}otraIndicacion`}
+                    rows={2}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[56px]"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

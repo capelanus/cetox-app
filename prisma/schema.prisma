@@ -166,7 +166,10 @@ model SET {
   devolucionMuestra      String?
   condicionesAmbientales String?
   procedenciaDescripcion String?
-  otraIndicacion         String?
+  otraIndicacion         String?  // legacy — campo único anterior
+  otraIndicacionQ        String?  // Química
+  otraIndicacionB        String?  // Biología
+  otraIndicacionM        String?  // Microbiología
   tipoEnvase             String?
   materialEnvase         String?
   etiquetaEnvase         String?

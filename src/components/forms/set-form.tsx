@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { crearSET } from '@/app/actions/set'
+import { OtraIndicacionFields } from './otra-indicacion-fields'
 
 interface ContactoCotizacion {
   contactoNombre: string | null
@@ -23,6 +24,8 @@ interface Props {
   cliente: ClienteInfo
   contacto: ContactoCotizacion
   numCotizacion: string
+  /** Áreas de laboratorio involucradas en esta cotización, p. ej. ['Q','B'] */
+  areas?: string[]
 }
 
 const TIPO_ENVASE_OPTIONS = ['Envase original', 'Envase simple', 'Trasvasado', 'Ampolla', 'Bidón', 'Bolsa', 'Botella', 'Caja', 'Otro']
@@ -63,7 +66,7 @@ function OtroSelect({
   )
 }
 
-export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Props) {
+export function SetForm({ cotizacionId, cliente, contacto, numCotizacion, areas = [] }: Props) {
   const [ingresoMuestra, setIngresoMuestra] = useState('')
   const [tipoEnvase, setTipoEnvase] = useState('')
   const [loading, setLoading] = useState(false)
@@ -231,14 +234,18 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion }: Prop
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
             />
           </div>
-          <div className="col-span-2 space-y-2">
-            <Label>Otra indicación</Label>
-            <textarea
-              name="otraIndicacion"
-              rows={2}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
-            />
-          </div>
+          {areas.length > 0 ? (
+            <OtraIndicacionFields areas={areas} />
+          ) : (
+            <div className="col-span-2 space-y-2">
+              <Label>Otra indicación</Label>
+              <textarea
+                name="otraIndicacion"
+                rows={2}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
+              />
+            </div>
+          )}
         </div>
       </div>
 

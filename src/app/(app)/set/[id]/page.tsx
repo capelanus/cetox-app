@@ -141,7 +141,14 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
           <InfoRow label="Devolución de muestra sobrante" value={set.devolucionMuestra} />
           <InfoRow label="Condiciones ambientales" value={set.condicionesAmbientales} />
           <InfoRow label="Procedencia / Descripción" value={set.procedenciaDescripcion} />
-          <InfoRow label="Otra indicación" value={set.otraIndicacion} />
+          {/* Indicaciones por área (nuevo) */}
+          {set.otraIndicacionQ && <InfoRow label="Indicaciones — Química" value={set.otraIndicacionQ} />}
+          {set.otraIndicacionB && <InfoRow label="Indicaciones — Biología" value={set.otraIndicacionB} />}
+          {set.otraIndicacionM && <InfoRow label="Indicaciones — Microbiología" value={set.otraIndicacionM} />}
+          {/* Legacy: campo único anterior */}
+          {!set.otraIndicacionQ && !set.otraIndicacionB && !set.otraIndicacionM && (
+            <InfoRow label="Otra indicación" value={set.otraIndicacion} />
+          )}
           {set.observaciones && (
             <div className="col-span-2">
               <p className="text-slate-500 text-xs">Observaciones</p>

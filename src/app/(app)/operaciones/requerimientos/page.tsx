@@ -40,25 +40,48 @@ export default async function RequerimientosPage() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {reqs.map(req => (
-              <tr key={req.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <Link href={`/operaciones/requerimientos/${req.id}`} className="font-mono text-[#13602C] font-medium hover:underline">
+              <tr key={req.id} className="hover:bg-gray-50 cursor-pointer relative">
+                {/* Link invisible que cubre toda la fila */}
+                <td className="px-4 py-3 relative">
+                  <Link
+                    href={`/operaciones/requerimientos/${req.id}`}
+                    className="absolute inset-0"
+                    aria-label={`Ver requerimiento ${formatNumRequerimiento(req.numero, req.anio)}`}
+                  />
+                  <span className="font-mono text-[#13602C] font-medium relative z-10">
                     {formatNumRequerimiento(req.numero, req.anio)}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-gray-600">{AREA_SOLICITANTE_LABELS[req.areaSolicitante] || req.areaSolicitante}</td>
-                <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">{req.descripcion}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${req.urgencia === 'MUY_URGENTE' ? 'bg-red-100 text-red-700' : req.urgencia === 'URGENTE' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
-                    {req.urgencia}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                <td className="px-4 py-3 text-gray-600 relative">
+                  <Link href={`/operaciones/requerimientos/${req.id}`} className="absolute inset-0" tabIndex={-1} />
+                  {AREA_SOLICITANTE_LABELS[req.areaSolicitante] || req.areaSolicitante}
+                </td>
+                <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate relative">
+                  <Link href={`/operaciones/requerimientos/${req.id}`} className="absolute inset-0" tabIndex={-1} />
+                  {req.descripcion}
+                </td>
+                <td className="px-4 py-3 relative">
+                  <Link href={`/operaciones/requerimientos/${req.id}`} className="absolute inset-0" tabIndex={-1} />
+                  <span className={`text-xs px-2 py-0.5 rounded-full relative z-10 ${req.urgencia === 'MUY_URGENTE' ? 'bg-red-100 text-red-700' : req.urgencia === 'URGENTE' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {req.urgencia === 'MUY_URGENTE' ? 'Muy urgente' : req.urgencia === 'URGENTE' ? 'Urgente' : 'Normal'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 relative">
+                  <Link href={`/operaciones/requerimientos/${req.id}`} className="absolute inset-0" tabIndex={-1} />
+                  <span className={`text-xs px-2 py-0.5 rounded-full relative z-10 ${
+                    req.estado === 'CERRADO'           ? 'bg-green-100 text-green-700' :
+                    req.estado === 'CANCELADO'         ? 'bg-red-100 text-red-700' :
+                    req.estado === 'EN_COTIZACION'     ? 'bg-blue-50 text-blue-700' :
+                    req.estado === 'OC_EMITIDA'        ? 'bg-purple-100 text-purple-700' :
+                                                         'bg-gray-100 text-gray-600'
+                  }`}>
                     {ESTADO_REQUERIMIENTO_LABELS[req.estado] || req.estado}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-gray-500">{formatFecha(req.createdAt)}</td>
+                <td className="px-4 py-3 text-gray-500 relative">
+                  <Link href={`/operaciones/requerimientos/${req.id}`} className="absolute inset-0" tabIndex={-1} />
+                  {formatFecha(req.createdAt)}
+                </td>
               </tr>
             ))}
             {reqs.length === 0 && (

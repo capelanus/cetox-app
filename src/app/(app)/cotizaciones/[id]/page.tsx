@@ -248,9 +248,12 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             <div className="space-y-4">
               {cot.muestras.map((muestra, idx) => (
                 <div key={muestra.id}>
-                  <p className="text-sm font-medium text-slate-600 mb-1 whitespace-pre-wrap">
-                    Muestra {idx + 1}{muestra.nombre ? `: ${muestra.nombre}` : ''}
-                  </p>
+                  <div className="flex gap-1.5 text-sm font-medium text-slate-600 mb-1">
+                    <span className="shrink-0">Muestra {idx + 1}{muestra.nombre ? ':' : ''}</span>
+                    {muestra.nombre && (
+                      <span className="whitespace-pre-wrap">{muestra.nombre}</span>
+                    )}
+                  </div>
                   <table className="w-full text-sm border rounded-lg overflow-hidden">
                     <thead className="bg-slate-50">
                       <tr>

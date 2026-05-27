@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Pencil } from 'lucide-react'
 import { SetPdfButton } from '@/components/set-pdf-button'
 import { formatFecha, formatNumSET, formatNumODA, formatMoneda } from '@/lib/format'
 import { generarODAs } from '@/app/actions/set'
@@ -55,6 +55,7 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
 
   const rol = session?.user.rol ?? ''
   const puedoGenerarODAs = hasRol(rol, 'ADMINISTRACION') && set.estado === 'EMITIDA' && set.odas.length === 0 && !!set.cotizacion
+  const puedoEditar = hasRol(rol, 'ADMINISTRACION')
   const generateAction = generarODAs.bind(null, id)
 
   const cot = set.cotizacion
@@ -86,7 +87,16 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
             $0 · {set.motivoCero === 'REENSAYO' ? 'Reensayo' : set.motivoCero === 'INGRESOS_INTERNOS' ? 'Interno' : 'Modificación sin costo'}
           </span>
         )}
-        <span className="ml-auto font-mono text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{set.codigoMuestra}</span>
+        <div className="ml-auto flex items-center gap-2">
+          {puedoEditar && (
+            <Link href={`/set/${id}/editar`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="h-3.5 w-3.5 mr-1.5" />Editar
+              </Button>
+            </Link>
+          )}
+          <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{set.codigoMuestra}</span>
+        </div>
       </div>
 
       {/* 1. Datos del cliente y contacto */}

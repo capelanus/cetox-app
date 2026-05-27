@@ -219,3 +219,40 @@ export async function cambiarEstadoSET(setId: string, estado: string) {
   revalidatePath(`/set/${setId}`)
   revalidatePath('/set')
 }
+
+export async function actualizarSET(setId: string, formData: FormData) {
+  await requireRol(['ADMINISTRACION'])
+
+  await prisma.sET.update({
+    where: { id: setId },
+    data: {
+      fechaIngreso: formData.get('fechaIngreso') ? new Date(formData.get('fechaIngreso') as string) : undefined,
+      nombreComercial: (formData.get('nombreComercial') as string) || null,
+      ingredienteActivo: (formData.get('ingredienteActivo') as string) || null,
+      formulacion: (formData.get('formulacion') as string) || null,
+      numeroLote: (formData.get('numeroLote') as string) || null,
+      fechaFabricacion: formData.get('fechaFabricacion') ? new Date(formData.get('fechaFabricacion') as string) : null,
+      fechaVencimiento: formData.get('fechaVencimiento') ? new Date(formData.get('fechaVencimiento') as string) : null,
+      pesoVolumen: (formData.get('pesoVolumen') as string) || null,
+      tipoMuestra: (formData.get('tipoMuestra') as string) || null,
+      observaciones: (formData.get('observaciones') as string) || null,
+      nombrePaciente: (formData.get('nombrePaciente') as string) || null,
+      edadPaciente: (formData.get('edadPaciente') as string) || null,
+      ingresoMuestra: (formData.get('ingresoMuestra') as string) || null,
+      ingresoMuestraOtro: (formData.get('ingresoMuestraOtro') as string) || null,
+      numeroMuestras: (formData.get('numeroMuestras') as string) || null,
+      devolucionMuestra: (formData.get('devolucionMuestra') as string) || null,
+      condicionesAmbientales: (formData.get('condicionesAmbientales') as string) || null,
+      procedenciaDescripcion: (formData.get('procedenciaDescripcion') as string) || null,
+      otraIndicacion: (formData.get('otraIndicacion') as string) || null,
+      tipoEnvase: (formData.get('tipoEnvase') as string) || null,
+      materialEnvase: (formData.get('materialEnvase') as string) || null,
+      etiquetaEnvase: (formData.get('etiquetaEnvase') as string) || null,
+      seguridadEnvase: (formData.get('seguridadEnvase') as string) || null,
+    },
+  })
+
+  revalidatePath(`/set/${setId}`)
+  revalidatePath('/set')
+  redirect(`/set/${setId}`)
+}

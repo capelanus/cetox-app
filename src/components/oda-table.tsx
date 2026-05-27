@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { formatFecha, formatNumODA } from '@/lib/format'
 
@@ -38,6 +38,7 @@ interface Props {
 }
 
 export function ODATable({ odas, userArea, isAnalista }: Props) {
+  const router = useRouter()
   const [filtroArea, setFiltroArea] = useState(userArea ?? '')
   const [filtroEstado, setFiltroEstado] = useState('')
 
@@ -95,12 +96,15 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
               {!isAnalista && <th className="text-left px-4 py-3 font-semibold text-slate-600">Cliente</th>}
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Entrega</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Estado</th>
-              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {filtradas.map((o) => (
-              <tr key={o.id} className="hover:bg-slate-50">
+              <tr
+                key={o.id}
+                onClick={() => router.push(`/oda/${o.id}`)}
+                className="hover:bg-slate-50 cursor-pointer transition-colors"
+              >
                 <td className="px-4 py-3 font-mono text-xs font-medium">{formatNumODA(o.numero, o.anio)}</td>
                 <td className="px-4 py-3">
                   <Badge variant="outline">{AREA_LABELS[o.area] ?? o.area}</Badge>
@@ -129,14 +133,11 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
                     {ESTADO_LABELS[o.estado] ?? o.estado}
                   </Badge>
                 </td>
-                <td className="px-4 py-3">
-                  <Link href={`/oda/${o.id}`} className="text-blue-600 hover:underline text-sm">Ver</Link>
-                </td>
               </tr>
             ))}
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">No hay ODAs</td>
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">No hay ODAs</td>
               </tr>
             )}
           </tbody>

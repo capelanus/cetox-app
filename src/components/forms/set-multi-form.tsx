@@ -53,7 +53,7 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
           </div>
           <div>
             <p className="font-semibold text-slate-800">
-              {muestra.nombre || `Muestra ${index + 1}`}
+              {(muestra.nombre || `Muestra ${index + 1}`).split('\n')[0]}
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
               {muestra.items.length} ensayo{muestra.items.length !== 1 ? 's' : ''}: {muestra.items.map(i => i.ensayo.nombre).join(', ')}

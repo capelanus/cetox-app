@@ -248,7 +248,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             <div className="space-y-4">
               {cot.muestras.map((muestra, idx) => (
                 <div key={muestra.id}>
-                  <p className="text-sm font-medium text-slate-600 mb-1">
+                  <p className="text-sm font-medium text-slate-600 mb-1 whitespace-pre-wrap">
                     Muestra {idx + 1}{muestra.nombre ? `: ${muestra.nombre}` : ''}
                   </p>
                   <table className="w-full text-sm border rounded-lg overflow-hidden">

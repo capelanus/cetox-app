@@ -18,6 +18,9 @@ interface MuestraState {
   key: string
   nombre: string
   items: ItemState[]
+  indicacionQ: string
+  indicacionB: string
+  indicacionM: string
   areaFilter: string
   search: string
   dropdownOpen: boolean
@@ -25,6 +28,9 @@ interface MuestraState {
 
 export interface InitialMuestra {
   nombre: string
+  indicacionQ?: string | null
+  indicacionB?: string | null
+  indicacionM?: string | null
   items: { ensayoId: string; costo: number; tiempoEntregaDias: number; ensayo: Ensayo }[]
 }
 
@@ -121,6 +127,9 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
       return initialMuestras.map((m) => ({
         key: newKey(),
         nombre: m.nombre,
+        indicacionQ: m.indicacionQ ?? '',
+        indicacionB: m.indicacionB ?? '',
+        indicacionM: m.indicacionM ?? '',
         areaFilter: '',
         search: '',
         dropdownOpen: false,
@@ -132,7 +141,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
         })),
       }))
     }
-    return [{ key: newKey(), nombre: '', items: [], areaFilter: '', search: '', dropdownOpen: false }]
+    return [{ key: newKey(), nombre: '', items: [], indicacionQ: '', indicacionB: '', indicacionM: '', areaFilter: '', search: '', dropdownOpen: false }]
   })
 
   const stableOnChange = useCallback(onChange ?? (() => {}), []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -147,7 +156,7 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
   }
 
   function addMuestra() {
-    setMuestras((prev) => [...prev, { key: newKey(), nombre: '', items: [], areaFilter: '', search: '', dropdownOpen: false }])
+    setMuestras((prev) => [...prev, { key: newKey(), nombre: '', items: [], indicacionQ: '', indicacionB: '', indicacionM: '', areaFilter: '', search: '', dropdownOpen: false }])
   }
 
   function removeMuestra(key: string) {
@@ -201,6 +210,22 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
           }
           return true
         })
+
+        const areas = [...new Set(
+          muestra.items
+            .map((it) => ensayos.find((e) => e.id === it.ensayoId)?.area)
+            .filter((a): a is string => !!a)
+        )].sort()
+
+        const AREA_STYLES: Record<string, { badge: string; border: string; label: string }> = {
+          Q: { badge: 'bg-blue-100 text-blue-700', border: 'border-blue-200 focus:ring-1 focus:ring-blue-300 focus:border-blue-400', label: 'Química' },
+          B: { badge: 'bg-green-100 text-green-700', border: 'border-green-200 focus:ring-1 focus:ring-green-300 focus:border-green-400', label: 'Biología' },
+          M: { badge: 'bg-purple-100 text-purple-700', border: 'border-purple-200 focus:ring-1 focus:ring-purple-300 focus:border-purple-400', label: 'Microbiología' },
+        }
+
+        const indicacionKey: Record<string, keyof Pick<MuestraState, 'indicacionQ' | 'indicacionB' | 'indicacionM'>> = {
+          Q: 'indicacionQ', B: 'indicacionB', M: 'indicacionM',
+        }
 
         return (
           <div key={muestra.key} className="border rounded-lg p-4 space-y-3 bg-slate-50/50">
@@ -323,6 +348,37 @@ export function MuestraEditor({ moneda, ensayos, initialMuestras, onChange }: Pr
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Indicaciones por laboratorio — aparecen según áreas involucradas */}
+            {areas.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Indicaciones al laboratorio
+                </p>
+                <div className={`grid gap-3 ${areas.length === 3 ? 'grid-cols-3' : areas.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  {areas.map((area) => {
+                    const st = AREA_STYLES[area]
+                    const stateKey = indicacionKey[area]
+                    if (!st || !stateKey) return null
+                    return (
+                      <div key={area} className="space-y-1">
+                        <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${st.badge}`}>
+                          {st.label}
+                        </span>
+                        <textarea
+                          name={`muestras[${mi}][indicacion${area}]`}
+                          value={muestra[stateKey]}
+                          onChange={(e) => update(muestra.key, { [stateKey]: e.target.value })}
+                          rows={3}
+                          placeholder={`Indicaciones para ${st.label}...`}
+                          className={`w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm resize-y min-h-[72px] outline-none ${st.border}`}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>

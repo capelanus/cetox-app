@@ -4,10 +4,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Copy, FilePlus, Pencil, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
-import { cambiarEstadoCotizacion, duplicarCotizacion, nuevaCotizacionDesde } from '@/app/actions/cotizaciones'
-import { DeleteCotizacionButton } from '@/components/delete-cotizacion-button'
+import { cambiarEstadoCotizacion } from '@/app/actions/cotizaciones'
+import { CotizacionActionsMenu } from '@/components/cotizacion-actions-menu'
 import { redirect } from 'next/navigation'
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -85,23 +85,8 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
           {ESTADO_LABELS[cot.estado] ?? cot.estado}
         </Badge>
         {canEdit && (
-          <div className="ml-auto flex gap-2 flex-wrap">
-            <Link href={`/cotizaciones/${id}/editar`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="h-3 w-3 mr-1" />Editar
-              </Button>
-            </Link>
-            <form action={duplicarCotizacion.bind(null, id)}>
-              <Button variant="outline" size="sm" type="submit">
-                <Copy className="h-3 w-3 mr-1" />Duplicar
-              </Button>
-            </form>
-            <form action={nuevaCotizacionDesde.bind(null, id)}>
-              <Button variant="outline" size="sm" type="submit">
-                <FilePlus className="h-3 w-3 mr-1" />Nueva desde esta
-              </Button>
-            </form>
-            <DeleteCotizacionButton
+          <div className="ml-auto">
+            <CotizacionActionsMenu
               id={id}
               hasSets={cot.sets.length > 0}
               numCotizacion={formatNumCotizacion(cot.numero, cot.anio, cot.sufijo)}
@@ -279,6 +264,32 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
                       ))}
                     </tbody>
                   </table>
+
+                  {/* Indicaciones por laboratorio */}
+                  {(muestra.indicacionQ || muestra.indicacionB || muestra.indicacionM) && (() => {
+                    const AREA_STYLES: Record<string, { badge: string; label: string }> = {
+                      Q: { badge: 'bg-blue-100 text-blue-700', label: 'Química' },
+                      B: { badge: 'bg-green-100 text-green-700', label: 'Biología' },
+                      M: { badge: 'bg-purple-100 text-purple-700', label: 'Microbiología' },
+                    }
+                    const indicaciones = [
+                      { area: 'Q', value: muestra.indicacionQ },
+                      { area: 'B', value: muestra.indicacionB },
+                      { area: 'M', value: muestra.indicacionM },
+                    ].filter((i) => i.value)
+                    return (
+                      <div className={`mt-2 grid gap-3 ${indicaciones.length === 3 ? 'grid-cols-3' : indicaciones.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {indicaciones.map(({ area, value }) => (
+                          <div key={area} className="rounded-lg border bg-slate-50 p-3 space-y-1">
+                            <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${AREA_STYLES[area].badge}`}>
+                              {AREA_STYLES[area].label}
+                            </span>
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
                 </div>
               ))}
             </div>

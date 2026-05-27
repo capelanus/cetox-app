@@ -114,6 +114,9 @@ model CotizacionMuestra {
   cotizacion   Cotizacion       @relation(fields: [cotizacionId], references: [id], onDelete: Cascade)
   nombre       String
   orden        Int              @default(0)
+  indicacionQ  String?          // Indicaciones para laboratorio de Química
+  indicacionB  String?          // Indicaciones para laboratorio de Biología
+  indicacionM  String?          // Indicaciones para laboratorio de Microbiología
   items        CotizacionItem[]
   sets         SET[]
 }

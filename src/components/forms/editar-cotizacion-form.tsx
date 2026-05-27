@@ -26,6 +26,9 @@ interface CotizacionData {
   muestras: {
     nombre: string
     orden: number
+    indicacionQ?: string | null
+    indicacionB?: string | null
+    indicacionM?: string | null
     items: { ensayoId: string; costo: number; tiempoEntregaDias: number; ensayo: Ensayo }[]
   }[]
   items: { ensayoId: string; costo: number; tiempoEntregaDias: number; ensayo: Ensayo }[]
@@ -46,7 +49,13 @@ export function EditarCotizacionForm({ cotizacion, clientes, ensayos }: Props) {
     ? cotizacion.muestras
         .slice()
         .sort((a, b) => a.orden - b.orden)
-        .map((m) => ({ nombre: m.nombre, items: m.items }))
+        .map((m) => ({
+          nombre: m.nombre,
+          indicacionQ: m.indicacionQ,
+          indicacionB: m.indicacionB,
+          indicacionM: m.indicacionM,
+          items: m.items,
+        }))
     : cotizacion.items.length > 0
       ? [{ nombre: 'Muestra 1', items: cotizacion.items }]
       : []

@@ -12,6 +12,9 @@ interface Muestra {
   id: string
   nombre: string
   orden: number
+  indicacionQ?: string | null
+  indicacionB?: string | null
+  indicacionM?: string | null
   items: { ensayo: { nombre: string; area: string }; tiempoEntregaDias: number; costo: number }[]
 }
 
@@ -184,7 +187,16 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
                 />
               </div>
               {areas.length > 0 ? (
-                <OtraIndicacionFields areas={areas} prefix={prefix} labelSize="xs" />
+                <OtraIndicacionFields
+                  areas={areas}
+                  prefix={prefix}
+                  labelSize="xs"
+                  defaultValues={{
+                    Q: muestra.indicacionQ,
+                    B: muestra.indicacionB,
+                    M: muestra.indicacionM,
+                  }}
+                />
               ) : (
                 <div className="col-span-2 space-y-1.5">
                   <Label className="text-xs">Otra indicación</Label>

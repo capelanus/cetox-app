@@ -187,6 +187,13 @@ export async function crearSETsFromMuestras(formData: FormData) {
   })
   if (cot.estado !== 'ACEPTADA') throw new Error('La cotización debe estar aceptada')
 
+  // Cargar indicaciones guardadas en cada muestra para pre-llenar el SET
+  const muestrasDB = await prisma.cotizacionMuestra.findMany({
+    where: { id: { in: muestraIds } },
+    select: { id: true, indicacionQ: true, indicacionB: true, indicacionM: true },
+  })
+  const muestraMap = Object.fromEntries(muestrasDB.map((m) => [m.id, m]))
+
   const anio = new Date().getFullYear()
   const fechaIngresoRaw = formData.get('fechaIngreso') as string
   const fechaIngreso = fechaIngresoRaw ? new Date(fechaIngresoRaw) : new Date()
@@ -198,6 +205,14 @@ export async function crearSETsFromMuestras(formData: FormData) {
     const numero = await siguienteCorrelativo('set', anio)
     const codigoMuestra = `MU-${anio}-${String(numero).padStart(4, '0')}`
 
+    const setData = buildSETData(formData, `${i}_`)
+    const muestraDB = muestraMap[muestraId]
+
+    // Si el formulario no tiene indicaciones propias, usar las de la cotizacion
+    if (!setData.otraIndicacionQ && muestraDB?.indicacionQ) setData.otraIndicacionQ = muestraDB.indicacionQ
+    if (!setData.otraIndicacionB && muestraDB?.indicacionB) setData.otraIndicacionB = muestraDB.indicacionB
+    if (!setData.otraIndicacionM && muestraDB?.indicacionM) setData.otraIndicacionM = muestraDB.indicacionM
+
     const set = await prisma.sET.create({
       data: {
         numero,
@@ -208,7 +223,7 @@ export async function crearSETsFromMuestras(formData: FormData) {
         codigoMuestra,
         fechaIngreso,
         creadoPorId: session.user.id,
-        ...buildSETData(formData, `${i}_`),
+        ...setData,
       },
     })
     setIds.push(set.id)

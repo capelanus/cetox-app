@@ -8,7 +8,13 @@ import { redirect } from 'next/navigation'
 import { addDays } from 'date-fns'
 
 interface ItemRaw { ensayoId: string; costo: number; tiempoEntregaDias: number }
-interface MuestraRaw { nombre: string; items: ItemRaw[] }
+interface MuestraRaw {
+  nombre: string
+  indicacionQ: string | null
+  indicacionB: string | null
+  indicacionM: string | null
+  items: ItemRaw[]
+}
 
 function parseMuestras(formData: FormData): MuestraRaw[] {
   const muestras: MuestraRaw[] = []
@@ -24,7 +30,14 @@ function parseMuestras(formData: FormData): MuestraRaw[] {
       })
       ii++
     }
-    muestras.push({ nombre: formData.get(`muestras[${mi}][nombre]`) as string, items })
+    const g = (k: string) => (formData.get(`muestras[${mi}][${k}]`) as string) || null
+    muestras.push({
+      nombre: formData.get(`muestras[${mi}][nombre]`) as string,
+      indicacionQ: g('indicacionQ'),
+      indicacionB: g('indicacionB'),
+      indicacionM: g('indicacionM'),
+      items,
+    })
     mi++
   }
   return muestras
@@ -46,7 +59,14 @@ function parseContacto(formData: FormData) {
 async function crearMuestrasConItems(cotizacionId: string, muestras: MuestraRaw[]) {
   for (const [orden, m] of muestras.entries()) {
     const muestra = await prisma.cotizacionMuestra.create({
-      data: { cotizacionId, nombre: m.nombre, orden },
+      data: {
+        cotizacionId,
+        nombre: m.nombre,
+        orden,
+        indicacionQ: m.indicacionQ,
+        indicacionB: m.indicacionB,
+        indicacionM: m.indicacionM,
+      },
     })
     if (m.items.length > 0) {
       await prisma.cotizacionItem.createMany({
@@ -189,6 +209,9 @@ async function copiarCotizacion(
       nueva.id,
       muestras.map((m) => ({
         nombre: m.nombre,
+        indicacionQ: m.indicacionQ,
+        indicacionB: m.indicacionB,
+        indicacionM: m.indicacionM,
         items: m.items.map((it) => ({
           ensayoId: it.ensayoId,
           costo: it.costo,

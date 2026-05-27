@@ -111,11 +111,11 @@ export default function NuevoRequerimientoPage() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-gray-500 mb-1">Unidad</label>
+                  <label className="block text-xs text-gray-500 mb-1">Unidad <span className="text-gray-400">(opcional)</span></label>
                   <input
                     value={item.unidad}
                     onChange={e => updateItem(i, 'unidad', e.target.value)}
-                    required
+                    placeholder="Unid, kg, L..."
                     className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
                   />
                 </div>

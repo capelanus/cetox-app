@@ -164,11 +164,10 @@ export default function NuevaSolicitudForm({ areaDeducida }: { areaDeducida: str
                   />
                 </div>
                 <div className="col-span-2">
-                  {i === 0 && <label className="block text-xs text-gray-500 mb-1">Unidad</label>}
+                  {i === 0 && <label className="block text-xs text-gray-500 mb-1">Unidad <span className="text-gray-400">(opcional)</span></label>}
                   <input
                     value={item.unidad}
                     onChange={e => updateItem(i, 'unidad', e.target.value)}
-                    required
                     placeholder="Unid, kg, L..."
                     className="w-full border border-gray-300 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
                   />

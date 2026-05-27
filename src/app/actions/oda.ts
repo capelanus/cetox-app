@@ -132,3 +132,45 @@ export async function iniciarEjecucionODA(odaId: string) {
   await prisma.oDA.update({ where: { id: odaId }, data: { estado: 'EN_EJECUCION', fechaInicioEjecucion: new Date() } })
   revalidatePath(`/oda/${odaId}`)
 }
+
+export async function actualizarODA(odaId: string, formData: FormData) {
+  await requireRol(['ADMINISTRACION'])
+
+  const oda = await prisma.oDA.findUniqueOrThrow({
+    where: { id: odaId },
+    include: { items: true },
+  })
+
+  const fechaEntrega = formData.get('fechaEntregaCompromiso') as string
+  const area = formData.get('area') as string
+
+  // Update ODA main fields
+  await prisma.oDA.update({
+    where: { id: odaId },
+    data: {
+      ...(fechaEntrega ? { fechaEntregaCompromiso: new Date(fechaEntrega) } : {}),
+      ...(area ? { area } : {}),
+    },
+  })
+
+  // Update each ODAItem
+  for (const item of oda.items) {
+    const costo = formData.get(`costo_${item.id}`) as string
+    const dias = formData.get(`dias_${item.id}`) as string
+    const fechaItem = formData.get(`fecha_${item.id}`) as string
+
+    await prisma.oDAItem.update({
+      where: { id: item.id },
+      data: {
+        ...(costo !== null && costo !== '' ? { costo: parseFloat(costo) } : {}),
+        ...(dias !== null && dias !== '' ? { tiempoEntregaDias: parseInt(dias) } : {}),
+        ...(fechaItem ? { fechaEntregaCompromiso: new Date(fechaItem) } : {}),
+      },
+    })
+  }
+
+  revalidatePath(`/set/${oda.setId}`)
+  revalidatePath(`/set/${oda.setId}/editar`)
+  revalidatePath(`/oda/${odaId}`)
+  revalidatePath('/oda')
+}

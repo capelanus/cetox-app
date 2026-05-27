@@ -232,6 +232,22 @@ export async function duplicarCotizacion(id: string) {
   redirect(`/cotizaciones/${nueva.id}`)
 }
 
+/**
+ * Crea una cotización completamente nueva (número consecutivo, sufijo vacío)
+ * copiando todos los datos de la cotización original.
+ */
+export async function nuevaCotizacionDesde(id: string) {
+  const session = await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+  const original = await prisma.cotizacion.findUniqueOrThrow({ where: { id } })
+
+  const anio = new Date().getFullYear()
+  const numero = await siguienteCorrelativo('cotizacion', anio)
+
+  const nueva = await copiarCotizacion(original, { numero, sufijo: '' }, session.user.id)
+  revalidatePath('/cotizaciones')
+  redirect(`/cotizaciones/${nueva.id}`)
+}
+
 export async function eliminarCotizacion(id: string) {
   const session = await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
 

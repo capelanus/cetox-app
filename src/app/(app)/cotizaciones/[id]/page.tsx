@@ -4,9 +4,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Copy, Pencil, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
+import { ArrowLeft, Copy, FilePlus, Pencil, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
-import { cambiarEstadoCotizacion, duplicarCotizacion } from '@/app/actions/cotizaciones'
+import { cambiarEstadoCotizacion, duplicarCotizacion, nuevaCotizacionDesde } from '@/app/actions/cotizaciones'
 import { DeleteCotizacionButton } from '@/components/delete-cotizacion-button'
 import { redirect } from 'next/navigation'
 
@@ -94,6 +94,11 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             <form action={duplicarCotizacion.bind(null, id)}>
               <Button variant="outline" size="sm" type="submit">
                 <Copy className="h-3 w-3 mr-1" />Duplicar
+              </Button>
+            </form>
+            <form action={nuevaCotizacionDesde.bind(null, id)}>
+              <Button variant="outline" size="sm" type="submit">
+                <FilePlus className="h-3 w-3 mr-1" />Nueva desde esta
               </Button>
             </form>
             <DeleteCotizacionButton

@@ -19,12 +19,19 @@ export default async function InformesPage() {
     orderBy: [{ anio: 'desc' }, { numero: 'desc' }],
   })
 
+  // Serializar fechas para el cliente
+  const informesSerialized = informes.map((inf) => ({
+    ...inf,
+    createdAt: inf.createdAt.toISOString(),
+    fechaEnvioResultados: inf.fechaEnvioResultados?.toISOString() ?? null,
+  }))
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Informes</h1>
       </div>
-      <InformesTable informes={informes} />
+      <InformesTable informes={informesSerialized} />
     </div>
   )
 }

@@ -10,6 +10,19 @@ export function formatFecha(date: Date | string | null | undefined): string {
   }
 }
 
+export function formatFechaHora(date: Date | string | null | undefined): { fecha: string; hora: string } {
+  if (!date) return { fecha: '—', hora: '' }
+  try {
+    const d = new Date(date)
+    return {
+      fecha: format(d, 'dd/MM/yyyy', { locale: es }),
+      hora: format(d, 'HH:mm', { locale: es }),
+    }
+  } catch {
+    return { fecha: '—', hora: '' }
+  }
+}
+
 export function formatMoneda(amount: number, currency: 'USD' | 'PEN'): string {
   return new Intl.NumberFormat('es-PE', {
     style: 'currency',

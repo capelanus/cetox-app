@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
-import { formatFecha, formatNumInforme } from '@/lib/format'
+import { formatFechaHora, formatNumInforme } from '@/lib/format'
 
 const ESTADO_LABELS: Record<string, string> = {
   BORRADOR: 'Borrador',
@@ -12,6 +12,15 @@ const ESTADO_LABELS: Record<string, string> = {
   EN_FIRMA_GERENCIA: 'En firma',
   FIRMADO: 'Firmado',
   ENTREGADO: 'Entregado',
+}
+
+const ESTADO_STYLES: Record<string, string> = {
+  FIRMADO:              'bg-green-100 text-green-700',
+  ENTREGADO:            'bg-emerald-100 text-emerald-700',
+  EN_REVISION_CALIDAD:  'bg-amber-100 text-amber-700',
+  EN_FIRMA_GERENCIA:    'bg-blue-100 text-blue-700',
+  EN_ELABORACION:       'bg-orange-100 text-orange-700',
+  BORRADOR:             'bg-slate-100 text-slate-600',
 }
 
 interface Ensayo { nombre: string; acreditadoINACAL: boolean }
@@ -23,6 +32,7 @@ interface InformeData {
   prefijo: string
   estado: string
   createdAt: Date | string
+  fechaEnvioResultados: Date | string | null
   analista: { nombre: string }
   oda: {
     items: ODAItem[]
@@ -35,6 +45,7 @@ interface Props {
 }
 
 export function InformesTable({ informes }: Props) {
+  const router = useRouter()
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroEnsayo, setFiltroEnsayo] = useState('')
   const [filtroAcreditado, setFiltroAcreditado] = useState('')
@@ -57,6 +68,7 @@ export function InformesTable({ informes }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Filtros */}
       <div className="flex gap-3 flex-wrap">
         <select
           className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm"
@@ -89,6 +101,7 @@ export function InformesTable({ informes }: Props) {
         </select>
       </div>
 
+      {/* Tabla */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b">
@@ -97,50 +110,53 @@ export function InformesTable({ informes }: Props) {
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Ensayo</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Cliente</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Analista</th>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Fecha</th>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Estado</th>
-              <th className="px-4 py-3"></th>
+              <th className="text-left px-4 py-3 font-semibold text-slate-600">Recibido</th>
+              <th className="text-right px-4 py-3 font-semibold text-slate-600">Estado</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {filtrados.map((inf) => (
-              <tr key={inf.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-mono text-xs font-medium">
-                  {formatNumInforme(inf.prefijo, inf.numero, inf.anio)}
-                </td>
-                <td className="px-4 py-3">
-                  {inf.oda.items.map((i) => (
-                    <span key={i.ensayo.nombre}>
-                      {i.ensayo.nombre}
-                      {i.ensayo.acreditadoINACAL && (
-                        <span className="ml-1 text-xs text-green-600 font-medium">[INACAL]</span>
-                      )}
-                    </span>
-                  ))}
-                </td>
-                <td className="px-4 py-3">{inf.oda.set.cliente.razonSocial}</td>
-                <td className="px-4 py-3 text-slate-600">{inf.analista.nombre}</td>
-                <td className="px-4 py-3 text-slate-600">{formatFecha(inf.createdAt)}</td>
-                <td className="px-4 py-3">
-                  <Badge
-                    className={
-                      inf.estado === 'FIRMADO' ? 'bg-green-100 text-green-700' :
-                      inf.estado === 'EN_REVISION_CALIDAD' ? 'bg-amber-100 text-amber-700' :
-                      inf.estado === 'EN_FIRMA_GERENCIA' ? 'bg-blue-100 text-blue-700' :
-                      inf.estado === 'EN_ELABORACION' ? 'bg-orange-100 text-orange-700' : ''
-                    }
-                  >
-                    {ESTADO_LABELS[inf.estado] ?? inf.estado}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3">
-                  <Link href={`/informes/${inf.id}`} className="text-blue-600 hover:underline text-sm">Ver</Link>
-                </td>
-              </tr>
-            ))}
+            {filtrados.map((inf) => {
+              const { fecha, hora } = formatFechaHora(inf.fechaEnvioResultados ?? inf.createdAt)
+              return (
+                <tr
+                  key={inf.id}
+                  onClick={() => router.push(`/informes/${inf.id}`)}
+                  className="hover:bg-slate-50 cursor-pointer transition-colors"
+                >
+                  <td className="px-4 py-3 font-mono text-xs font-medium">
+                    {formatNumInforme(inf.prefijo, inf.numero, inf.anio)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-0.5">
+                      {inf.oda.items.map((i) => (
+                        <span key={i.ensayo.nombre} className="leading-snug">
+                          {i.ensayo.nombre}
+                          {i.ensayo.acreditadoINACAL && (
+                            <span className="ml-1 text-xs text-green-600 font-medium">[INACAL]</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">{inf.oda.set.cliente.razonSocial}</td>
+                  <td className="px-4 py-3 text-slate-600">{inf.analista.nombre}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    <span>{fecha}</span>
+                    {hora && (
+                      <span className="ml-1.5 text-xs text-slate-400 font-mono">{hora}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Badge className={ESTADO_STYLES[inf.estado] ?? ''}>
+                      {ESTADO_LABELS[inf.estado] ?? inf.estado}
+                    </Badge>
+                  </td>
+                </tr>
+              )
+            })}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">No hay informes</td>
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">No hay informes</td>
               </tr>
             )}
           </tbody>

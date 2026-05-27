@@ -35,6 +35,7 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
   const prefix = `${index}_`
   const [open, setOpen] = useState(index === 0)
   const [ingresoMuestra, setIngresoMuestra] = useState('')
+  const [condAmb, setCondAmb] = useState('')
   const [tipoEnvase, setTipoEnvase] = useState('')
   const areas = [...new Set(muestra.items.map((i) => i.ensayo.area))].sort()
 
@@ -159,11 +160,20 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Condiciones ambientales</Label>
-                <select name={`${prefix}condicionesAmbientales`} className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+                <select
+                  name={`${prefix}condicionesAmbientales`}
+                  value={condAmb}
+                  onChange={(e) => setCondAmb(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                >
                   <option value="">Seleccionar...</option>
                   <option value="Temperatura ambiente">Temperatura ambiente</option>
                   <option value="Cadena de frío">Cadena de frío</option>
+                  <option value="Otro">Otro</option>
                 </select>
+                {condAmb === 'Otro' && (
+                  <Input name={`${prefix}condicionesAmbientalesOtro`} placeholder="Especificar condiciones..." className="mt-1 text-sm" />
+                )}
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-xs">Procedencia / Descripción</Label>

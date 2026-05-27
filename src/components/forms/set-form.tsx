@@ -68,6 +68,7 @@ function OtroSelect({
 
 export function SetForm({ cotizacionId, cliente, contacto, numCotizacion, areas = [] }: Props) {
   const [ingresoMuestra, setIngresoMuestra] = useState('')
+  const [condAmb, setCondAmb] = useState('')
   const [tipoEnvase, setTipoEnvase] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -220,11 +221,20 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion, areas 
           </div>
           <div className="space-y-2">
             <Label>Condiciones ambientales</Label>
-            <select name="condicionesAmbientales" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+            <select
+              name="condicionesAmbientales"
+              value={condAmb}
+              onChange={(e) => setCondAmb(e.target.value)}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+            >
               <option value="">Seleccionar...</option>
               <option value="Temperatura ambiente">Temperatura ambiente</option>
               <option value="Cadena de frío">Cadena de frío</option>
+              <option value="Otro">Otro</option>
             </select>
+            {condAmb === 'Otro' && (
+              <Input name="condicionesAmbientalesOtro" placeholder="Especificar condiciones..." className="mt-1" />
+            )}
           </div>
           <div className="col-span-2 space-y-2">
             <Label>Procedencia / Características / Descripción</Label>

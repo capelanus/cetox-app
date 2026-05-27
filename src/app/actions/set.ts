@@ -51,7 +51,7 @@ export async function crearSET(formData: FormData) {
       ingresoMuestraOtro: (formData.get('ingresoMuestraOtro') as string) || null,
       numeroMuestras: (formData.get('numeroMuestras') as string) || null,
       devolucionMuestra: (formData.get('devolucionMuestra') as string) || null,
-      condicionesAmbientales: (formData.get('condicionesAmbientales') as string) || null,
+      condicionesAmbientales: resolveCondAmb(formData),
       procedenciaDescripcion: (formData.get('procedenciaDescripcion') as string) || null,
       otraIndicacion: (formData.get('otraIndicacion') as string) || null,
       otraIndicacionQ: (formData.get('otraIndicacionQ') as string) || null,
@@ -129,6 +129,15 @@ export async function generarODAs(setId: string) {
   revalidatePath('/oda')
 }
 
+// Resuelve condiciones ambientales: si es "Otro", toma el campo libre
+function resolveCondAmb(fd: FormData, prefix = '') {
+  const val = (fd.get(`${prefix}condicionesAmbientales`) as string) || null
+  if (val === 'Otro') {
+    return (fd.get(`${prefix}condicionesAmbientalesOtro`) as string) || null
+  }
+  return val
+}
+
 // Helper para construir datos de SET a partir de FormData (prefijados o no)
 function buildSETData(fd: FormData, prefix = '') {
   const g = (k: string) => (fd.get(`${prefix}${k}`) as string) || null
@@ -148,7 +157,7 @@ function buildSETData(fd: FormData, prefix = '') {
     ingresoMuestraOtro: g('ingresoMuestraOtro'),
     numeroMuestras: g('numeroMuestras'),
     devolucionMuestra: g('devolucionMuestra'),
-    condicionesAmbientales: g('condicionesAmbientales'),
+    condicionesAmbientales: resolveCondAmb(fd, prefix),
     procedenciaDescripcion: g('procedenciaDescripcion'),
     otraIndicacion: g('otraIndicacion'),          // legacy
     otraIndicacionQ: g('otraIndicacionQ'),
@@ -254,7 +263,7 @@ export async function crearSETCero(formData: FormData) {
       ingresoMuestraOtro: (formData.get('ingresoMuestraOtro') as string) || null,
       numeroMuestras: (formData.get('numeroMuestras') as string) || null,
       devolucionMuestra: (formData.get('devolucionMuestra') as string) || null,
-      condicionesAmbientales: (formData.get('condicionesAmbientales') as string) || null,
+      condicionesAmbientales: resolveCondAmb(formData),
       procedenciaDescripcion: (formData.get('procedenciaDescripcion') as string) || null,
       otraIndicacion: (formData.get('otraIndicacion') as string) || null,
       tipoEnvase: (formData.get('tipoEnvase') as string) || null,
@@ -335,7 +344,7 @@ export async function actualizarSET(setId: string, formData: FormData) {
       ingresoMuestraOtro: (formData.get('ingresoMuestraOtro') as string) || null,
       numeroMuestras: (formData.get('numeroMuestras') as string) || null,
       devolucionMuestra: (formData.get('devolucionMuestra') as string) || null,
-      condicionesAmbientales: (formData.get('condicionesAmbientales') as string) || null,
+      condicionesAmbientales: resolveCondAmb(formData),
       procedenciaDescripcion: (formData.get('procedenciaDescripcion') as string) || null,
       otraIndicacion: (formData.get('otraIndicacion') as string) || null,
       otraIndicacionQ: (formData.get('otraIndicacionQ') as string) || null,

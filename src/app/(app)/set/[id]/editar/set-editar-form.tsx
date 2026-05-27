@@ -54,11 +54,19 @@ function toDateInput(d: Date | null | undefined): string {
   return new Date(d).toISOString().split('T')[0]
 }
 
+const COND_AMB_CONOCIDAS = ['Temperatura ambiente', 'Cadena de frío']
+
 export function SetEditarForm({ set, areas }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const [ingresoMuestra, setIngresoMuestra] = useState(set.ingresoMuestra ?? '')
+
+  // Si el valor guardado no es una opción conocida, es un valor personalizado
+  const condAmbInicial = set.condicionesAmbientales
+  const condAmbEsPersonalizado = !!condAmbInicial && !COND_AMB_CONOCIDAS.includes(condAmbInicial)
+  const [condAmb, setCondAmb] = useState(condAmbEsPersonalizado ? 'Otro' : (condAmbInicial ?? ''))
+
   const [tipoEnvase, setTipoEnvase] = useState(set.tipoEnvase ?? '')
   const [materialEnvase, setMaterialEnvase] = useState(set.materialEnvase ?? '')
   const [etiquetaEnvase, setEtiquetaEnvase] = useState(set.etiquetaEnvase ?? '')
@@ -178,13 +186,23 @@ export function SetEditarForm({ set, areas }: Props) {
             <Label>Condiciones ambientales</Label>
             <select
               name="condicionesAmbientales"
-              defaultValue={set.condicionesAmbientales ?? ''}
+              value={condAmb}
+              onChange={(e) => setCondAmb(e.target.value)}
               className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
             >
               <option value="">Seleccionar...</option>
               <option value="Temperatura ambiente">Temperatura ambiente</option>
               <option value="Cadena de frío">Cadena de frío</option>
+              <option value="Otro">Otro</option>
             </select>
+            {condAmb === 'Otro' && (
+              <Input
+                name="condicionesAmbientalesOtro"
+                defaultValue={condAmbEsPersonalizado ? (condAmbInicial ?? '') : ''}
+                placeholder="Especificar condiciones..."
+                className="mt-1"
+              />
+            )}
           </div>
           <div className="col-span-2 space-y-2">
             <Label>Procedencia / Características / Descripción</Label>

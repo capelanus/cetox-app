@@ -107,7 +107,12 @@ export function SetEditarForm({ set, areas }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2 space-y-2">
             <Label>Nombre comercial</Label>
-            <Input name="nombreComercial" defaultValue={set.nombreComercial ?? ''} />
+            <textarea
+              name="nombreComercial"
+              rows={2}
+              defaultValue={set.nombreComercial ?? ''}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
+            />
           </div>
           <div className="space-y-2">
             <Label>Ingrediente activo</Label>

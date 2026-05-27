@@ -102,7 +102,12 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-xs">Nombre comercial</Label>
-                <Input name={`${prefix}nombreComercial`} defaultValue={muestra.nombre} className="text-sm" />
+                <textarea
+                  name={`${prefix}nombreComercial`}
+                  defaultValue={muestra.nombre}
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[60px]"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Ingrediente activo</Label>

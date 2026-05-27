@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Download, QrCode, CheckCircle2, Circle, Clock, XCircle } from 'lucide-react'
-import { formatFecha, formatNumInforme, formatNumODA } from '@/lib/format'
+import { formatFecha, formatFechaHora, formatNumInforme, formatNumODA } from '@/lib/format'
 import { ResultadoForm } from '@/components/forms/resultado-form'
 import { EnviarElaboracionButton } from '@/components/enviar-elaboracion-button'
 import {
@@ -92,7 +92,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
               depto: 'Analista',
               color: 'text-purple-700',
               dot: 'bg-purple-500',
-              fecha: informe.createdAt,
+              fecha: informe.fechaEnvioResultados ?? informe.createdAt,
               done: true,
               activo: informe.estado === 'BORRADOR',
             },
@@ -101,7 +101,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
               depto: 'Administración',
               color: 'text-orange-700',
               dot: 'bg-orange-500',
-              fecha: null,
+              fecha: null as Date | string | null,
               done: ['EN_REVISION_CALIDAD', 'EN_FIRMA_GERENCIA', 'FIRMADO', 'ENTREGADO'].includes(informe.estado),
               activo: informe.estado === 'EN_ELABORACION',
             },
@@ -128,7 +128,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
               depto: 'Administración',
               color: 'text-emerald-700',
               dot: 'bg-emerald-500',
-              fecha: null,
+              fecha: informe.firmaGerencia ?? null,
               done: informe.estado === 'ENTREGADO',
               activo: informe.estado === 'FIRMADO',
             },
@@ -137,40 +137,48 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
             <div className="bg-white rounded-xl border shadow-sm p-5">
               <h2 className="font-semibold text-slate-700 text-sm mb-4">Flujo de aprobación</h2>
               <div className="flex items-start gap-0">
-                {pasos.map((paso, i) => (
-                  <div key={i} className="flex-1 flex items-start">
-                    <div className="flex flex-col items-center flex-1">
-                      <div className="flex items-center w-full">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                          paso.activo ? paso.dot : paso.done ? 'bg-slate-400' : 'bg-slate-100'
-                        }`}>
-                          {paso.done
-                            ? <CheckCircle2 className="w-4 h-4 text-white" />
-                            : paso.activo
-                            ? <Clock className="w-3.5 h-3.5 text-white" />
-                            : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                {pasos.map((paso, i) => {
+                  const fh = paso.fecha ? formatFechaHora(paso.fecha) : null
+                  return (
+                    <div key={i} className="flex-1 flex items-start">
+                      <div className="flex flex-col items-center flex-1">
+                        <div className="flex items-center w-full">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                            paso.activo ? paso.dot : paso.done ? 'bg-slate-400' : 'bg-slate-100'
+                          }`}>
+                            {paso.done
+                              ? <CheckCircle2 className="w-4 h-4 text-white" />
+                              : paso.activo
+                              ? <Clock className="w-3.5 h-3.5 text-white" />
+                              : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                          </div>
+                          {i < pasos.length - 1 && (
+                            <div className={`flex-1 h-0.5 mx-1 ${paso.done ? 'bg-slate-300' : 'bg-slate-200'}`} />
+                          )}
                         </div>
-                        {i < pasos.length - 1 && (
-                          <div className={`flex-1 h-0.5 mx-1 ${paso.done ? 'bg-slate-300' : 'bg-slate-200'}`} />
-                        )}
-                      </div>
-                      <div className="mt-2 pr-2 w-full">
-                        <p className={`text-xs font-semibold ${paso.activo ? paso.color : paso.done ? 'text-slate-500' : 'text-slate-400'}`}>
-                          {paso.label}
-                        </p>
-                        <p className={`text-xs mt-0.5 ${paso.activo ? paso.color : paso.done ? 'text-slate-400' : 'text-slate-300'}`}>
-                          {paso.depto}
-                        </p>
-                        {paso.done && paso.fecha && (
-                          <p className="text-xs text-slate-400 mt-0.5">{formatFecha(paso.fecha)}</p>
-                        )}
-                        {paso.activo && !paso.done && (
-                          <p className={`text-xs mt-0.5 font-medium ${paso.color}`}>Pendiente</p>
-                        )}
+                        <div className="mt-2 pr-2 w-full">
+                          <p className={`text-xs font-semibold ${paso.activo ? paso.color : paso.done ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {paso.label}
+                          </p>
+                          <p className={`text-xs mt-0.5 ${paso.activo ? paso.color : paso.done ? 'text-slate-400' : 'text-slate-300'}`}>
+                            {paso.depto}
+                          </p>
+                          {paso.done && fh && (
+                            <p className="text-xs text-slate-400 mt-1 leading-4">
+                              {fh.fecha}
+                              {fh.hora && (
+                                <span className="ml-1 font-mono text-slate-300">{fh.hora}</span>
+                              )}
+                            </p>
+                          )}
+                          {paso.activo && !paso.done && (
+                            <p className={`text-xs mt-0.5 font-medium ${paso.color}`}>Pendiente</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )

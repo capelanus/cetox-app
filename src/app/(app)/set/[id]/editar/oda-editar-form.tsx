@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { actualizarODA } from '@/app/actions/oda'
+import { actualizarODA, eliminarODA } from '@/app/actions/oda'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, Trash2 } from 'lucide-react'
 
 interface ODAItem {
   id: string
@@ -35,7 +35,9 @@ function toDateInput(d: Date): string {
 
 export function OdaEditarForm({ oda }: Props) {
   const [isPending, startTransition] = useTransition()
+  const [isDeleting, startDeleteTransition] = useTransition()
   const [saved, setSaved] = useState(false)
+  const [deleted, setDeleted] = useState(false)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -48,7 +50,25 @@ export function OdaEditarForm({ oda }: Props) {
     })
   }
 
+  function handleEliminar() {
+    if (!confirm(
+      `¿Eliminar ODA-${String(oda.numero).padStart(5, '0')} (${AREA_LABELS[oda.area] ?? oda.area})?\n\nEsta acción no se puede deshacer. Si la ODA tiene un informe en borrador, también se eliminará.`
+    )) return
+    startDeleteTransition(async () => {
+      try {
+        await eliminarODA(oda.id)
+        setDeleted(true)
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Error al eliminar la ODA'
+        alert(msg)
+      }
+    })
+  }
+
   const odaNum = String(oda.numero).padStart(5, '0')
+
+  // Si fue eliminada, no renderizar nada
+  if (deleted) return null
 
   return (
     <form onSubmit={handleSubmit} className="border border-gray-200 rounded-xl p-4 space-y-4 bg-white">
@@ -60,19 +80,37 @@ export function OdaEditarForm({ oda }: Props) {
             {AREA_LABELS[oda.area] ?? oda.area}
           </span>
         </div>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium bg-[#1F4E79] text-white hover:bg-[#163a5b] disabled:opacity-50 transition-colors"
-        >
-          {isPending ? (
-            <><Loader2 className="w-3.5 h-3.5 animate-spin" />Guardando...</>
-          ) : saved ? (
-            <><Check className="w-3.5 h-3.5" />Guardado</>
-          ) : (
-            'Guardar ODA'
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Botón eliminar */}
+          <button
+            type="button"
+            disabled={isDeleting || isPending}
+            onClick={handleEliminar}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+          >
+            {isDeleting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="w-3.5 h-3.5" />
+            )}
+            {isDeleting ? 'Eliminando...' : 'Eliminar ODA'}
+          </button>
+
+          {/* Botón guardar */}
+          <button
+            type="submit"
+            disabled={isPending || isDeleting}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium bg-[#1F4E79] text-white hover:bg-[#163a5b] disabled:opacity-50 transition-colors"
+          >
+            {isPending ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" />Guardando...</>
+            ) : saved ? (
+              <><Check className="w-3.5 h-3.5" />Guardado</>
+            ) : (
+              'Guardar ODA'
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Área y fecha de entrega global */}

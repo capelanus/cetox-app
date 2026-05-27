@@ -174,3 +174,38 @@ export async function actualizarODA(odaId: string, formData: FormData) {
   revalidatePath(`/oda/${odaId}`)
   revalidatePath('/oda')
 }
+
+export async function eliminarODA(odaId: string) {
+  await requireRol(['ADMINISTRACION'])
+
+  const oda = await prisma.oDA.findUniqueOrThrow({
+    where: { id: odaId },
+    include: { informe: true },
+  })
+
+  // Bloquear si el informe ya está en un estado avanzado
+  if (oda.informe) {
+    const estadosProtegidos = ['EMITIDO', 'FIRMADO', 'ENTREGADO']
+    if (estadosProtegidos.includes(oda.informe.estado)) {
+      throw new Error(
+        `No se puede eliminar: el informe ${oda.informe.prefijo}-${oda.informe.numero} ya está en estado "${oda.informe.estado}".`
+      )
+    }
+    // Si está en BORRADOR o CON_RESULTADO, eliminar el informe primero
+    await prisma.informe.delete({ where: { id: oda.informe.id } })
+  }
+
+  // ODAItems tienen onDelete: Cascade — se eliminan automáticamente
+  await prisma.oDA.delete({ where: { id: odaId } })
+
+  // Si el SET ya no tiene ODAs, volver a estado EMITIDA
+  const odaRestantes = await prisma.oDA.count({ where: { setId: oda.setId } })
+  if (odaRestantes === 0) {
+    await prisma.sET.update({ where: { id: oda.setId }, data: { estado: 'EMITIDA' } })
+  }
+
+  revalidatePath(`/set/${oda.setId}`)
+  revalidatePath(`/set/${oda.setId}/editar`)
+  revalidatePath('/set')
+  revalidatePath('/oda')
+}

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Guía de Uso — Director de Calidad · CETOX</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --green:   #13602C;
+    --teal:    #4AC3B2;
+    --light:   #EAF4F4;
+    --amber:   #d97706;
+    --red:     #dc2626;
+    --blue:    #2563eb;
+    --gray50:  #f9fafb;
+    --gray100: #f3f4f6;
+    --gray300: #d1d5db;
+    --gray500: #6b7280;
+    --gray700: #374151;
+    --gray900: #111827;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    color: var(--gray900);
+    background: white;
+    line-height: 1.6;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 72px;
+    background: linear-gradient(145deg, var(--green) 0%, #0c4220 100%);
+    color: white;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: rgba(74, 195, 178, 0.15);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -120px; left: -60px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: rgba(74, 195, 178, 0.08);
+  }
+  .cover-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 20px;
+    background: rgba(74,195,178,0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .cover h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 42pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .cover h1 span { color: var(--teal); }
+  .cover .subtitle {
+    font-size: 14pt;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 48px;
+    max-width: 420px;
+  }
+  .cover-divider {
+    width: 64px;
+    height: 4px;
+    background: var(--teal);
+    border-radius: 2px;
+    margin-bottom: 40px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 32px;
+    font-size: 9pt;
+    color: rgba(255,255,255,0.6);
+    position: absolute;
+    bottom: 48px;
+    left: 72px;
+  }
+  .cover-meta span strong { color: rgba(255,255,255,0.9); }
+
+  /* ── Content layout ── */
+  .content {
+    padding: 52px 64px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* ── Section headings ── */
+  .section-number {
+    font-family: 'Oswald', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18pt;
+    font-weight: 600;
+    color: var(--green);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--light);
+  }
+  h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: var(--gray700);
+    margin: 18px 0 8px;
+  }
+
+  /* ── Body text ── */
+  p { margin-bottom: 10px; color: var(--gray700); }
+  .section { margin-bottom: 36px; }
+
+  /* ── Highlight box ── */
+  .box {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 10pt;
+  }
+  .box-green  { background: #f0fdf4; border-left: 4px solid var(--green); }
+  .box-amber  { background: #fffbeb; border-left: 4px solid var(--amber); }
+  .box-blue   { background: #eff6ff; border-left: 4px solid var(--blue);  }
+  .box-red    { background: #fef2f2; border-left: 4px solid var(--red);   }
+  .box-teal   { background: var(--light); border-left: 4px solid var(--teal); }
+  .box strong { color: var(--gray900); }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  thead tr { background: var(--green); color: white; }
+  thead th {
+    padding: 9px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: 0.03em;
+  }
+  tbody tr:nth-child(even) { background: var(--gray50); }
+  tbody tr:nth-child(odd)  { background: white; }
+  tbody td {
+    padding: 8px 14px;
+    color: var(--gray700);
+    border-bottom: 1px solid var(--gray100);
+    vertical-align: top;
+  }
+  tbody td:first-child { font-weight: 500; color: var(--gray900); }
+
+  /* ── Steps ── */
+  .steps { list-style: none; margin: 12px 0; }
+  .steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+    color: var(--gray700);
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    background: var(--green);
+    color: white;
+    border-radius: 50%;
+    font-size: 9pt;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+
+  /* ── Flow diagram ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 16px 0;
+  }
+  .flow-step {
+    background: var(--light);
+    border: 1.5px solid var(--teal);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--green);
+    white-space: nowrap;
+  }
+  .flow-step.active {
+    background: var(--green);
+    color: white;
+    border-color: var(--green);
+  }
+  .flow-arrow {
+    color: var(--gray300);
+    font-size: 13pt;
+    font-weight: 300;
+  }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-amber  { background: #fef3c7; color: #92400e; }
+  .badge-green  { background: #d1fae5; color: #065f46; }
+  .badge-red    { background: #fee2e2; color: #991b1b; }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
+  .badge-gray   { background: var(--gray100); color: var(--gray500); }
+
+  /* ── FAQ ── */
+  .faq-item { margin-bottom: 18px; }
+  .faq-q {
+    font-weight: 600;
+    color: var(--green);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .faq-q::before {
+    content: '?';
+    background: var(--green);
+    color: white;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    font-size: 9pt;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .faq-a { color: var(--gray700); padding-left: 26px; }
+
+  /* ── Page break ── */
+  .page-break { page-break-before: always; margin-top: 52px; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gray100);
+    font-size: 8.5pt;
+    color: var(--gray500);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer .logo-text {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    color: var(--green);
+    font-size: 10pt;
+  }
+
+  /* ── Print ── */
+  @media print {
+    @page { margin: 0; size: A4; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cover { min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ PORTADA ══════════════ -->
+<div class="cover">
+  <div class="cover-tag">Sistema ERP · CETOX Laboratorios</div>
+  <h1>Guía de Uso<br/><span>Director de Calidad</span></h1>
+  <div class="cover-divider"></div>
+  <p class="subtitle">Manual de referencia para la gestión de cotizaciones, aprobaciones y pagos en el sistema ERP.</p>
+  <div class="cover-meta">
+    <span><strong>Versión:</strong> 2026</span>
+    <span><strong>Rol:</strong> DIRECTOR_CALIDAD</span>
+    <span><strong>Confidencial</strong></span>
+  </div>
+</div>
+
+<!-- ══════════════ CONTENIDO ══════════════ -->
+<div class="content">
+
+  <!-- ACCESO -->
+  <div class="section">
+    <div class="section-number">01 · Acceso al sistema</div>
+    <h2>Ingreso y navegación</h2>
+    <p>Ingresar con tu email y contraseña en la URL del sistema. El rol <strong>Director de Calidad</strong> tiene acceso tanto al módulo comercial del laboratorio (cotizaciones a clientes, SET, ODA, informes) como al módulo de operaciones (aprobación de compras y pagos a proveedores).</p>
+
+    <table>
+      <thead><tr><th>Módulo</th><th>Para qué sirve</th><th>Acceso</th></tr></thead>
+      <tbody>
+        <tr><td>Dashboard</td><td>KPIs generales del laboratorio</td><td>Lectura</td></tr>
+        <tr><td>Clientes</td><td>Directorio de clientes</td><td>Lectura</td></tr>
+        <tr><td>Cotizaciones (clientes)</td><td>Propuestas de servicio a clientes</td><td>Crear / editar</td></tr>
+        <tr><td>SET</td><td>Ingreso de muestras</td><td>Lectura</td></tr>
+        <tr><td>ODA</td><td>Órdenes de análisis por área</td><td>Lectura</td></tr>
+        <tr><td>Informes</td><td>Informes técnicos emitidos</td><td>Lectura</td></tr>
+        <tr><td>Cargos de Entrega</td><td>FR N° 124</td><td>Lectura</td></tr>
+        <tr><td>Ingresos</td><td>Servicios ingresados por período</td><td>Lectura</td></tr>
+        <tr><td>Resumen</td><td>Vista consolidada de cotizaciones</td><td>Lectura</td></tr>
+        <tr><td>Cotiz. Proveedor ★</td><td><strong>Aprobar o rechazar cotizaciones de compra</strong></td><td>Aprobar / rechazar</td></tr>
+        <tr><td>Facturas</td><td>Facturas de proveedores registradas por Operaciones</td><td>Lectura</td></tr>
+        <tr><td>Gestión de Pagos ★</td><td><strong>Aprobar pagos a proveedores</strong></td><td>Aprobar pagos</td></tr>
+        <tr><td>Mis Solicitudes</td><td>Pedidos de materiales a Operaciones</td><td>Crear / ver</td></tr>
+      </tbody>
+    </table>
+
+    <div class="box box-teal">
+      <strong>★ Responsabilidades exclusivas de Calidad:</strong> Las cotizaciones de proveedor y los pagos a proveedores <em>solo</em> pueden ser aprobados por el Director de Calidad. Sin tu aprobación, Operaciones no puede emitir una OC ni procesar un pago.
+    </div>
+  </div>
+
+  <!-- FLUJO -->
+  <div class="section">
+    <div class="section-number">02 · Flujo de compras</div>
+    <h2>Tu lugar en el proceso</h2>
+    <p>El ciclo de una compra en CETOX pasa por tres equipos. El Director de Calidad actúa como punto de control en dos momentos clave:</p>
+
+    <div class="flow">
+      <div class="flow-step">Área solicita</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step">Operaciones cotiza</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step active">✓ Calidad aprueba cotización</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step">OC emitida</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step">Recepción / Factura</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step active">✓ Calidad aprueba pago</div>
+    </div>
+
+    <div class="box box-amber">
+      <strong>Regla de oro:</strong> Operaciones registra y gestiona — Calidad aprueba y controla. Ninguna compra avanza a OC sin tu visto bueno, y ningún pago se procesa sin tu aprobación.
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- COTIZACIONES PROVEEDOR -->
+  <div class="section">
+    <div class="section-number">03 · Aprobación de cotizaciones</div>
+    <h2>Cotizaciones de proveedor</h2>
+    <p>Cuando Operaciones recibe una oferta de un proveedor y la considera válida, la envía a Calidad para aprobación. El sistema te notifica mostrando las pendientes en la parte superior de la pantalla.</p>
+
+    <h3>Cómo acceder</h3>
+    <p>En el menú lateral → <strong>Cotiz. Proveedor</strong></p>
+
+    <h3>Lo que verás al entrar</h3>
+    <p>La pantalla está dividida en dos secciones:</p>
+
+    <ul class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div><strong>Pendientes de aprobación</strong> — Cards con borde amarillo al tope de la página. Cada una muestra: proveedor, total, área solicitante, plazo de entrega, condiciones de pago y quién registró la cotización.</div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div><strong>Historial</strong> — Tabla con todas las cotizaciones ya procesadas (aprobadas o rechazadas).</div>
+      </li>
+    </ul>
+
+    <h3>Aprobar una cotización</h3>
+    <ul class="steps">
+      <li><div class="step-num">1</div><div>Revisar los datos de la card: proveedor, total, plazo, condiciones de pago.</div></li>
+      <li><div class="step-num">2</div><div>Si necesitas ver el detalle completo (ítems, precios unitarios), hacer clic en <strong>"Ver detalle completo →"</strong>.</div></li>
+      <li><div class="step-num">3</div><div>Hacer clic en el botón <strong style="color:#16a34a">✓ Aprobar</strong>.</div></li>
+      <li><div class="step-num">4</div><div>Confirmar en el diálogo de confirmación.</div></li>
+    </ul>
+
+    <div class="box box-green">
+      Al aprobar: el requerimiento pasa automáticamente a estado <span class="badge badge-green">Cotización aprobada</span> y Operaciones puede proceder a emitir la Orden de Compra. El área solicitante verá el cambio en su panel de "Mis Solicitudes".
+    </div>
+
+    <h3>Rechazar una cotización</h3>
+    <ul class="steps">
+      <li><div class="step-num">1</div><div>Hacer clic en <strong style="color:#dc2626">Rechazar</strong> en la card.</div></li>
+      <li><div class="step-num">2</div><div>Se despliega un campo de texto — ingresar el <strong>motivo del rechazo</strong> (obligatorio).</div></li>
+      <li><div class="step-num">3</div><div>Hacer clic en <strong>"Confirmar rechazo"</strong>.</div></li>
+    </ul>
+
+    <div class="box box-red">
+      Al rechazar: el requerimiento vuelve a estado <span class="badge badge-amber">En cotización</span>. Operaciones recibe la notificación con tu motivo y puede buscar otro proveedor o negociar mejores condiciones antes de volver a enviarte la cotización.
+    </div>
+
+    <table>
+      <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-gray">Borrador</span></td><td>Operaciones la está preparando, aún no te llegó</td></tr>
+        <tr><td><span class="badge badge-amber">Enviada a Calidad</span></td><td>Esperando tu revisión y aprobación</td></tr>
+        <tr><td><span class="badge badge-green">Aprobada</span></td><td>Aprobada — Operaciones puede emitir la OC</td></tr>
+        <tr><td><span class="badge badge-red">Rechazada</span></td><td>Rechazada — Operaciones busca otra alternativa</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- FACTURAS -->
+  <div class="section">
+    <div class="section-number">04 · Facturas</div>
+    <h2>Facturas de proveedores</h2>
+    <p>Las facturas son registradas por Operaciones después de recibir la mercadería. Como Director de Calidad tienes visibilidad de todas las facturas para su revisión antes de aprobar el pago.</p>
+
+    <p>Acceder desde el menú → <strong>Facturas</strong>. Aquí se muestra: proveedor, OC asociada, monto, moneda, fecha de emisión, fecha de vencimiento y estado.</p>
+
+    <div class="box box-blue">
+      <strong>Acción requerida:</strong> Si una factura tiene la provisión de pago pendiente de aprobación, aparecerá destacada. Deberás revisarla antes de proceder al paso de Gestión de Pagos.
+    </div>
+  </div>
+
+  <!-- PAGOS -->
+  <div class="section">
+    <div class="section-number">05 · Gestión de pagos</div>
+    <h2>Aprobación de pagos a proveedores</h2>
+    <p>El módulo <strong>Gestión de Pagos</strong> es de acceso <em>exclusivo</em> del Director de Calidad. Aquí se aprueban los pagos a proveedores una vez que Operaciones ha registrado la factura y generado la provisión de pago.</p>
+
+    <h3>Flujo de un pago</h3>
+    <div class="flow">
+      <div class="flow-step">Factura recibida</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step">Provisión de pago</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step active">✓ Calidad aprueba</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step">Pago procesado</div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step">Confirmación proveedor</div>
+    </div>
+
+    <h3>Aprobar un pago</h3>
+    <ul class="steps">
+      <li><div class="step-num">1</div><div>Ir a <strong>Gestión de Pagos</strong> en el menú lateral.</div></li>
+      <li><div class="step-num">2</div><div>Revisar la provisión: proveedor, monto, moneda, condiciones y medio de pago propuesto.</div></li>
+      <li><div class="step-num">3</div><div>Verificar que corresponda a una factura registrada y una OC correctamente recepcionada.</div></li>
+      <li><div class="step-num">4</div><div>Aprobar el pago e indicar fecha, referencia y voucher si corresponde.</div></li>
+    </ul>
+
+    <table>
+      <thead><tr><th>Estado del pago</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-amber">Pendiente</span></td><td>Provisión creada, esperando tu aprobación</td></tr>
+        <tr><td><span class="badge badge-blue">Aprobado</span></td><td>Aprobado, en proceso de transferencia</td></tr>
+        <tr><td><span class="badge badge-green">Pagado</span></td><td>Transferencia realizada</td></tr>
+        <tr><td><span class="badge badge-gray">Confirmado proveedor</span></td><td>El proveedor confirmó la recepción del pago</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- MÓDULO COMERCIAL -->
+  <div class="section">
+    <div class="section-number">06 · Módulo comercial</div>
+    <h2>Cotizaciones a clientes y seguimiento</h2>
+    <p>Además de las funciones de control de compras, el Director de Calidad tiene acceso completo al módulo comercial para seguimiento del pipeline de servicios.</p>
+
+    <h3>Cotizaciones a clientes</h3>
+    <p>Acceder desde <strong>Cotizaciones</strong> en el menú principal. Aquí se gestionan las propuestas de servicio al cliente. El Director de Calidad puede crear y editar cotizaciones, al igual que Administración.</p>
+
+    <table>
+      <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-gray">Borrador</span></td><td>En preparación, no enviada aún</td></tr>
+        <tr><td><span class="badge badge-blue">En revisión</span></td><td>En revisión interna</td></tr>
+        <tr><td><span class="badge badge-amber">Enviada</span></td><td>Enviada al cliente, esperando respuesta</td></tr>
+        <tr><td><span class="badge badge-green">Aceptada</span></td><td>Cliente confirmó — procede el ingreso de muestra</td></tr>
+        <tr><td><span class="badge badge-red">Rechazada</span></td><td>Cliente no aceptó</td></tr>
+        <tr><td><span class="badge badge-gray">Vencida</span></td><td>Sin respuesta en el plazo de validez</td></tr>
+      </tbody>
+    </table>
+
+    <h3>SET — Solicitudes de Ensayo</h3>
+    <p>Los SETs son creados por Administración cuando el cliente trae las muestras. Desde <strong>SET</strong> puedes monitorear el estado de cada muestra en el laboratorio.</p>
+
+    <h3>ODA — Órdenes de Análisis</h3>
+    <p>Desde <strong>ODA</strong> puedes ver en tiempo real qué análisis están en ejecución, cuáles tienen resultado y cuáles ya tienen informe emitido — sin necesidad de consultar a los analistas.</p>
+
+    <h3>Informes</h3>
+    <p>Desde <strong>Informes</strong> se visualizan todos los informes técnicos, su estado (emitido, firmado) y el analista responsable.</p>
+  </div>
+
+  <!-- MIS SOLICITUDES -->
+  <div class="section">
+    <div class="section-number">07 · Solicitudes de compra</div>
+    <h2>Mis Solicitudes</h2>
+    <p>Si el área de Calidad necesita materiales o insumos, puedes solicitarlos directamente desde <strong>Mis Solicitudes → Nueva solicitud</strong>. La solicitud llega inmediatamente a Operaciones sin necesidad de llamadas ni emails.</p>
+
+    <ul class="steps">
+      <li><div class="step-num">1</div><div>Describir qué necesitas y la urgencia (Normal / Urgente / Muy urgente).</div></li>
+      <li><div class="step-num">2</div><div>Agregar los ítems: descripción, cantidad y unidad de medida.</div></li>
+      <li><div class="step-num">3</div><div>Indicar la fecha en que se necesita (opcional).</div></li>
+      <li><div class="step-num">4</div><div>Hacer clic en <strong>Enviar solicitud</strong>.</div></li>
+    </ul>
+
+    <p>Desde el mismo módulo puedes hacer seguimiento del estado de tu pedido en tiempo real, ver el proveedor seleccionado y la fecha de entrega estimada.</p>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- FAQ -->
+  <div class="section">
+    <div class="section-number">08 · Preguntas frecuentes</div>
+    <h2>Consultas comunes</h2>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Puedo ver una cotización de proveedor antes de aprobar o rechazar?</div>
+      <div class="faq-a">Sí. En cada card de cotización pendiente hay un enlace <strong>"Ver detalle completo →"</strong> que muestra el desglose completo: ítems cotizados, precios unitarios, subtotal, IGV y total. También puedes ver la ficha del proveedor desde ahí.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Qué pasa si rechazo una cotización y luego Operaciones envía otra del mismo proveedor?</div>
+      <div class="faq-a">Aparecerá como una nueva cotización en estado <span class="badge badge-amber">Enviada a Calidad</span>. Puedes aprobarla o rechazarla independientemente. El sistema guarda el historial de todas las revisiones con su motivo de rechazo y fecha.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Puedo aprobar un pago sin que exista una factura registrada?</div>
+      <div class="faq-a">No. El flujo requiere: OC emitida → Recepción registrada → Factura registrada → Provisión de pago → Aprobación de Calidad. Si falta algún paso, la provisión no se puede crear y el pago no llega a tu bandeja.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Cómo sé si hay cotizaciones pendientes sin entrar al módulo?</div>
+      <div class="faq-a">El contador de pendientes se muestra en la descripción del menú lateral al lado de <strong>Cotiz. Proveedor</strong>. Al entrar a la pantalla, las pendientes aparecen en la sección superior con borde amarillo antes que cualquier otro contenido.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Puedo editar los datos de una cotización de proveedor antes de aprobarla?</div>
+      <div class="faq-a">No directamente — las cotizaciones de proveedor son registradas por Operaciones. Si los datos son incorrectos, rechazarla con el motivo de corrección y Operaciones la actualiza antes de volver a enviarla.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿El área solicitante sabe que aprobé o rechacé su cotización?</div>
+      <div class="faq-a">Sí. El estado del requerimiento se actualiza automáticamente y el área lo ve desde <strong>Mis Solicitudes</strong>. Si se aprueba, verán el proveedor seleccionado; si se rechaza, el proceso vuelve a cotización.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Puedo crear cotizaciones para clientes desde mi rol?</div>
+      <div class="faq-a">Sí. Tienes acceso completo a <strong>Cotizaciones</strong> (a clientes), incluyendo crear, editar y cambiar estado. La papelera también está disponible para recuperar cotizaciones eliminadas por error.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div><span class="logo-text">CETOX</span> · Laboratorios</div>
+    <div>Guía de Uso — Director de Calidad · 2026</div>
+    <div>Confidencial · Uso interno</div>
+  </div>
+
+</div>
+</body>
+</html>

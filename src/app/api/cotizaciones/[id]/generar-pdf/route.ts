@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
 
-const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
+// En el documento para el cliente se usan las abreviaciones oficiales del laboratorio
+const AREA_LABELS: Record<string, string> = { Q: 'Q', B: 'B', M: 'P' }
 
 export async function GET(
   _req: NextRequest,

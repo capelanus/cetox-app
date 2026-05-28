@@ -13,8 +13,12 @@ export async function cargarResultado(odaId: string, formData: FormData) {
 
   const oda = await prisma.oDA.findUniqueOrThrow({
     where: { id: odaId },
-    include: { items: { include: { ensayo: true }, take: 1 } },
+    include: {
+      items: { include: { ensayo: true }, take: 1 },
+      set: { select: { id: true, nombreComercial: true } },
+    },
   })
+  const estadoAnteriorOda = oda.estado
 
   if (session.user.area && oda.area !== session.user.area) {
     throw new Error('No tienes permiso para cargar resultados en esta ODA')
@@ -101,6 +105,43 @@ export async function cargarResultado(odaId: string, formData: FormData) {
     where: { id: odaId },
     data: { estado: 'CON_RESULTADO' },
   })
+
+  // Notificar si todas las ODAs del SET están terminadas (solo en la primera transición)
+  if (estadoAnteriorOda !== 'CON_RESULTADO' && estadoAnteriorOda !== 'INFORME_EMITIDO') {
+    const ESTADOS_COMPLETADO = ['CON_RESULTADO', 'INFORME_EMITIDO']
+    const todasOdas = await prisma.oDA.findMany({
+      where: { setId: oda.setId },
+      select: { id: true, estado: true },
+    })
+    // Considerar esta ODA como ya completada (acaba de actualizarse)
+    const todasCompletas = todasOdas.every((o) =>
+      o.id === odaId ? true : ESTADOS_COMPLETADO.includes(o.estado)
+    )
+    if (todasCompletas) {
+      const ROLES_NOTIFICAR = ['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO']
+      const destinatarios = await prisma.usuario.findMany({
+        where: { rol: { in: ROLES_NOTIFICAR }, activo: true },
+        select: { id: true },
+      })
+      if (destinatarios.length > 0) {
+        const nombreMuestra = oda.set.nombreComercial ?? 'muestra sin nombre'
+        const numOdas = todasOdas.length
+        await prisma.notificacion.createMany({
+          data: destinatarios.map((u) => ({
+            usuarioId: u.id,
+            tipo: 'SET_COMPLETO',
+            titulo: numOdas === 1
+              ? 'ODA completada'
+              : 'Todas las ODAs completadas',
+            mensaje: numOdas === 1
+              ? `El laboratorio completó su resultado para "${nombreMuestra}".`
+              : `Los ${numOdas} laboratorios completaron sus resultados para "${nombreMuestra}".`,
+            enlace: `/set/${oda.setId}`,
+          })),
+        })
+      }
+    }
+  }
 
   revalidatePath('/oda')
   revalidatePath(`/oda/${odaId}`)

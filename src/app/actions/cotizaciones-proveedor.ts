@@ -64,7 +64,43 @@ export async function crearCotizacionProveedor(formData: FormData) {
 
 export async function enviarCotizacionACalidad(id: string) {
   await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+
+  // Fetch data before update (for notification message)
+  const cot = await prisma.cotizacionProveedor.findUnique({
+    where: { id },
+    select: {
+      numero:   true,
+      anio:     true,
+      total:    true,
+      moneda:   true,
+      proveedor: { select: { razonSocial: true } },
+    },
+  })
+
   await prisma.cotizacionProveedor.update({ where: { id }, data: { estado: 'ENVIADA_CALIDAD' } })
+
+  // ── Notificar a DIRECTOR_CALIDAD ──
+  if (cot) {
+    const directores = await prisma.usuario.findMany({
+      where: { rol: 'DIRECTOR_CALIDAD', activo: true },
+      select: { id: true },
+    })
+    if (directores.length > 0) {
+      const totalFmt = new Intl.NumberFormat('es-PE', {
+        style: 'currency', currency: cot.moneda, minimumFractionDigits: 2,
+      }).format(cot.total)
+      await prisma.notificacion.createMany({
+        data: directores.map((u) => ({
+          usuarioId: u.id,
+          tipo:      'COTIZACION_PROVEEDOR_REVISION',
+          titulo:    'Cotización de proveedor pendiente de aprobación',
+          mensaje:   `Operaciones envió la cotización de "${cot.proveedor.razonSocial}" por ${totalFmt} para su revisión.`,
+          enlace:    `/operaciones/cotizaciones-proveedor/${id}`,
+        })),
+      })
+    }
+  }
+
   revalidatePath('/operaciones/cotizaciones-proveedor')
   revalidatePath(`/operaciones/cotizaciones-proveedor/${id}`)
 }

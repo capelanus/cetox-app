@@ -32,6 +32,69 @@ model Usuario {
   facturasRegistradas       Factura[]             @relation("FacturaPor")
   provisionesAprobadas      ProvisionPago[]       @relation("ProvisionPor")
   pagosAprobados            Pago[]                @relation("PagoPor")
+  notificaciones            Notificacion[]
+  cajaChicaGastos           CajaChicaGasto[]
+  cajaChicaIngresos         CajaChicaIngreso[]
+  mensajesChat              MensajeChat[]
+}
+
+model CanalChat {
+  id       String        @id @default(cuid())
+  slug     String        @unique
+  nombre   String
+  mensajes MensajeChat[]
+}
+
+model MensajeChat {
+  id        String    @id @default(cuid())
+  canalId   String
+  canal     CanalChat @relation(fields: [canalId], references: [id], onDelete: Cascade)
+  autorId   String
+  autor     Usuario   @relation(fields: [autorId], references: [id])
+  contenido String
+  createdAt DateTime  @default(now())
+}
+
+model CajaChicaGasto {
+  id              String     @id @default(cuid())
+  fecha           DateTime   @default(now())
+  concepto        String
+  monto           Float
+  moneda          String     @default("PEN")
+  categoria       String?
+  proveedorId     String?
+  proveedor       Proveedor? @relation(fields: [proveedorId], references: [id])
+  proveedorNombre String?    // nombre libre cuando proveedorId es null
+  proveedorRuc    String?    // RUC libre o copiado del proveedor
+  numeroFactura   String?
+  comprobante     String?
+  notas           String?
+  creadoPorId     String
+  creadoPor       Usuario    @relation(fields: [creadoPorId], references: [id])
+  createdAt       DateTime   @default(now())
+}
+
+model CajaChicaIngreso {
+  id          String   @id @default(cuid())
+  fecha       DateTime @default(now())
+  monto       Float
+  moneda      String   @default("PEN")
+  descripcion String
+  creadoPorId String
+  creadoPor   Usuario  @relation(fields: [creadoPorId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Notificacion {
+  id        String   @id @default(cuid())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tipo      String   // INFORME_EMITIDO
+  titulo    String
+  mensaje   String
+  enlace    String?
+  leida     Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Cliente {
@@ -101,6 +164,7 @@ model Cotizacion {
   deletedAt        DateTime?
   deletedById      String?
   deletedBy        Usuario?  @relation("CotEliminadaPor", fields: [deletedById], references: [id])
+  informeEnviado   Boolean  @default(false)
   items            CotizacionItem[]
   muestras         CotizacionMuestra[]
   sets             SET[]
@@ -281,6 +345,7 @@ model Proveedor {
 
   cotizacionesProveedor CotizacionProveedor[]
   ordenesCompra         OrdenCompra[]
+  cajaChicaGastos       CajaChicaGasto[]
 }
 
 model Requerimiento {
@@ -526,6 +591,66 @@ model Pago {
   createdAt           DateTime      @default(now())
 
   @@unique([numero, anio])
+}
+
+model Empleado {
+  id           String    @id @default(cuid())
+  dni          String    @unique
+  nombre       String
+  tipoContrato String    // PERMANENTE | PLAZO_FIJO
+  fechaIngreso DateTime
+  finContrato  DateTime? // null = Indeterminado
+  cargo        String?
+  area         String?
+  notas        String?
+  activo       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  vacacion VacacionBalance?
+}
+
+model VacacionBalance {
+  id                    String   @id @default(cuid())
+  empleadoId            String   @unique
+  empleado              Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  diasAtrasados         Int      @default(0)
+  diasReglamentarios    Int      @default(0)
+  adelantadasTomadas    Int      @default(0)
+  adelantadasPendientes Int      @default(0)
+  updatedAt             DateTime @updatedAt
+}
+
+model Equipo {
+  id             String        @id @default(cuid())
+  codigo         String        @unique
+  nombre         String
+  area           String?       // B=Biología, Q=Química, M=Microbiología, AD, CAL
+  categoria      String        @default("GENERAL") // GENERAL | TERMOHIGROMETRO | VIDRIO
+  ultimoServicio DateTime?
+  notas          String?
+  activo         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  tareas TareaEquipo[]
+}
+
+model TareaEquipo {
+  id         String    @id @default(cuid())
+  equipoId   String
+  equipo     Equipo    @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  tipo       String    // PREVENTIVO | CALIBRACION | VERIFICACION
+  mes        Int       // 1-12
+  anio       Int
+  completado Boolean   @default(false)
+  fechaReal  DateTime?
+  nota       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([equipoId])
+  @@index([mes, anio])
 }
 
 model InventarioItem {

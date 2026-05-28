@@ -26,12 +26,20 @@ export default async function SETPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Solicitudes de Ensayo (SET)</h1>
         {canCreate && (
-          <Link href="/set/nuevo-cero">
-            <Button variant="outline" className="border-dashed" style={{ borderColor: '#4AC3B2', color: '#13602C' }}>
-              <Plus className="h-4 w-4 mr-2" />
-              SET sin costo
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/set/nuevo-con-costo">
+              <Button style={{ backgroundColor: '#1F4E79' }}>
+                <Plus className="h-4 w-4 mr-2" />
+                SET con costo
+              </Button>
+            </Link>
+            <Link href="/set/nuevo-cero">
+              <Button variant="outline" className="border-dashed" style={{ borderColor: '#4AC3B2', color: '#13602C' }}>
+                <Plus className="h-4 w-4 mr-2" />
+                SET sin costo
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
       <SETTable sets={setsSerialized} />

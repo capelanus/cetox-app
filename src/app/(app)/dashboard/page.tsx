@@ -9,9 +9,13 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Wrench,
+  AlertTriangle,
 } from 'lucide-react'
+import Link from 'next/link'
 import { DashboardPipeline } from '@/components/dashboard-pipeline'
 import type { StageCount } from '@/components/dashboard-pipeline'
+import { getResumenEquipos } from '@/app/actions/equipos'
 
 /* ─── KPI Card ───────────────────────────────────────────────────────────── */
 
@@ -69,6 +73,7 @@ export default async function DashboardPage() {
     setsByEstado,
     odasByEstado,
     informesByEstado,
+    resumenEquipos,
   ] = await Promise.all([
     prisma.cotizacion.count({ where: { deletedAt: null, estado: { in: ['BORRADOR', 'EN_REVISION', 'ENVIADA'] } } }),
     prisma.sET.count({ where: { estado: { in: ['EMITIDA', 'EN_EJECUCION'] } } }),
@@ -80,6 +85,7 @@ export default async function DashboardPage() {
     prisma.sET.groupBy({ by: ['estado'], _count: { estado: true } }),
     prisma.oDA.groupBy({ by: ['estado'], _count: { estado: true } }),
     prisma.informe.groupBy({ by: ['estado'], _count: { estado: true } }),
+    getResumenEquipos().catch(() => null),
   ])
 
   const normalize = (rows: { estado: string; _count: { estado: number } }[]): StageCount[] =>
@@ -204,6 +210,57 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* ── Equipment alerts ── */}
+      {resumenEquipos && (resumenEquipos.vencidos > 0 || resumenEquipos.proximos > 0) && (
+        <div className="mb-6 mt-2">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-px flex-1" style={{ backgroundColor: '#CCE3DE' }} />
+            <span className="text-[10px] font-semibold uppercase tracking-widest px-2" style={{ color: '#4AC3B2', fontFamily: 'var(--font-oswald)' }}>
+              Alertas de equipos
+            </span>
+            <div className="h-px flex-1" style={{ backgroundColor: '#CCE3DE' }} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {resumenEquipos.vencidos > 0 && (
+              <Link
+                href="/equipos?estado=VENCIDO"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}
+              >
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0" style={{ backgroundColor: 'rgba(220,38,38,0.1)' }}>
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-red-700" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    {resumenEquipos.vencidos} equipo{resumenEquipos.vencidos !== 1 ? 's' : ''} con mantenimiento vencido
+                  </p>
+                  <p className="text-[11px] text-red-500">Requieren atención inmediata</p>
+                </div>
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+              </Link>
+            )}
+            {resumenEquipos.proximos > 0 && (
+              <Link
+                href="/equipos?estado=PROXIMO"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}
+              >
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0" style={{ backgroundColor: 'rgba(217,119,6,0.1)' }}>
+                  <Wrench className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-amber-700" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    {resumenEquipos.proximos} equipo{resumenEquipos.proximos !== 1 ? 's' : ''} con mantenimiento próximo
+                  </p>
+                  <p className="text-[11px] text-amber-500">Programar con proveedor</p>
+                </div>
+                <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Pipeline ── */}
       <div className="flex items-center gap-3 mb-6">

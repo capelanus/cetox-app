@@ -93,6 +93,8 @@ export async function crearCotizacion(formData: FormData) {
   const igv = subtotal * 0.18
   const total = subtotal + igv
 
+  const clienteId = formData.get('clienteId') as string
+
   const cot = await prisma.cotizacion.create({
     data: {
       numero,
@@ -100,7 +102,7 @@ export async function crearCotizacion(formData: FormData) {
       sufijo: '',
       moneda:        formData.get('moneda') as string,
       modalidadPago: (formData.get('modalidadPago') as string) || 'ANTICIPO_50_50',
-      clienteId:     formData.get('clienteId') as string,
+      clienteId,
       observaciones: (formData.get('observaciones') as string) || null,
       ...parseContacto(formData),
       vigenciaHasta: addDays(new Date(), 30),
@@ -112,6 +114,26 @@ export async function crearCotizacion(formData: FormData) {
   })
 
   await crearMuestrasConItems(cot.id, muestras)
+
+  // ── Notificar a DIRECTOR_CALIDAD solo si la creó ADMINISTRACION ──
+  if (session.user.rol === 'ADMINISTRACION') {
+    const [cliente, directores] = await Promise.all([
+      prisma.cliente.findUnique({ where: { id: clienteId }, select: { razonSocial: true } }),
+      prisma.usuario.findMany({ where: { rol: 'DIRECTOR_CALIDAD', activo: true }, select: { id: true } }),
+    ])
+    if (directores.length > 0 && cliente) {
+      const numFmt = `${String(numero).padStart(5, '0')}-${anio}`
+      await prisma.notificacion.createMany({
+        data: directores.map((u) => ({
+          usuarioId: u.id,
+          tipo:      'COTIZACION_NUEVA',
+          titulo:    `Nueva cotización N° ${numFmt}`,
+          mensaje:   `Administración registró la cotización N° ${numFmt} para ${cliente.razonSocial}.`,
+          enlace:    `/cotizaciones/${cot.id}`,
+        })),
+      })
+    }
+  }
 
   revalidatePath('/cotizaciones')
   redirect(`/cotizaciones/${cot.id}`)
@@ -317,4 +339,18 @@ export async function modificarCotizacionAceptada(id: string) {
   const nueva = await copiarCotizacion(original, { sufijo: siguienteSufijo }, session.user.id)
   revalidatePath('/cotizaciones')
   redirect(`/cotizaciones/${nueva.id}`)
+}
+
+
+export async function toggleInformeEnviado(cotizacionId: string) {
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD'])
+  const cot = await prisma.cotizacion.findUniqueOrThrow({
+    where: { id: cotizacionId },
+    select: { informeEnviado: true },
+  })
+  await prisma.cotizacion.update({
+    where: { id: cotizacionId },
+    data: { informeEnviado: !cot.informeEnviado },
+  })
+  revalidatePath('/cotizaciones')
 }

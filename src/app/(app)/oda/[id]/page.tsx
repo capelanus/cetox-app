@@ -213,7 +213,7 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
                 <tr key={item.id}>
                   <td className="px-3 py-2">{item.ensayo.nombre}</td>
                   <td className="px-3 py-2">{formatFecha(item.fechaEntregaCompromiso)}</td>
-                  <td className="px-3 py-2 font-mono text-xs font-semibold">{String(oda.numero).padStart(5, '0')}</td>
+                  <td className="px-3 py-2 font-mono text-xs font-semibold">{formatNumODA(oda.numero, oda.anio)}</td>
                 </tr>
               ))}
             </tbody>

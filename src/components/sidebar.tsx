@@ -6,6 +6,8 @@ import { signOut } from 'next-auth/react'
 import {
   LayoutDashboard,
   Users,
+  Users2,
+  PalmtreeIcon,
   FlaskConical,
   FileText,
   ClipboardList,
@@ -26,9 +28,26 @@ import {
   CreditCard,
   Building2,
   ShoppingBag,
+  Wallet,
+  Wrench,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface NavItem {
+  href:   string
+  label:  string
+  icon:   React.ElementType
+  roles:  string[]
+  muted?: boolean
+}
+
+interface NavSection {
+  label: string
+  items: NavItem[]
+}
 
 interface SidebarProps {
   userName:  string
@@ -39,50 +58,233 @@ interface SidebarProps {
   onToggle:  () => void
 }
 
-const allNavItems = [
-  { href: '/dashboard',                 label: 'Dashboard',         icon: LayoutDashboard, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/clientes',                  label: 'Clientes',          icon: Users,           roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/ensayos',                   label: 'Ensayos',           icon: FlaskConical,    roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/cotizaciones',              label: 'Cotizaciones',      icon: FileText,        roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/cotizaciones/papelera',     label: 'Papelera',          icon: Trash2,          roles: ['ADMINISTRACION', 'DIRECTOR_CALIDAD'], muted: true },
-  { href: '/set',                       label: 'SET',               icon: ClipboardList,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/oda',                       label: 'ODA',               icon: TestTube,        roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
-  { href: '/informes',                  label: 'Informes',          icon: FileCheck,       roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
-  { href: '/cargos',                    label: 'Cargos de Entrega', icon: Package,         roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/ingresos',                  label: 'Ingresos',          icon: TrendingUp,      roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/resumen',                   label: 'Resumen',           icon: TableProperties, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
-  { href: '/solicitudes',               label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
+// ── Nav item definitions ───────────────────────────────────────────────────────
+
+const allNavItems: NavItem[] = [
+  { href: '/dashboard',             label: 'Dashboard',         icon: LayoutDashboard, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/clientes',              label: 'Clientes',          icon: Users,           roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/ensayos',               label: 'Ensayos',           icon: FlaskConical,    roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/cotizaciones',          label: 'Cotizaciones',      icon: FileText,        roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/cotizaciones/papelera', label: 'Papelera',          icon: Trash2,          roles: ['ADMINISTRACION', 'DIRECTOR_CALIDAD'], muted: true },
+  { href: '/set',                   label: 'SET',               icon: ClipboardList,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/oda',                   label: 'ODA',               icon: TestTube,        roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
+  { href: '/informes',              label: 'Informes',          icon: FileCheck,       roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
+  { href: '/cargos',                label: 'Cargos de Entrega', icon: Package,         roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/ingresos',              label: 'Ingresos',          icon: TrendingUp,      roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/resumen',               label: 'Resumen',           icon: TableProperties, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
+  { href: '/solicitudes',           label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
+  { href: '/caja-chica',            label: 'Caja Chica',        icon: Wallet,          roles: ['DIRECTOR_CALIDAD'] },
+  { href: '/rrhh',                  label: 'RRHH',              icon: Users2,          roles: ['ADMINISTRACION'] },
 ]
 
-const operacionesNavItems = [
-  { href: '/operaciones',                           label: 'Panel Operaciones',  icon: LayoutDashboard, roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
-  { href: '/operaciones/requerimientos',            label: 'Requerimientos',     icon: ClipboardList,   roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
-  { href: '/operaciones/proveedores',               label: 'Proveedores',        icon: Building2,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
-  { href: '/operaciones/cotizaciones-proveedor',    label: 'Cotiz. Proveedor',   icon: FileText,        roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
-  { href: '/operaciones/ordenes-compra',            label: 'Órdenes de Compra',  icon: ShoppingCart,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
-  { href: '/operaciones/recepciones',               label: 'Recepciones',        icon: PackageCheck,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
-  { href: '/operaciones/devoluciones',              label: 'Devoluciones',       icon: RotateCcw,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
-  { href: '/operaciones/facturas',                  label: 'Facturas',           icon: Receipt,         roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
-  { href: '/operaciones/pagos',                     label: 'Gestión de Pagos',   icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
-  { href: '/operaciones/inventario',                label: 'Inventario',         icon: Microscope,      roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+const operacionesNavItems: NavItem[] = [
+  { href: '/operaciones',                        label: 'Panel Operaciones', icon: LayoutDashboard, roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/requerimientos',          label: 'Requerimientos',    icon: ClipboardList,   roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/proveedores',             label: 'Proveedores',       icon: Building2,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/cotizaciones-proveedor',  label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/ordenes-compra',          label: 'Órdenes de Compra', icon: ShoppingCart,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/recepciones',             label: 'Recepciones',       icon: PackageCheck,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/devoluciones',            label: 'Devoluciones',      icon: RotateCcw,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/facturas',                label: 'Facturas',          icon: Receipt,         roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/pagos',                   label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/inventario',              label: 'Inventario',        icon: Microscope,      roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/equipos',                             label: 'Equipos',           icon: Wrench,          roles: ['JEFE_OPERACIONES'] },
 ]
 
-/* ─── Sidebar Cetox ──────────────────────────────────────────────────────── */
+// ── Sections for ADMINISTRACION ───────────────────────────────────────────────
+
+const sectionesAdministracion: NavSection[] = [
+  {
+    label: 'Calidad',
+    items: [
+      { href: '/ensayos',   label: 'Ensayos',    icon: FlaskConical,  roles: ['ADMINISTRACION'] },
+      { href: '/set',       label: 'SET',         icon: ClipboardList, roles: ['ADMINISTRACION'] },
+      { href: '/oda',       label: 'ODA',         icon: TestTube,      roles: ['ADMINISTRACION'] },
+      { href: '/informes',  label: 'Informes',    icon: FileCheck,     roles: ['ADMINISTRACION'] },
+      { href: '/cargos',    label: 'Cargos',      icon: Package,       roles: ['ADMINISTRACION'] },
+      { href: '/equipos',   label: 'Equipos',     icon: Wrench,        roles: ['ADMINISTRACION'] },
+    ],
+  },
+  {
+    label: 'Administración',
+    items: [
+      { href: '/dashboard',             label: 'Dashboard',    icon: LayoutDashboard, roles: ['ADMINISTRACION'] },
+      { href: '/clientes',              label: 'Clientes',     icon: Users,           roles: ['ADMINISTRACION'] },
+      { href: '/cotizaciones',          label: 'Cotizaciones', icon: FileText,        roles: ['ADMINISTRACION'] },
+      { href: '/cotizaciones/papelera', label: 'Papelera',     icon: Trash2,          roles: ['ADMINISTRACION'], muted: true },
+      { href: '/ingresos',              label: 'Ingresos',     icon: TrendingUp,      roles: ['ADMINISTRACION'] },
+      { href: '/resumen',               label: 'Resumen',      icon: TableProperties, roles: ['ADMINISTRACION'] },
+      { href: '/solicitudes',           label: 'Mis Solicitudes', icon: ShoppingBag,  roles: ['ADMINISTRACION'] },
+    ],
+  },
+  {
+    label: 'RRHH',
+    items: [
+      { href: '/rrhh',             label: 'Resumen RRHH',  icon: Users2,        roles: ['ADMINISTRACION'] },
+      { href: '/rrhh/personal',    label: 'Personal',      icon: Users,         roles: ['ADMINISTRACION'] },
+      { href: '/rrhh/vacaciones',  label: 'Vacaciones',    icon: PalmtreeIcon,  roles: ['ADMINISTRACION'] },
+      { href: '/rrhh/contratos',   label: 'Contratos',     icon: ClipboardList, roles: ['ADMINISTRACION'] },
+      { href: '/rrhh/estructura',  label: 'Estructura',    icon: Building2,     roles: ['ADMINISTRACION'] },
+    ],
+  },
+]
+
+// ── Sections for DIRECTOR_CALIDAD ─────────────────────────────────────────────
+
+const sectionesDirectorCalidad: NavSection[] = [
+  {
+    label: 'Calidad',
+    items: [
+      { href: '/ensayos',    label: 'Ensayos',    icon: FlaskConical,  roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/set',        label: 'SET',         icon: ClipboardList, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/oda',        label: 'ODA',         icon: TestTube,      roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/informes',   label: 'Informes',    icon: FileCheck,     roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/equipos',    label: 'Equipos',     icon: Wrench,        roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/caja-chica', label: 'Caja Chica',  icon: Wallet,        roles: ['DIRECTOR_CALIDAD'] },
+    ],
+  },
+  {
+    label: 'Administración',
+    items: [
+      { href: '/dashboard',             label: 'Dashboard',         icon: LayoutDashboard, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/clientes',              label: 'Clientes',          icon: Users,           roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/cotizaciones',          label: 'Cotizaciones',      icon: FileText,        roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/cotizaciones/papelera', label: 'Papelera',          icon: Trash2,          roles: ['DIRECTOR_CALIDAD'], muted: true },
+      { href: '/cargos',                label: 'Cargos de Entrega', icon: Package,         roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/ingresos',              label: 'Ingresos',          icon: TrendingUp,      roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/resumen',               label: 'Resumen',           icon: TableProperties, roles: ['DIRECTOR_CALIDAD'] },
+    ],
+  },
+  {
+    label: 'Operaciones',
+    items: [
+      { href: '/operaciones',                       label: 'Panel Operaciones', icon: LayoutDashboard, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/operaciones/cotizaciones-proveedor', label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/operaciones/facturas',              label: 'Facturas',          icon: Receipt,         roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/operaciones/pagos',                 label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/solicitudes',                       label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['DIRECTOR_CALIDAD'] },
+    ],
+  },
+]
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
 
-  let navItems: typeof allNavItems
-  if (userRol === 'SUPER_ADMIN') {
+  // Build flat navItems for non-DC roles
+  let navItems: NavItem[] = []
+  let sections: NavSection[] | null = null
+
+  if (userRol === 'DIRECTOR_CALIDAD') {
+    sections = sectionesDirectorCalidad
+  } else if (userRol === 'ADMINISTRACION') {
+    sections = sectionesAdministracion
+  } else if (userRol === 'SUPER_ADMIN') {
     navItems = [...allNavItems, ...operacionesNavItems]
   } else if (userRol === 'JEFE_OPERACIONES' || userRol === 'ASISTENTE_LOGISTICA') {
     navItems = operacionesNavItems.filter(item => item.roles.includes(userRol))
-  } else if (userRol === 'DIRECTOR_CALIDAD') {
-    const mainItems = allNavItems.filter(item => item.roles.includes(userRol))
-    const opItems = operacionesNavItems.filter(item => item.roles.includes(userRol))
-    navItems = [...mainItems, ...opItems]
   } else {
     navItems = allNavItems.filter(item => item.roles.includes(userRol))
+  }
+
+  // All items in a flat list (for active-state logic)
+  const allVisible: NavItem[] = sections
+    ? sections.flatMap(s => s.items)
+    : navItems
+
+  function isActive(href: string) {
+    return (
+      (pathname === href || pathname.startsWith(href + '/')) &&
+      !allVisible.some(
+        other =>
+          other.href !== href &&
+          (pathname === other.href || pathname.startsWith(other.href + '/')) &&
+          other.href.startsWith(href + '/')
+      )
+    )
+  }
+
+  function renderItem(item: NavItem) {
+    const Icon  = item.icon
+    const muted = !!item.muted
+    const active = isActive(item.href)
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        title={collapsed ? item.label : undefined}
+        className={cn(
+          'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
+          active ? 'text-white' : muted ? 'text-white/40 hover:text-white/70' : 'text-white/70 hover:text-white',
+        )}
+        style={{
+          gap:             collapsed ? 0 : 12,
+          padding:         collapsed ? '10px 0' : muted ? '6px 12px 6px 24px' : '10px 12px',
+          justifyContent:  collapsed ? 'center' : 'flex-start',
+          backgroundColor: active ? 'rgba(74,195,178,0.22)' : 'transparent',
+          borderLeft:      active && !collapsed ? '3px solid #4AC3B2' : '3px solid transparent',
+          transition:      'all 0.15s ease',
+          position:        'relative',
+        }}
+        onMouseEnter={e => {
+          if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.08)'
+        }}
+        onMouseLeave={e => {
+          if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+        }}
+      >
+        <Icon
+          className="flex-shrink-0"
+          style={{
+            width:  collapsed ? 18 : muted ? 14 : 16,
+            height: collapsed ? 18 : muted ? 14 : 16,
+            color:  active ? '#4AC3B2' : 'inherit',
+          }}
+        />
+        <span
+          className="overflow-hidden whitespace-nowrap flex-1"
+          style={{
+            maxWidth:   collapsed ? '0px' : '180px',
+            opacity:    collapsed ? 0 : 1,
+            transition: 'max-width 0.3s ease, opacity 0.2s ease',
+            fontFamily: 'var(--font-montserrat)',
+          }}
+        >
+          {item.label}
+        </span>
+        {active && !collapsed && (
+          <ChevronRight className="ml-auto h-3 w-3 flex-shrink-0" style={{ color: '#4AC3B2' }} />
+        )}
+        {active && collapsed && (
+          <span
+            className="absolute right-1.5 w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: '#4AC3B2' }}
+          />
+        )}
+      </Link>
+    )
+  }
+
+  function renderSectionLabel(label: string) {
+    return (
+      <div
+        className="overflow-hidden whitespace-nowrap"
+        style={{
+          maxHeight:  collapsed ? '0px' : '28px',
+          opacity:    collapsed ? 0 : 1,
+          transition: 'max-height 0.3s ease, opacity 0.2s ease',
+        }}
+      >
+        <p
+          className="px-3 pb-1.5 pt-2 text-[10px] font-semibold tracking-widest uppercase"
+          style={{ color: 'rgba(74,195,178,0.7)' }}
+        >
+          {label}
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -100,13 +302,12 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
       <div
         className="flex items-center py-5 flex-shrink-0"
         style={{
-          borderBottom: '1px solid rgba(255,255,255,0.12)',
-          padding:      collapsed ? '20px 0' : '20px',
+          borderBottom:   '1px solid rgba(255,255,255,0.12)',
+          padding:        collapsed ? '20px 0' : '20px',
           justifyContent: collapsed ? 'center' : 'space-between',
-          transition:   'padding 0.3s ease',
+          transition:     'padding 0.3s ease',
         }}
       >
-        {/* Icono + texto */}
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="flex items-center justify-center rounded-lg flex-shrink-0"
@@ -114,8 +315,6 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
           >
             <Microscope className="h-5 w-5 text-white" />
           </div>
-
-          {/* Texto: desaparece al colapsar */}
           <div
             className="overflow-hidden whitespace-nowrap"
             style={{
@@ -135,8 +334,6 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
             </div>
           </div>
         </div>
-
-        {/* Botón toggle — solo visible cuando está expandido */}
         {!collapsed && (
           <button
             onClick={onToggle}
@@ -162,98 +359,49 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
         className="flex-1 py-3 overflow-y-auto overflow-x-hidden cetox-scroll"
         style={{ padding: collapsed ? '12px 8px' : '12px' }}
       >
-        {/* Label de sección — oculto al colapsar */}
-        <div
-          className="overflow-hidden whitespace-nowrap"
-          style={{
-            maxHeight:  collapsed ? '0px' : '32px',
-            opacity:    collapsed ? 0 : 1,
-            transition: 'max-height 0.3s ease, opacity 0.2s ease',
-          }}
-        >
-          <p
-            className="px-3 pb-2 pt-1 text-[10px] font-semibold tracking-widest uppercase"
-            style={{ color: 'rgba(74,195,178,0.7)' }}
-          >
-            Módulos
-          </p>
-        </div>
-
-        <div className="space-y-0.5">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const muted = 'muted' in item && item.muted
-            // Un ítem es activo si el pathname lo coincide PERO ningún ítem más específico (hijo) también coincide
-            const active = (pathname === item.href || pathname.startsWith(item.href + '/')) &&
-              !navItems.some(
-                (other) =>
-                  other.href !== item.href &&
-                  (pathname === other.href || pathname.startsWith(other.href + '/')) &&
-                  other.href.startsWith(item.href + '/')
-              )
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={collapsed ? item.label : undefined}
-                className={cn(
-                  'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
-                  active ? 'text-white' : muted ? 'text-white/40 hover:text-white/70' : 'text-white/70 hover:text-white',
-                )}
-                style={{
-                  gap:             collapsed ? 0 : 12,
-                  padding:         collapsed ? '10px 0' : muted && !collapsed ? '6px 12px 6px 24px' : '10px 12px',
-                  justifyContent:  collapsed ? 'center' : 'flex-start',
-                  backgroundColor: active ? 'rgba(74,195,178,0.22)' : 'transparent',
-                  borderLeft:      active && !collapsed ? '3px solid #4AC3B2' : '3px solid transparent',
-                  transition:      'all 0.15s ease',
-                }}
-                onMouseEnter={e => {
-                  if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.08)'
-                }}
-                onMouseLeave={e => {
-                  if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                }}
+        {sections ? (
+          /* ── Sectioned view (DIRECTOR_CALIDAD) ── */
+          sections.map((section, i) => (
+            <div key={section.label} className={i > 0 ? 'mt-1' : ''}>
+              {/* Separator between sections when collapsed */}
+              {i > 0 && collapsed && (
+                <div style={{
+                  height: 1,
+                  backgroundColor: 'rgba(255,255,255,0.10)',
+                  margin: '8px 6px',
+                }} />
+              )}
+              {/* Section label (hidden when collapsed) */}
+              {renderSectionLabel(section.label)}
+              {/* Items */}
+              <div className="space-y-0.5">
+                {section.items.map(item => renderItem(item))}
+              </div>
+            </div>
+          ))
+        ) : (
+          /* ── Flat view (other roles) ── */
+          <>
+            <div
+              className="overflow-hidden whitespace-nowrap"
+              style={{
+                maxHeight:  collapsed ? '0px' : '32px',
+                opacity:    collapsed ? 0 : 1,
+                transition: 'max-height 0.3s ease, opacity 0.2s ease',
+              }}
+            >
+              <p
+                className="px-3 pb-2 pt-1 text-[10px] font-semibold tracking-widest uppercase"
+                style={{ color: 'rgba(74,195,178,0.7)' }}
               >
-                <Icon
-                  className="flex-shrink-0"
-                  style={{
-                    width:  collapsed ? 18 : muted ? 14 : 16,
-                    height: collapsed ? 18 : muted ? 14 : 16,
-                    color:  active ? '#4AC3B2' : 'inherit',
-                  }}
-                />
-
-                {/* Texto del ítem */}
-                <span
-                  className="overflow-hidden whitespace-nowrap flex-1"
-                  style={{
-                    maxWidth:   collapsed ? '0px' : '180px',
-                    opacity:    collapsed ? 0 : 1,
-                    transition: 'max-width 0.3s ease, opacity 0.2s ease',
-                    fontFamily: 'var(--font-montserrat)',
-                  }}
-                >
-                  {item.label}
-                </span>
-
-                {/* Chevron activo */}
-                {active && !collapsed && (
-                  <ChevronRight className="ml-auto h-3 w-3 flex-shrink-0" style={{ color: '#4AC3B2' }} />
-                )}
-
-                {/* Punto activo en modo colapsado */}
-                {active && collapsed && (
-                  <span
-                    className="absolute right-1.5 w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: '#4AC3B2' }}
-                  />
-                )}
-              </Link>
-            )
-          })}
-        </div>
+                Módulos
+              </p>
+            </div>
+            <div className="space-y-0.5">
+              {navItems.map(item => renderItem(item))}
+            </div>
+          </>
+        )}
       </nav>
 
       {/* ── Footer usuario ── */}
@@ -264,7 +412,6 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
           padding:   collapsed ? '12px 8px' : '16px',
         }}
       >
-        {/* Botón expand — solo visible en modo colapsado */}
         {collapsed && (
           <button
             onClick={onToggle}
@@ -284,7 +431,6 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
           </button>
         )}
 
-        {/* Avatar + info */}
         <div
           className="flex items-center mb-3"
           style={{ gap: collapsed ? 0 : 12, justifyContent: collapsed ? 'center' : 'flex-start' }}
@@ -303,7 +449,6 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
           >
             {userName.charAt(0)}
           </div>
-
           <div
             className="min-w-0 overflow-hidden"
             style={{
@@ -323,7 +468,6 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
           </div>
         </div>
 
-        {/* Logout */}
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
           title={collapsed ? 'Cerrar sesión' : undefined}

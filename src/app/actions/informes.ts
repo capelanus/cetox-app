@@ -164,10 +164,42 @@ export async function subirInformeElaborado(informeId: string, formData: FormDat
 
 export async function enviarAElaboracion(informeId: string) {
   await requireRol(['ANALISTA'])
-  await prisma.informe.update({
+  const informe = await prisma.informe.update({
     where: { id: informeId },
     data: { estado: 'EN_ELABORACION', fechaEnvioResultados: new Date() },
+    include: {
+      oda: {
+        include: {
+          set: { select: { nombreComercial: true } },
+        },
+      },
+    },
   })
+
+  // Notificar a Administración, Calidad y Gerencia
+  const ROLES_NOTIFICAR = ['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO']
+  const destinatarios = await prisma.usuario.findMany({
+    where: { rol: { in: ROLES_NOTIFICAR }, activo: true },
+    select: { id: true },
+  })
+
+  if (destinatarios.length > 0) {
+    const area = informe.oda.area
+    const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
+    const nombreMuestra = informe.oda.set.nombreComercial ?? 'muestra sin nombre'
+    const areaLabel = AREA_LABELS[area] ?? area
+
+    await prisma.notificacion.createMany({
+      data: destinatarios.map((u) => ({
+        usuarioId: u.id,
+        tipo: 'INFORME_EMITIDO',
+        titulo: `Resultado emitido — ${areaLabel}`,
+        mensaje: `El laboratorio de ${areaLabel} emitió su resultado para "${nombreMuestra}".`,
+        enlace: `/informes/${informeId}`,
+      })),
+    })
+  }
+
   revalidatePath(`/informes/${informeId}`)
   revalidatePath('/informes')
 }

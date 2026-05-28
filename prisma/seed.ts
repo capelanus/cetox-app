@@ -44,6 +44,40 @@ async function main() {
     },
   })
 
+  // Usuarios RRHH
+  await prisma.usuario.upsert({
+    where: { email: 'a.cadillo@cetox.com.pe' },
+    update: {},
+    create: {
+      email: 'a.cadillo@cetox.com.pe',
+      passwordHash: password,
+      nombre: 'Angie Daniela Cadillo Ramírez',
+      rol: 'ADMINISTRACION',
+    },
+  })
+
+  await prisma.usuario.upsert({
+    where: { email: 'y.valeriano@cetox.com.pe' },
+    update: {},
+    create: {
+      email: 'y.valeriano@cetox.com.pe',
+      passwordHash: password,
+      nombre: 'Yahaida Milagros Valeriano Machacuay',
+      rol: 'ADMINISTRACION',
+    },
+  })
+
+  await prisma.usuario.upsert({
+    where: { email: 'a.castillo@cetox.com.pe' },
+    update: {},
+    create: {
+      email: 'a.castillo@cetox.com.pe',
+      passwordHash: password,
+      nombre: 'Andrea Castillo Blanco',
+      rol: 'ADMINISTRACION',
+    },
+  })
+
   await prisma.usuario.upsert({
     where: { email: 'analista.q@cetox.com.pe' },
     update: {},

@@ -40,7 +40,7 @@ export function formatNumSET(numero: number, anio: number): string {
 }
 
 export function formatNumODA(numero: number, anio: number): string {
-  return `ODA-${String(numero).padStart(5, '0')}-${anio}`
+  return `${String(numero).padStart(5, '0')}-${anio}`
 }
 
 export function formatNumInforme(prefijo: string, numero: number, anio: number): string {

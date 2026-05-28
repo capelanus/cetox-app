@@ -2,23 +2,35 @@
 
 import { useState } from 'react'
 import { Sidebar } from './sidebar'
+import { NotificationBell, type NotificacionData } from './notification-bell'
+import { ChatPanel } from './chat/chat-panel'
 
 interface AppShellProps {
-  children:  React.ReactNode
-  userName:  string
-  userEmail: string
-  userRol:   string
-  userArea:  string | null
+  children:       React.ReactNode
+  userName:       string
+  userEmail:      string
+  userRol:        string
+  userArea:       string | null
+  userId:         string
+  notificaciones: NotificacionData[]
 }
 
-export function AppShell({ children, userName, userEmail, userRol, userArea }: AppShellProps) {
+export function AppShell({
+  children,
+  userName,
+  userEmail,
+  userRol,
+  userArea,
+  userId,
+  notificaciones,
+}: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#EAF4F4' }}>
       <Sidebar
         collapsed={collapsed}
-        onToggle={() => setCollapsed(c => !c)}
+        onToggle={() => setCollapsed((c) => !c)}
         userName={userName}
         userEmail={userEmail}
         userRol={userRol}
@@ -27,10 +39,17 @@ export function AppShell({ children, userName, userEmail, userRol, userArea }: A
       <main
         className="flex-1 p-8 cetox-scroll overflow-y-auto"
         style={{
-          marginLeft:  collapsed ? '64px' : '256px',
-          transition:  'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          marginLeft: collapsed ? '64px' : '256px',
+          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
+        {/* Top-right bar: notifications */}
+        <div className="flex items-center justify-end gap-1 mb-4">
+          <NotificationBell notificaciones={notificaciones} />
+        </div>
+
+        {/* Floating chat FAB — fixed bottom-right, rendered outside content flow */}
+        <ChatPanel userId={userId} userRol={userRol} userName={userName} />
         {children}
       </main>
     </div>

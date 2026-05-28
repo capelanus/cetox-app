@@ -46,7 +46,7 @@ export async function getEquipos(filtros?: {
   estado?: EstadoEquipo
   buscar?: string
 }) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'JEFE_OPERACIONES'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
 
   const equipos = await prisma.equipo.findMany({
     where: {
@@ -77,7 +77,7 @@ export async function getEquipos(filtros?: {
 }
 
 export async function getEquipo(id: string) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'JEFE_OPERACIONES'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
 
   const eq = await prisma.equipo.findUnique({
     where: { id },
@@ -93,7 +93,7 @@ export async function getEquipo(id: string) {
 }
 
 export async function getResumenEquipos() {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'JEFE_OPERACIONES'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
 
   const equipos = await prisma.equipo.findMany({
     where:   { activo: true },
@@ -114,7 +114,7 @@ export async function getResumenEquipos() {
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
 export async function toggleTareaCompleta(tareaId: string, completado: boolean, nota?: string) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'JEFE_OPERACIONES'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
 
   const tarea = await prisma.tareaEquipo.update({
     where: { id: tareaId },
@@ -145,7 +145,7 @@ export async function crearTarea(data: {
   anio:     number
   nota?:    string
 }) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
 
   const tarea = await prisma.tareaEquipo.create({
     data: {
@@ -187,7 +187,7 @@ export async function crearEquipo(data: {
 }
 
 export async function actualizarNotaEquipo(id: string, notas: string) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
 
   await prisma.equipo.update({ where: { id }, data: { notas } })
   revalidatePath('/equipos')

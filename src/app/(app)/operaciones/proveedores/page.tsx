@@ -8,11 +8,11 @@ import ProveedoresFilters from './filters-client'
 export default async function ProveedoresPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; especialidad?: string; estado?: string }>
+  searchParams: Promise<{ q?: string; especialidad?: string; estado?: string; producto?: string }>
 }) {
   await requireOperaciones()
 
-  const { q, especialidad, estado } = await searchParams
+  const { q, especialidad, estado, producto } = await searchParams
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {}
@@ -25,6 +25,7 @@ export default async function ProveedoresPage({
     ]
   }
   if (especialidad) where.especialidad = { contains: especialidad, mode: 'insensitive' }
+  if (producto) where.productosTexto = { contains: producto, mode: 'insensitive' }
   if (estado === 'activo')   where.activo = true
   if (estado === 'inactivo') where.activo = false
 
@@ -92,6 +93,7 @@ export default async function ProveedoresPage({
         currentQ={q}
         currentEspecialidad={especialidad}
         currentEstado={estado}
+        currentProducto={producto}
       />
 
       {/* Table */}
@@ -154,7 +156,7 @@ export default async function ProveedoresPage({
           </table>
           <div className="px-4 py-2 border-t border-gray-100 text-xs text-gray-400">
             {proveedores.length} proveedor{proveedores.length !== 1 ? 'es' : ''}
-            {(q || especialidad || estado) ? ` (filtrado de ${total})` : ''}
+            {(q || especialidad || estado || producto) ? ` (filtrado de ${total})` : ''}
           </div>
         </div>
       )}

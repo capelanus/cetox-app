@@ -16,6 +16,7 @@ export async function registrarFactura(formData: FormData) {
   const igvStr = formData.get('igv') as string
   const fechaEmision = formData.get('fechaEmision') as string
   const fechaVencimiento = formData.get('fechaVencimiento') as string
+  const archivoUrl = formData.get('archivoUrl') as string
 
   const subtotal = parseFloat(subtotalStr) || 0
   const igv = parseFloat(igvStr) || 0
@@ -32,6 +33,7 @@ export async function registrarFactura(formData: FormData) {
       total,
       fechaEmision: new Date(fechaEmision),
       fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null,
+      archivoUrl: archivoUrl || null,
       estado: 'REGISTRADA',
       registradoPorId: session.user.id,
     },

@@ -32,8 +32,10 @@ interface CotizacionProveedor {
 interface LineItem {
   descripcion: string
   cantidad: number
+  cantidadCot: number   // original quantity from cotizacion (for % display)
   unidad: string
   precioUnitario: number
+  incluido: boolean
 }
 
 export default function NuevaOrdenCompraPage() {
@@ -47,7 +49,8 @@ export default function NuevaOrdenCompraPage() {
   const [selectedReq, setSelectedReq] = useState<string>(reqParam || '')
   const [selectedCot, setSelectedCot] = useState<string>(cotParam || '')
   const [selectedProv, setSelectedProv] = useState<string>('')
-  const [items, setItems] = useState<LineItem[]>([{ descripcion: '', cantidad: 1, unidad: 'Unidad', precioUnitario: 0 }])
+  const [items, setItems] = useState<LineItem[]>([{ descripcion: '', cantidad: 1, cantidadCot: 0, unidad: 'Unidad', precioUnitario: 0, incluido: true }])
+  const [fromCot, setFromCot] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -66,12 +69,15 @@ export default function NuevaOrdenCompraPage() {
         const cot = cots.find((c: CotizacionProveedor) => c.id === cotParam)
         if (cot) {
           setSelectedProv(cot.proveedorId)
+          setFromCot(true)
           if (cot.items?.length) {
-            setItems(cot.items.map((item: LineItem) => ({
+            setItems(cot.items.map((item: { descripcion: string; cantidad: number; unidad: string; precioUnitario: number }) => ({
               descripcion: item.descripcion,
               cantidad: item.cantidad,
+              cantidadCot: item.cantidad,
               unidad: item.unidad,
               precioUnitario: item.precioUnitario,
+              incluido: true,
             })))
           }
         }
@@ -79,18 +85,23 @@ export default function NuevaOrdenCompraPage() {
     }).catch(() => setLoading(false))
   }, [cotParam])
 
-  const addItem = () => setItems(prev => [...prev, { descripcion: '', cantidad: 1, unidad: 'Unidad', precioUnitario: 0 }])
+  const addItem = () => setItems(prev => [...prev, { descripcion: '', cantidad: 1, cantidadCot: 0, unidad: 'Unidad', precioUnitario: 0, incluido: true }])
   const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i))
-  const updateItem = (i: number, field: keyof LineItem, value: string | number) => {
+  const updateItem = (i: number, field: keyof LineItem, value: string | number | boolean) => {
     setItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item))
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0)
+  // Only count checked items
+  const includedItems = items.filter(item => item.incluido)
+  const subtotal = includedItems.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0)
   const igv = subtotal * 0.18
   const total = subtotal + igv
 
   async function handleSubmit(formData: FormData) {
-    formData.set('items', JSON.stringify(items))
+    const submitItems = items
+      .filter(item => item.incluido)
+      .map(({ descripcion, cantidad, unidad, precioUnitario }) => ({ descripcion, cantidad, unidad, precioUnitario }))
+    formData.set('items', JSON.stringify(submitItems))
     if (selectedProv) formData.set('proveedorId', selectedProv)
     await crearOrdenCompra(formData)
   }
@@ -193,13 +204,25 @@ export default function NuevaOrdenCompraPage() {
           </div>
           <div className="space-y-3">
             {items.map((item, i) => (
-              <div key={i} className="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-lg">
-                <div className="col-span-4">
+              <div key={i} className={`grid gap-2 items-start p-3 rounded-lg ${item.incluido ? 'bg-gray-50' : 'bg-gray-100 opacity-60'} ${fromCot ? 'grid-cols-13' : 'grid-cols-12'}`}>
+                {/* Include checkbox (only when pre-filled from cotizacion) */}
+                {fromCot && (
+                  <div className="col-span-1 pt-5 flex justify-center">
+                    <input
+                      type="checkbox"
+                      checked={item.incluido}
+                      onChange={e => updateItem(i, 'incluido', e.target.checked)}
+                      className="w-4 h-4 accent-[#13602C]"
+                      title="Incluir en OC"
+                    />
+                  </div>
+                )}
+                <div className={fromCot ? 'col-span-3' : 'col-span-4'}>
                   <label className="block text-xs text-gray-500 mb-1">Descripción</label>
                   <input
                     value={item.descripcion}
                     onChange={e => updateItem(i, 'descripcion', e.target.value)}
-                    required
+                    required={item.incluido}
                     className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
                   />
                 </div>
@@ -211,16 +234,25 @@ export default function NuevaOrdenCompraPage() {
                     min={0.01}
                     step={0.01}
                     onChange={e => updateItem(i, 'cantidad', parseFloat(e.target.value))}
-                    required
+                    required={item.incluido}
                     className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
                   />
                 </div>
+                {/* % of cotizacion column — shown only when from cotizacion */}
+                {fromCot && item.cantidadCot > 0 && (
+                  <div className="col-span-1">
+                    <label className="block text-xs text-gray-500 mb-1">%</label>
+                    <p className={`text-sm font-mono py-1.5 ${item.cantidad / item.cantidadCot > 1 ? 'text-red-600' : 'text-gray-600'}`}>
+                      {((item.cantidad / item.cantidadCot) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                )}
                 <div className="col-span-2">
                   <label className="block text-xs text-gray-500 mb-1">Unidad</label>
                   <input
                     value={item.unidad}
                     onChange={e => updateItem(i, 'unidad', e.target.value)}
-                    required
+                    required={item.incluido}
                     className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
                   />
                 </div>
@@ -232,7 +264,7 @@ export default function NuevaOrdenCompraPage() {
                     min={0}
                     step={0.01}
                     onChange={e => updateItem(i, 'precioUnitario', parseFloat(e.target.value))}
-                    required
+                    required={item.incluido}
                     className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
                   />
                 </div>
@@ -250,6 +282,13 @@ export default function NuevaOrdenCompraPage() {
               </div>
             ))}
           </div>
+          {fromCot && (
+            <p className="text-xs text-gray-500">
+              {items.filter(i => !i.incluido).length > 0
+                ? `${items.filter(i => !i.incluido).length} ítem(s) excluido(s) de la OC`
+                : 'Todos los ítems incluidos'}
+            </p>
+          )}
           <div className="flex justify-end">
             <div className="text-sm space-y-1 min-w-[200px]">
               <div className="flex justify-between">

@@ -339,9 +339,10 @@ model Proveedor {
   email          String?
   email2         String?
   email3         String?
-  cuentaBancaria String?
-  activo         Boolean  @default(true)
-  createdAt      DateTime @default(now())
+  cuentaBancaria  String?
+  productosTexto  String? // comma-separated product names this supplier sells
+  activo          Boolean  @default(true)
+  createdAt       DateTime @default(now())
 
   cotizacionesProveedor CotizacionProveedor[]
   ordenesCompra         OrdenCompra[]

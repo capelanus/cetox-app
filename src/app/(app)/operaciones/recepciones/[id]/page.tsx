@@ -7,6 +7,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react'
 import { formatNumRecepcion, formatFecha } from '@/lib/format'
 import { ESTADO_RECEPCION_LABELS } from '@/lib/constants'
 import { registrarEntregaArea } from '@/app/actions/recepciones'
+import ActaBtn from './acta-btn'
 
 export default async function RecepcionDetallePage({ params }: { params: Promise<{ id: string }> }) {
   await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
@@ -38,7 +39,23 @@ export default async function RecepcionDetallePage({ params }: { params: Promise
           </h1>
           <p className="text-sm text-gray-500">{rec.ordenCompra.proveedor.razonSocial}</p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          <ActaBtn
+            numero={rec.numero}
+            anio={rec.anio}
+            fechaRecepcion={rec.fechaRecepcion.toISOString()}
+            ocNumero={`OC-${String(rec.ordenCompra.numero).padStart(4, '0')}-${rec.ordenCompra.anio}`}
+            proveedor={rec.ordenCompra.proveedor.razonSocial}
+            recibidoPor={rec.recibidoPor.nombre}
+            items={rec.items.map(item => ({
+              descripcion: item.descripcion,
+              cantidadEsperada: item.cantidadEsperada,
+              cantidadRecibida: item.cantidadRecibida,
+              unidad: item.unidad,
+              conforme: item.conforme,
+              observacion: item.observacion,
+            }))}
+          />
           <span className={`text-sm px-3 py-1 rounded-full font-medium ${
             rec.estado === 'CONFORME' || rec.estado === 'ENTREGADO_AREA' ? 'bg-green-100 text-green-700' :
             rec.estado === 'NO_CONFORME' ? 'bg-red-100 text-red-700' :

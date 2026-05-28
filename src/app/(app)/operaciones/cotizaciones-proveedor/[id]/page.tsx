@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Paperclip } from 'lucide-react'
 import { formatNumCotizacionProveedor, formatFecha } from '@/lib/format'
 import { ESTADO_COT_PROVEEDOR_LABELS } from '@/lib/constants'
 import { enviarCotizacionACalidad } from '@/app/actions/cotizaciones-proveedor'
@@ -41,6 +41,17 @@ export default async function CotizacionProveedorDetallePage({ params }: { param
           <p className="text-sm text-gray-500">{cot.proveedor.razonSocial}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {cot.archivoUrl && (
+            <a
+              href={cot.archivoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border border-[#13602C] text-[#13602C] hover:bg-green-50 transition-colors font-medium"
+            >
+              <Paperclip className="w-3.5 h-3.5" />
+              Ver documento adjunto
+            </a>
+          )}
           <span className={`text-sm px-3 py-1 rounded-full font-medium ${
             cot.estado === 'APROBADA' ? 'bg-green-100 text-green-700' :
             cot.estado === 'RECHAZADA' ? 'bg-red-100 text-red-700' :

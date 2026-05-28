@@ -18,6 +18,7 @@ export async function crearCotizacionProveedor(formData: FormData) {
   const condicionesPago = formData.get('condicionesPago') as string
   const validezDias = formData.get('validezDias') as string
   const observaciones = formData.get('observaciones') as string
+  const archivoUrl = formData.get('archivoUrl') as string
   const itemsJson = formData.get('items') as string
   const items: { descripcion: string; cantidad: number; unidad: string; precioUnitario: number }[] = JSON.parse(itemsJson || '[]')
 
@@ -48,6 +49,7 @@ export async function crearCotizacionProveedor(formData: FormData) {
       condicionesPago: condicionesPago || null,
       validezDias: validezDias ? parseInt(validezDias) : null,
       observaciones: observaciones || null,
+      archivoUrl: archivoUrl || null,
       estado: 'BORRADOR',
       creadoPorId: session.user.id,
       items: { create: itemsWithSubtotal },

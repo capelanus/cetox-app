@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Search, AlertTriangle, X } from 'lucide-react'
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 export default function InventarioSearchClient({ categorias, currentQ, currentCategoria, currentAlerta }: Props) {
   const router   = useRouter()
   const pathname = usePathname()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const navigate = useCallback((params: Record<string, string | undefined>) => {
     const sp = new URLSearchParams()
@@ -21,6 +22,20 @@ export default function InventarioSearchClient({ categorias, currentQ, currentCa
     const qs = sp.toString()
     router.push(qs ? `${pathname}?${qs}` : pathname)
   }, [router, pathname])
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
+
+  const handleSearchChange = useCallback((value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      navigate({ q: value || undefined, categoria: currentCategoria, alerta: currentAlerta })
+    }, 400)
+  }, [navigate, currentCategoria, currentAlerta])
 
   return (
     <div className="flex flex-wrap gap-3 items-center">
@@ -32,11 +47,7 @@ export default function InventarioSearchClient({ categorias, currentQ, currentCa
           defaultValue={currentQ ?? ''}
           placeholder="Buscar por descripción o código..."
           className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              navigate({ q: (e.target as HTMLInputElement).value || undefined, categoria: currentCategoria, alerta: currentAlerta })
-            }
-          }}
+          onChange={e => handleSearchChange(e.target.value)}
         />
       </div>
 

@@ -72,3 +72,13 @@ export async function toggleProveedorActivo(id: string, activo: boolean) {
   revalidatePath('/operaciones/proveedores')
   revalidatePath(`/operaciones/proveedores/${id}`)
 }
+
+export async function actualizarProductosProveedor(proveedorId: string, productos: string[]) {
+  await requireOperaciones()
+  await prisma.proveedor.update({
+    where: { id: proveedorId },
+    data: { productosTexto: productos.filter(Boolean).join(',') },
+  })
+  revalidatePath(`/operaciones/proveedores/${proveedorId}`)
+  revalidatePath('/operaciones/proveedores')
+}

@@ -1,9 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Paperclip, CheckCircle } from 'lucide-react'
 import { crearCotizacionProveedor } from '@/app/actions/cotizaciones-proveedor'
 
 interface Requerimiento {
@@ -36,6 +36,10 @@ export default function NuevaCotizacionProveedorPage() {
   const [selectedReq, setSelectedReq] = useState<string>(reqParam || '')
   const [items, setItems] = useState<LineItem[]>([{ descripcion: '', cantidad: 1, unidad: 'Unidad', precioUnitario: 0 }])
   const [loading, setLoading] = useState(true)
+  const [archivoUrl, setArchivoUrl] = useState<string>('')
+  const [archivoNombre, setArchivoNombre] = useState<string>('')
+  const [uploading, setUploading] = useState(false)
+  const archivoUrlRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     Promise.all([
@@ -73,8 +77,29 @@ export default function NuevaCotizacionProveedorPage() {
   const igv = subtotal * 0.18
   const total = subtotal + igv
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) {
+        setArchivoUrl(data.url)
+        setArchivoNombre(file.name)
+      }
+    } catch {
+      alert('Error al subir el archivo')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function handleSubmit(formData: FormData) {
     formData.set('items', JSON.stringify(items))
+    if (archivoUrl) formData.set('archivoUrl', archivoUrl)
     await crearCotizacionProveedor(formData)
   }
 
@@ -141,6 +166,30 @@ export default function NuevaCotizacionProveedorPage() {
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
               <textarea name="observaciones" rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]" />
+            </div>
+
+            {/* File upload */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Paperclip className="w-3.5 h-3.5 inline-block mr-1" />
+                Adjuntar cotización (PDF / imagen)
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                onChange={handleFileChange}
+                disabled={uploading}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C] file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-[#13602C] file:text-white hover:file:bg-[#0e4a21]"
+              />
+              {uploading && <p className="text-xs text-gray-500 mt-1">Subiendo archivo...</p>}
+              {archivoUrl && !uploading && (
+                <p className="text-xs text-green-700 mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  {archivoNombre} — subido correctamente
+                </p>
+              )}
+              {/* Hidden input to carry URL in FormData */}
+              <input ref={archivoUrlRef} type="hidden" name="archivoUrl" value={archivoUrl} />
             </div>
           </div>
         </div>

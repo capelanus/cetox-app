@@ -8,6 +8,7 @@ import { formatFecha } from '@/lib/format'
 import { ESTADO_OC_LABELS, ESTADO_COT_PROVEEDOR_LABELS } from '@/lib/constants'
 import ProveedorEditForm from './edit-form'
 import ToggleActivoButton from './toggle-activo'
+import ProductosProveedor from './productos-client'
 
 export default async function ProveedorDetallePage({ params }: { params: Promise<{ id: string }> }) {
   await requireOperaciones()
@@ -141,6 +142,15 @@ export default async function ProveedorDetallePage({ params }: { params: Promise
             <p className="text-sm text-gray-700 font-mono leading-relaxed">{proveedor.cuentaBancaria}</p>
           </div>
         )}
+      </div>
+
+      {/* Productos que provee */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+        <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Productos que provee</h2>
+        <ProductosProveedor
+          proveedorId={proveedor.id}
+          productosIniciales={proveedor.productosTexto ? proveedor.productosTexto.split(',').filter(Boolean) : []}
+        />
       </div>
 
       {/* Edit form (collapsible) */}

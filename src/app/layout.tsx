@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Oswald, Montserrat } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/theme-provider'
 
 const oswald = Oswald({
   subsets: ['latin'],
@@ -24,10 +25,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${oswald.variable} ${montserrat.variable}`}>
+    <html lang="es" className={`${oswald.variable} ${montserrat.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        {children}
-        <Toaster richColors position="top-right" />
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   )

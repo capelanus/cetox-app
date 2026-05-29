@@ -5,6 +5,7 @@ import { MessageSquare, X, Send, Hash, Paperclip, FileText, Image, File, Downloa
 import { enviarMensaje } from '@/app/actions/chat'
 import { format, isToday, isYesterday } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { UserAvatar } from '@/components/ui/user-avatar'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -594,7 +595,6 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
               {agrupados.map((m) => {
                 const esPropio = m.autorId === userId
                 const color    = ROL_COLOR[m.autor.rol] ?? '#94a3b8'
-                const inicial  = m.autor.nombre.charAt(0).toUpperCase()
 
                 return (
                   <div
@@ -602,15 +602,14 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
                     className={`flex gap-2 ${esPropio ? 'flex-row-reverse' : 'flex-row'} ${m.showHeader ? 'mt-4' : 'mt-0.5'}`}
                   >
                     {m.showHeader ? (
-                      <div
+                      <UserAvatar
+                        nombre={m.autor.nombre}
+                        size="sm"
                         title={`${m.autor.nombre} · ${ROL_LABEL[m.autor.rol] ?? m.autor.rol}`}
-                        className="flex-shrink-0 flex items-center justify-center rounded-full text-white text-xs font-bold"
-                        style={{ backgroundColor: color, width: 32, height: 32, fontFamily: 'var(--font-oswald)', marginTop: 2 }}
-                      >
-                        {inicial}
-                      </div>
+                        style={{ marginTop: 2 }}
+                      />
                     ) : (
-                      <div className="w-8 flex-shrink-0" />
+                      <div className="w-7 flex-shrink-0" />
                     )}
 
                     <div className={`flex-1 min-w-0 flex flex-col ${esPropio ? 'items-end' : 'items-start'}`}>

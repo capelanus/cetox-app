@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Sidebar } from './sidebar'
 import { NotificationBell, type NotificacionData } from './notification-bell'
 import { ChatPanel } from './chat/chat-panel'
+import { ThemeToggle } from './theme-toggle'
+import { GlobalSearch } from './global-search'
 
 interface AppShellProps {
   children:       React.ReactNode
@@ -43,8 +45,10 @@ export function AppShell({
           transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {/* Top-right bar: notifications */}
-        <div className="flex items-center justify-end gap-1 mb-4">
+        {/* Top-right bar: search + theme toggle + notifications */}
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <GlobalSearch userRol={userRol} />
+          <ThemeToggle />
           <NotificationBell notificaciones={notificaciones} />
         </div>
 

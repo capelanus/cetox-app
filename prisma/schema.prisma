@@ -36,6 +36,7 @@ model Usuario {
   cajaChicaGastos           CajaChicaGasto[]
   cajaChicaIngresos         CajaChicaIngreso[]
   mensajesChat              MensajeChat[]
+  auditLogs                 AuditLog[]
 }
 
 model CanalChat {
@@ -669,4 +670,22 @@ model InventarioItem {
   notas       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ── Audit Log ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  usuarioId  String?
+  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
+  accion     String   // CREATE | UPDATE | DELETE
+  entidad    String   // Cotizacion | SET | Informe | etc.
+  entidadId  String
+  detalle    String?  // JSON string con {campo, antes, despues}
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([entidad, entidadId])
+  @@index([createdAt])
 }

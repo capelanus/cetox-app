@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { AppShell } from '@/components/app-shell'
+import { PageTransition } from '@/components/page-transition'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -37,7 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       userId={session.user.id}
       notificaciones={notificacionesSerialized}
     >
-      {children}
+      <PageTransition>{children}</PageTransition>
     </AppShell>
   )
 }

@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { DashboardPipeline } from '@/components/dashboard-pipeline'
 import type { StageCount } from '@/components/dashboard-pipeline'
 import { getResumenEquipos } from '@/app/actions/equipos'
+import { DashboardCharts } from '@/components/dashboard-charts'
 
 /* ─── KPI Card ───────────────────────────────────────────────────────────── */
 
@@ -74,6 +75,8 @@ export default async function DashboardPage() {
     odasByEstado,
     informesByEstado,
     resumenEquipos,
+    cotRecientes,
+    setsRecientes,
   ] = await Promise.all([
     prisma.cotizacion.count({ where: { deletedAt: null, estado: { in: ['BORRADOR', 'EN_REVISION', 'ENVIADA'] } } }),
     prisma.sET.count({ where: { estado: { in: ['EMITIDA', 'EN_EJECUCION'] } } }),
@@ -86,10 +89,57 @@ export default async function DashboardPage() {
     prisma.oDA.groupBy({ by: ['estado'], _count: { estado: true } }),
     prisma.informe.groupBy({ by: ['estado'], _count: { estado: true } }),
     getResumenEquipos().catch(() => null),
+    // Monthly data: last 6 months
+    prisma.cotizacion.findMany({
+      where: { deletedAt: null, fechaEmision: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5, 1)) } },
+      select: { fechaEmision: true },
+    }),
+    prisma.sET.findMany({
+      where: { fechaIngreso: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5, 1)) } },
+      select: { fechaIngreso: true },
+    }),
   ])
 
   const normalize = (rows: { estado: string; _count: { estado: number } }[]): StageCount[] =>
     rows.map(r => ({ estado: r.estado, count: r._count.estado }))
+
+  // ── Monthly chart data (last 6 months) ──────────────────────────────────
+  const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+  const now   = new Date()
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
+    return { year: d.getFullYear(), month: d.getMonth(), label: MESES_CORTOS[d.getMonth()] }
+  })
+
+  function countByMonth(items: { fecha: Date }[], year: number, month: number) {
+    return items.filter(i => i.fecha.getFullYear() === year && i.fecha.getMonth() === month).length
+  }
+
+  const cotFechas  = cotRecientes.map(c  => ({ fecha: c.fechaEmision }))
+  const setsFechas = setsRecientes.map(s => ({ fecha: s.fechaIngreso }))
+
+  const monthlyData = months.map(m => ({
+    mes:          m.label,
+    cotizaciones: countByMonth(cotFechas,  m.year, m.month),
+    ensayos:      countByMonth(setsFechas, m.year, m.month),
+  }))
+
+  // ── Estado colors for pie chart ──────────────────────────────────────────
+  const ESTADO_COLORS: Record<string, string> = {
+    BORRADOR:     '#94a3b8',
+    EN_REVISION:  '#f59e0b',
+    ENVIADA:      '#3b82f6',
+    APROBADA:     '#10b981',
+    RECHAZADA:    '#ef4444',
+    ANULADA:      '#6b7280',
+    EN_EJECUCION: '#8b5cf6',
+    COMPLETADA:   '#13602C',
+  }
+  const estadosPie = cotByEstado.map(r => ({
+    estado: r.estado,
+    count:  r._count.estado,
+    color:  ESTADO_COLORS[r.estado] ?? '#94a3b8',
+  }))
 
   const hora = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })
   const fecha = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Lima' })
@@ -210,6 +260,16 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* ── Gráficos ── */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="h-px flex-1" style={{ backgroundColor: '#CCE3DE' }} />
+        <span className="text-[10px] font-semibold uppercase tracking-widest px-2" style={{ color: '#4AC3B2', fontFamily: 'var(--font-oswald)' }}>
+          Actividad y distribución
+        </span>
+        <div className="h-px flex-1" style={{ backgroundColor: '#CCE3DE' }} />
+      </div>
+      <DashboardCharts monthly={monthlyData} estados={estadosPie} />
 
       {/* ── Equipment alerts ── */}
       {resumenEquipos && (resumenEquipos.vencidos > 0 || resumenEquipos.proximos > 0) && (

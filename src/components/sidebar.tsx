@@ -30,9 +30,14 @@ import {
   ShoppingBag,
   Wallet,
   Wrench,
+  Calendar,
+  History,
+  DollarSign,
+  BarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
+import { getInitials } from '@/components/ui/user-avatar'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -110,8 +115,11 @@ const sectionesAdministracion: NavSection[] = [
       { href: '/clientes',              label: 'Clientes',     icon: Users,           roles: ['ADMINISTRACION'] },
       { href: '/cotizaciones',          label: 'Cotizaciones', icon: FileText,        roles: ['ADMINISTRACION'] },
       { href: '/cotizaciones/papelera', label: 'Papelera',     icon: Trash2,          roles: ['ADMINISTRACION'], muted: true },
-      { href: '/ingresos',              label: 'Ingresos',     icon: TrendingUp,      roles: ['ADMINISTRACION'] },
-      { href: '/resumen',               label: 'Resumen',      icon: TableProperties, roles: ['ADMINISTRACION'] },
+      { href: '/ingresos',  label: 'Ingresos',             icon: TrendingUp,      roles: ['ADMINISTRACION'] },
+      { href: '/resumen',   label: 'Resumen',              icon: TableProperties, roles: ['ADMINISTRACION'] },
+      { href: '/finanzas',  label: 'Dashboard Financiero', icon: DollarSign,      roles: ['ADMINISTRACION'] },
+      { href: '/kpis',      label: 'KPIs Equipo',          icon: BarChart2,       roles: ['ADMINISTRACION'] },
+      { href: '/historial', label: 'Historial',            icon: History,         roles: ['ADMINISTRACION'], muted: true },
       { href: '/solicitudes',           label: 'Mis Solicitudes', icon: ShoppingBag,  roles: ['ADMINISTRACION'] },
     ],
   },
@@ -137,8 +145,9 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/set',        label: 'SET',         icon: ClipboardList, roles: ['DIRECTOR_CALIDAD'] },
       { href: '/oda',        label: 'ODA',         icon: TestTube,      roles: ['DIRECTOR_CALIDAD'] },
       { href: '/informes',   label: 'Informes',    icon: FileCheck,     roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/equipos',    label: 'Equipos',     icon: Wrench,        roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/caja-chica', label: 'Caja Chica',  icon: Wallet,        roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/equipos',            label: 'Equipos',           icon: Wrench,    roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/equipos/calendario', label: 'Cal. Mantenimiento', icon: Calendar,  roles: ['DIRECTOR_CALIDAD'], muted: true },
+      { href: '/caja-chica',         label: 'Caja Chica',         icon: Wallet,    roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
   {
@@ -149,8 +158,10 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/cotizaciones',          label: 'Cotizaciones',      icon: FileText,        roles: ['DIRECTOR_CALIDAD'] },
       { href: '/cotizaciones/papelera', label: 'Papelera',          icon: Trash2,          roles: ['DIRECTOR_CALIDAD'], muted: true },
       { href: '/cargos',                label: 'Cargos de Entrega', icon: Package,         roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/ingresos',              label: 'Ingresos',          icon: TrendingUp,      roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/resumen',               label: 'Resumen',           icon: TableProperties, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/ingresos',  label: 'Ingresos',          icon: TrendingUp,    roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/resumen',   label: 'Resumen',           icon: TableProperties, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/finanzas',  label: 'Dashboard Financiero', icon: DollarSign, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/kpis',      label: 'KPIs Equipo',       icon: BarChart2,     roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
   {
@@ -160,7 +171,8 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/operaciones/cotizaciones-proveedor', label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/facturas',              label: 'Facturas',          icon: Receipt,         roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/pagos',                 label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/solicitudes',                       label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/solicitudes', label: 'Mis Solicitudes', icon: ShoppingBag, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/historial',   label: 'Historial',       icon: History,     roles: ['DIRECTOR_CALIDAD'], muted: true },
     ],
   },
 ]
@@ -434,18 +446,19 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
           style={{ gap: collapsed ? 0 : 12, justifyContent: collapsed ? 'center' : 'flex-start' }}
         >
           <div
-            className="flex items-center justify-center rounded-full font-bold flex-shrink-0 uppercase"
+            className="flex items-center justify-center rounded-full font-bold flex-shrink-0"
             style={{
               backgroundColor: '#4AC3B2',
               color:           '#13602C',
               fontFamily:      'var(--font-oswald)',
               width:  collapsed ? 36 : 32,
               height: collapsed ? 36 : 32,
-              fontSize: 13,
+              fontSize: 12,
+              letterSpacing: '0.03em',
               transition: 'width 0.3s ease, height 0.3s ease',
             }}
           >
-            {userName.charAt(0)}
+            {getInitials(userName)}
           </div>
           <div
             className="min-w-0 overflow-hidden"

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition, useCallback } from 'react'
-import { MessageSquare, X, Send, Hash } from 'lucide-react'
+import { MessageSquare, X, Send, Hash, Paperclip, FileText, Image, File, Download, Loader2 } from 'lucide-react'
 import { enviarMensaje } from '@/app/actions/chat'
 import { format, isToday, isYesterday } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -9,11 +9,14 @@ import { es } from 'date-fns/locale'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Mensaje {
-  id:        string
-  contenido: string
-  createdAt: string
-  autorId:   string
-  autor:     { nombre: string; rol: string }
+  id:            string
+  contenido:     string
+  archivoUrl:    string | null
+  archivoNombre: string | null
+  archivoTipo:   string | null
+  createdAt:     string
+  autorId:       string
+  autor:         { nombre: string; rol: string }
 }
 
 interface MensajeAgrupado extends Mensaje { showHeader: boolean }
@@ -87,6 +90,20 @@ function formatHora(iso: string): string {
   return format(new Date(iso), 'HH:mm')
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024)       return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function isImage(tipo: string | null): boolean {
+  return !!tipo?.startsWith('image/')
+}
+
+function isPdf(tipo: string | null): boolean {
+  return tipo === 'application/pdf'
+}
+
 function agrupar(mensajes: Mensaje[]): MensajeAgrupado[] {
   return mensajes.map((m, i) => {
     const prev = mensajes[i - 1]
@@ -102,7 +119,6 @@ function loadLastRead(): Record<string, string> {
   if (typeof window === 'undefined') return {}
   try {
     const stored: Record<string, string> = JSON.parse(localStorage.getItem(LS_KEY) || '{}')
-    // Initialize missing channels to "now" so old messages don't appear as unread
     const now = new Date().toISOString()
     let changed = false
     for (const slug of TODOS_LOS_CANALES) {
@@ -117,30 +133,112 @@ function saveLastRead(data: Record<string, string>) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(data)) } catch {}
 }
 
+// ── File attachment preview ────────────────────────────────────────────────────
+
+function FileIconComponent({ tipo }: { tipo: string | null }) {
+  if (isImage(tipo))  return <Image  className="w-4 h-4 flex-shrink-0" />
+  if (isPdf(tipo))    return <FileText className="w-4 h-4 flex-shrink-0" />
+  return <File className="w-4 h-4 flex-shrink-0" />
+}
+
+interface PendingFile {
+  file:      File
+  preview?:  string   // object URL for images
+  uploading: boolean
+  url?:      string   // blob URL after upload
+  error?:    string
+}
+
+// ── Attachment bubble ──────────────────────────────────────────────────────────
+
+function AttachmentBubble({ msg, esPropio }: { msg: Mensaje; esPropio: boolean }) {
+  const { archivoUrl, archivoNombre, archivoTipo } = msg
+  if (!archivoUrl) return null
+
+  const isImg = isImage(archivoTipo)
+  const nombre = archivoNombre ?? 'archivo'
+
+  if (isImg) {
+    return (
+      <a
+        href={archivoUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-xl overflow-hidden mt-1"
+        style={{ maxWidth: 220 }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={archivoUrl}
+          alt={nombre}
+          className="w-full object-cover rounded-xl hover:opacity-90 transition-opacity"
+          style={{ maxHeight: 200 }}
+        />
+      </a>
+    )
+  }
+
+  return (
+    <a
+      href={archivoUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 rounded-xl px-3 py-2 mt-1 group transition-all"
+      style={{
+        backgroundColor: esPropio ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.05)',
+        border:          esPropio ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,0,0,0.08)',
+        maxWidth:        220,
+        textDecoration:  'none',
+      }}
+    >
+      <div
+        className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+        style={{ backgroundColor: isPdf(archivoTipo) ? '#fee2e2' : '#dbeafe' }}
+      >
+        <FileIconComponent tipo={archivoTipo} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p
+          className="text-xs font-semibold truncate"
+          style={{ color: esPropio ? 'white' : '#334155' }}
+        >
+          {nombre}
+        </p>
+        <p className="text-[10px]" style={{ color: esPropio ? 'rgba(255,255,255,0.65)' : '#94a3b8' }}>
+          {isPdf(archivoTipo) ? 'PDF' : archivoTipo?.split('/')[1]?.toUpperCase() ?? 'Archivo'}
+        </p>
+      </div>
+      <Download className="w-3.5 h-3.5 flex-shrink-0" style={{ color: esPropio ? 'rgba(255,255,255,0.7)' : '#94a3b8' }} />
+    </a>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ChatPanel({ userId, userRol, userName }: Props) {
-  const [open,         setOpen]        = useState(false)
-  const [canal,        setCanal]       = useState('general')
-  const [mensajes,     setMensajes]    = useState<Mensaje[]>([])
-  const [texto,        setTexto]       = useState('')
-  const [cargando,     setCargando]    = useState(false)
-  const [lastRead,     setLastRead]    = useState<Record<string, string>>(loadLastRead)
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
-  const [isPending,    startTransition] = useTransition()
+  const [open,          setOpen]         = useState(false)
+  const [canal,         setCanal]        = useState('general')
+  const [mensajes,      setMensajes]     = useState<Mensaje[]>([])
+  const [texto,         setTexto]        = useState('')
+  const [cargando,      setCargando]     = useState(false)
+  const [lastRead,      setLastRead]     = useState<Record<string, string>>(loadLastRead)
+  const [unreadCounts,  setUnreadCounts] = useState<Record<string, number>>({})
+  const [isPending,     startTransition] = useTransition()
+  const [pendingFile,   setPendingFile]  = useState<PendingFile | null>(null)
 
-  const lastTsRef      = useRef<string | null>(null)
-  const isOpenRef      = useRef(false)
-  const activeCanalRef = useRef('general')
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef       = useRef<HTMLInputElement>(null)
-  const scrollRef      = useRef<HTMLDivElement>(null)
-  const msgPollRef     = useRef<ReturnType<typeof setInterval> | null>(null)
-  const unreadPollRef  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const lastTsRef       = useRef<string | null>(null)
+  const isOpenRef       = useRef(false)
+  const activeCanalRef  = useRef('general')
+  const messagesEndRef  = useRef<HTMLDivElement>(null)
+  const inputRef        = useRef<HTMLInputElement>(null)
+  const fileInputRef    = useRef<HTMLInputElement>(null)
+  const scrollRef       = useRef<HTMLDivElement>(null)
+  const msgPollRef      = useRef<ReturnType<typeof setInterval> | null>(null)
+  const unreadPollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const canales = ACCESO_POR_ROL[userRol] ?? TODOS_LOS_CANALES
 
-  useEffect(() => { isOpenRef.current = open },   [open])
+  useEffect(() => { isOpenRef.current = open },    [open])
   useEffect(() => { activeCanalRef.current = canal }, [canal])
 
   const totalUnread = Object.values(unreadCounts).reduce((s, n) => s + n, 0)
@@ -157,7 +255,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
     })
   }, [])
 
-  // ── Fetch unread counts (background, all channels) ────────────────────────
+  // ── Fetch unread counts (background) ─────────────────────────────────────
 
   const fetchUnread = useCallback(async (currentLastRead: Record<string, string>) => {
     try {
@@ -169,7 +267,6 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
       if (!res.ok) return
       const data: Record<string, number> = await res.json()
       setUnreadCounts(prev => {
-        // Only update channels not currently active & open (those are marked read on arrival)
         const updated = { ...prev }
         for (const slug of Object.keys(data)) {
           if (isOpenRef.current && slug === activeCanalRef.current) continue
@@ -180,7 +277,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
     } catch { /* ignore */ }
   }, [canales])
 
-  // ── Messages fetch & poll (active channel when open) ─────────────────────
+  // ── Messages ──────────────────────────────────────────────────────────────
 
   function isNearBottom() {
     const el = scrollRef.current
@@ -215,7 +312,6 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
       if (!res.ok) return
       const data: Mensaje[] = await res.json()
       if (!data.length) return
-
       setMensajes(prev => {
         const ids  = new Set(prev.map(m => m.id))
         const news = data.filter(m => !ids.has(m.id))
@@ -224,23 +320,19 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
         if (isNearBottom()) setTimeout(scrollToBottom, 80)
         return [...prev, ...news]
       })
-      // Auto-mark read since user is looking at this channel
       marcarLeido(slug)
     } catch { /* ignore */ }
   }
 
-  // ── Background unread poll (every 8s, even when closed) ──────────────────
+  // ── Unread poll (background, even when closed) ────────────────────────────
 
   useEffect(() => {
-    fetchUnread(lastRead) // initial fetch
-    unreadPollRef.current = setInterval(() => {
-      fetchUnread(lastRead)
-    }, 8000)
+    fetchUnread(lastRead)
+    unreadPollRef.current = setInterval(() => { fetchUnread(lastRead) }, 8000)
     return () => { if (unreadPollRef.current) clearInterval(unreadPollRef.current) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // only on mount — uses lastRead via closure on first run; subsequent runs get fresh state via setLastRead
+  }, [])
 
-  // Restart unread poll when lastRead changes (so we use fresh timestamps)
   useEffect(() => {
     if (unreadPollRef.current) clearInterval(unreadPollRef.current)
     unreadPollRef.current = setInterval(() => fetchUnread(lastRead), 8000)
@@ -261,7 +353,6 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
   // ── Auto-switch to channel with unread on open ────────────────────────────
 
   function handleOpen() {
-    // Find channel with most unread messages
     let maxCount = 0
     let target = canal
     for (const slug of canales) {
@@ -272,22 +363,75 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
     setOpen(true)
   }
 
-  // ── Focus input on open ──────────────────────────────────────────────────
-
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 250)
   }, [open])
+
+  // ── File attachment ───────────────────────────────────────────────────────
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 20 MB limit
+    if (file.size > 20 * 1024 * 1024) {
+      alert('El archivo no puede superar 20 MB')
+      e.target.value = ''
+      return
+    }
+
+    const newPending: PendingFile = { file, uploading: true }
+
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      newPending.preview = URL.createObjectURL(file)
+    }
+
+    setPendingFile(newPending)
+    e.target.value = '' // reset input
+
+    // Upload immediately
+    const formData = new FormData()
+    formData.append('file', file)
+
+    fetch('/api/upload', { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then((data: { url?: string; error?: string }) => {
+        if (data.url) {
+          setPendingFile(prev => prev ? { ...prev, uploading: false, url: data.url } : null)
+        } else {
+          setPendingFile(prev => prev ? { ...prev, uploading: false, error: 'Error al subir' } : null)
+        }
+      })
+      .catch(() => {
+        setPendingFile(prev => prev ? { ...prev, uploading: false, error: 'Error de red' } : null)
+      })
+  }
+
+  function cancelFile() {
+    if (pendingFile?.preview) URL.revokeObjectURL(pendingFile.preview)
+    setPendingFile(null)
+  }
 
   // ── Send message ─────────────────────────────────────────────────────────
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     const contenido = texto.trim()
-    if (!contenido || isPending) return
+    if ((!contenido && !pendingFile?.url) || isPending) return
+    if (pendingFile?.uploading) return // wait for upload to finish
+
+    const archivoUrl    = pendingFile?.url    ?? null
+    const archivoNombre = pendingFile?.file.name ?? null
+    const archivoTipo   = pendingFile?.file.type ?? null
+
     setTexto('')
+    if (pendingFile?.preview) URL.revokeObjectURL(pendingFile.preview)
+    setPendingFile(null)
+
     startTransition(async () => {
       try {
-        const nuevo = await enviarMensaje(canal, contenido)
+        const nuevo = await enviarMensaje(canal, contenido, archivoUrl, archivoNombre, archivoTipo)
         setMensajes(prev => {
           if (prev.find(m => m.id === nuevo.id)) return prev
           return [...prev, nuevo]
@@ -302,6 +446,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
   }
 
   const agrupados = agrupar(mensajes)
+  const canSend   = (texto.trim().length > 0 || (pendingFile?.url != null)) && !isPending && !pendingFile?.uploading
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -332,8 +477,6 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
         onMouseUp={e   => { e.currentTarget.style.transform = 'translateY(-3px)' }}
       >
         <MessageSquare className="h-[22px] w-[22px]" style={{ color: 'rgba(255,255,255,0.88)' }} />
-
-        {/* Total unread badge */}
         {totalUnread > 0 && (
           <span
             className="absolute flex items-center justify-center font-bold leading-none"
@@ -382,10 +525,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
               Chat interno
             </span>
             {totalUnread > 0 && (
-              <span
-                className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{ backgroundColor: '#ef4444', color: 'white' }}
-              >
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
                 {totalUnread}
               </span>
             )}
@@ -424,8 +564,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
                     className="flex items-center justify-center font-bold leading-none rounded-full"
                     style={{
                       minWidth: 16, height: 16,
-                      fontSize: 9,
-                      paddingInline: 3,
+                      fontSize: 9, paddingInline: 3,
                       backgroundColor: active ? '#1F4E79' : '#ef4444',
                       color: 'white',
                     }}
@@ -466,10 +605,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
                       <div
                         title={`${m.autor.nombre} · ${ROL_LABEL[m.autor.rol] ?? m.autor.rol}`}
                         className="flex-shrink-0 flex items-center justify-center rounded-full text-white text-xs font-bold"
-                        style={{
-                          backgroundColor: color, width: 32, height: 32,
-                          fontFamily: 'var(--font-oswald)', marginTop: 2,
-                        }}
+                        style={{ backgroundColor: color, width: 32, height: 32, fontFamily: 'var(--font-oswald)', marginTop: 2 }}
                       >
                         {inicial}
                       </div>
@@ -493,23 +629,29 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
                         </div>
                       )}
 
-                      <div
-                        className="group relative inline-block px-3 py-2 rounded-2xl text-sm leading-relaxed break-words"
-                        style={{
-                          maxWidth: 260,
-                          backgroundColor: esPropio ? '#4AC3B2' : '#F1F5F9',
-                          color: esPropio ? 'white' : '#334155',
-                          borderTopRightRadius: esPropio && m.showHeader ? 4 : 16,
-                          borderTopLeftRadius: !esPropio && m.showHeader ? 4 : 16,
-                        }}
-                      >
-                        {m.contenido}
-                        {!m.showHeader && (
-                          <span className="absolute bottom-full left-0 mb-1 text-[10px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                            {formatHora(m.createdAt)}
-                          </span>
-                        )}
-                      </div>
+                      {/* Text bubble (only if there's text) */}
+                      {m.contenido && (
+                        <div
+                          className="group relative inline-block px-3 py-2 rounded-2xl text-sm leading-relaxed break-words"
+                          style={{
+                            maxWidth: 260,
+                            backgroundColor: esPropio ? '#4AC3B2' : '#F1F5F9',
+                            color: esPropio ? 'white' : '#334155',
+                            borderTopRightRadius: esPropio && m.showHeader ? 4 : 16,
+                            borderTopLeftRadius:  !esPropio && m.showHeader ? 4 : 16,
+                          }}
+                        >
+                          {m.contenido}
+                          {!m.showHeader && (
+                            <span className="absolute bottom-full left-0 mb-1 text-[10px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                              {formatHora(m.createdAt)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Attachment */}
+                      <AttachmentBubble msg={m} esPropio={esPropio} />
                     </div>
                   </div>
                 )
@@ -519,12 +661,84 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
           )}
         </div>
 
+        {/* ── File preview strip (shown when a file is selected) ── */}
+        {pendingFile && (
+          <div
+            className="flex-shrink-0 mx-3 mb-2 rounded-xl overflow-hidden border"
+            style={{ borderColor: pendingFile.error ? '#fecaca' : '#e2e8f0', backgroundColor: pendingFile.error ? '#fef2f2' : '#f8fafc' }}
+          >
+            <div className="flex items-center gap-2 px-3 py-2">
+              {/* Image preview or file icon */}
+              {pendingFile.preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={pendingFile.preview} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#dbeafe' }}>
+                  <FileIconComponent tipo={pendingFile.file.type} />
+                </div>
+              )}
+
+              {/* File info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-slate-700 truncate">{pendingFile.file.name}</p>
+                <p className="text-[10px] text-slate-400">
+                  {formatBytes(pendingFile.file.size)}
+                  {pendingFile.error && (
+                    <span className="text-red-500 ml-1">· {pendingFile.error}</span>
+                  )}
+                </p>
+              </div>
+
+              {/* Status */}
+              {pendingFile.uploading ? (
+                <Loader2 className="w-4 h-4 text-slate-400 animate-spin flex-shrink-0" />
+              ) : pendingFile.url ? (
+                <span className="text-[10px] text-green-600 font-semibold flex-shrink-0">✓ Listo</span>
+              ) : null}
+
+              {/* Cancel */}
+              <button
+                onClick={cancelFile}
+                className="flex items-center justify-center w-6 h-6 rounded-full transition-colors flex-shrink-0"
+                style={{ color: '#94a3b8' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#f1f5f9'; (e.currentTarget as HTMLElement).style.color = '#374151' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94a3b8' }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Input */}
         <form onSubmit={handleSend} className="flex-shrink-0 px-3 py-3 border-t bg-white">
           <div
             className="flex items-center gap-2 rounded-xl px-3 py-2 border transition-colors focus-within:border-slate-300"
             style={{ backgroundColor: '#F8FAFC' }}
           >
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+
+            {/* Attach button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={!!pendingFile}
+              title="Adjuntar archivo"
+              className="flex items-center justify-center w-7 h-7 rounded-lg transition-all flex-shrink-0 disabled:opacity-30"
+              style={{ color: '#94a3b8' }}
+              onMouseEnter={e => { if (!pendingFile) { (e.currentTarget as HTMLElement).style.backgroundColor = '#e2e8f0'; (e.currentTarget as HTMLElement).style.color = '#475569' } }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94a3b8' }}
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
+
             <input
               ref={inputRef}
               type="text"
@@ -536,21 +750,32 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
                   handleSend(e as unknown as React.FormEvent)
                 }
               }}
-              placeholder={`Mensaje en #${CANALES_INFO[canal] ?? canal}…`}
-              maxLength={1000}
+              placeholder={pendingFile ? 'Añade un mensaje (opcional)…' : `Mensaje en #${CANALES_INFO[canal] ?? canal}…`}
+              maxLength={2000}
               className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none"
             />
+
             <button
               type="submit"
-              disabled={!texto.trim() || isPending}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all disabled:opacity-30"
-              style={{ backgroundColor: texto.trim() && !isPending ? '#1F4E79' : '#E2E8F0' }}
+              disabled={!canSend}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all disabled:opacity-30 flex-shrink-0"
+              style={{ backgroundColor: canSend ? '#1F4E79' : '#E2E8F0' }}
             >
-              <Send className="h-4 w-4" style={{ color: texto.trim() && !isPending ? 'white' : '#94a3b8' }} />
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#94a3b8' }} />
+              ) : (
+                <Send className="h-4 w-4" style={{ color: canSend ? 'white' : '#94a3b8' }} />
+              )}
             </button>
           </div>
+
           <p className="text-[10px] text-slate-300 mt-1.5 px-1">
-            Enter para enviar · {1000 - texto.length} caracteres restantes
+            {pendingFile?.uploading
+              ? 'Subiendo archivo…'
+              : pendingFile?.url
+                ? 'Archivo listo · Enter para enviar'
+                : `Clip para adjuntar · Enter para enviar · ${2000 - texto.length} caracteres`
+            }
           </p>
         </form>
       </div>

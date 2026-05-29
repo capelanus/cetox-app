@@ -46,13 +46,16 @@ model CanalChat {
 }
 
 model MensajeChat {
-  id        String    @id @default(cuid())
-  canalId   String
-  canal     CanalChat @relation(fields: [canalId], references: [id], onDelete: Cascade)
-  autorId   String
-  autor     Usuario   @relation(fields: [autorId], references: [id])
-  contenido String
-  createdAt DateTime  @default(now())
+  id            String    @id @default(cuid())
+  canalId       String
+  canal         CanalChat @relation(fields: [canalId], references: [id], onDelete: Cascade)
+  autorId       String
+  autor         Usuario   @relation(fields: [autorId], references: [id])
+  contenido     String
+  archivoUrl    String?   // Vercel Blob URL
+  archivoNombre String?   // nombre original del archivo
+  archivoTipo   String?   // MIME type: image/png, application/pdf, etc.
+  createdAt     DateTime  @default(now())
 }
 
 model CajaChicaGasto {

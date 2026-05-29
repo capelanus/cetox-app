@@ -44,11 +44,14 @@ export async function GET(request: Request) {
 
   return Response.json(
     result.map((m) => ({
-      id:        m.id,
-      contenido: m.contenido,
-      createdAt: m.createdAt.toISOString(),
-      autorId:   m.autorId,
-      autor:     { nombre: m.autor.nombre, rol: m.autor.rol },
+      id:            m.id,
+      contenido:     m.contenido,
+      archivoUrl:    m.archivoUrl,
+      archivoNombre: m.archivoNombre,
+      archivoTipo:   m.archivoTipo,
+      createdAt:     m.createdAt.toISOString(),
+      autorId:       m.autorId,
+      autor:         { nombre: m.autor.nombre, rol: m.autor.rol },
     }))
   )
 }

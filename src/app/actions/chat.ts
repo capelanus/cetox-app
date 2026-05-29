@@ -15,19 +15,29 @@ const CANALES_NOMBRES: Record<string, string> = {
 }
 
 export interface MensajeEnviado {
-  id:        string
-  contenido: string
-  createdAt: string
-  autorId:   string
-  autor:     { nombre: string; rol: string }
+  id:            string
+  contenido:     string
+  archivoUrl:    string | null
+  archivoNombre: string | null
+  archivoTipo:   string | null
+  createdAt:     string
+  autorId:       string
+  autor:         { nombre: string; rol: string }
 }
 
-export async function enviarMensaje(canalSlug: string, contenido: string): Promise<MensajeEnviado> {
+export async function enviarMensaje(
+  canalSlug:     string,
+  contenido:     string,
+  archivoUrl?:   string | null,
+  archivoNombre?: string | null,
+  archivoTipo?:  string | null,
+): Promise<MensajeEnviado> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('No autenticado')
 
   const text = contenido.trim()
-  if (!text || text.length > 1000) throw new Error('Mensaje inválido')
+  // Allow empty text if there's an attachment
+  if (!archivoUrl && (!text || text.length > 2000)) throw new Error('Mensaje inválido')
 
   const canal = await prisma.canalChat.upsert({
     where:  { slug: canalSlug },
@@ -36,15 +46,25 @@ export async function enviarMensaje(canalSlug: string, contenido: string): Promi
   })
 
   const msg = await prisma.mensajeChat.create({
-    data: { canalId: canal.id, autorId: session.user.id, contenido: text },
+    data: {
+      canalId:       canal.id,
+      autorId:       session.user.id,
+      contenido:     text,
+      archivoUrl:    archivoUrl    ?? null,
+      archivoNombre: archivoNombre ?? null,
+      archivoTipo:   archivoTipo   ?? null,
+    },
     include: { autor: { select: { nombre: true, rol: true } } },
   })
 
   return {
-    id:        msg.id,
-    contenido: msg.contenido,
-    createdAt: msg.createdAt.toISOString(),
-    autorId:   msg.autorId,
-    autor:     msg.autor,
+    id:            msg.id,
+    contenido:     msg.contenido,
+    archivoUrl:    msg.archivoUrl,
+    archivoNombre: msg.archivoNombre,
+    archivoTipo:   msg.archivoTipo,
+    createdAt:     msg.createdAt.toISOString(),
+    autorId:       msg.autorId,
+    autor:         msg.autor,
   }
 }

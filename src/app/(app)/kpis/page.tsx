@@ -16,7 +16,7 @@ function bar(value: number, max: number, color: string) {
 }
 
 export default async function KpisPage() {
-  await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
+  await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO'])
 
   const inicio30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   const inicio90d = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)

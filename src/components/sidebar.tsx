@@ -34,6 +34,7 @@ import {
   History,
   DollarSign,
   BarChart2,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -78,8 +79,9 @@ const allNavItems: NavItem[] = [
   { href: '/ingresos',              label: 'Ingresos',          icon: TrendingUp,      roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/resumen',               label: 'Resumen',           icon: TableProperties, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/solicitudes',           label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
-  { href: '/caja-chica',            label: 'Caja Chica',        icon: Wallet,          roles: ['DIRECTOR_CALIDAD'] },
-  { href: '/rrhh',                  label: 'RRHH',              icon: Users2,          roles: ['ADMINISTRACION'] },
+  { href: '/caja-chica',           label: 'Caja Chica',        icon: Wallet,   roles: ['DIRECTOR_CALIDAD'] },
+  { href: '/gerencia/accesos',     label: 'Control de Accesos', icon: Shield,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'] },
+  { href: '/rrhh',                 label: 'RRHH',               icon: Users2,   roles: ['ADMINISTRACION'] },
 ]
 
 const operacionesNavItems: NavItem[] = [
@@ -171,8 +173,9 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/operaciones/cotizaciones-proveedor', label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/facturas',              label: 'Facturas',          icon: Receipt,         roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/pagos',                 label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/solicitudes', label: 'Mis Solicitudes', icon: ShoppingBag, roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/historial',   label: 'Historial',       icon: History,     roles: ['DIRECTOR_CALIDAD'], muted: true },
+      { href: '/solicitudes',      label: 'Mis Solicitudes',    icon: ShoppingBag, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/historial',        label: 'Historial',          icon: History,     roles: ['DIRECTOR_CALIDAD'], muted: true },
+      { href: '/gerencia/accesos', label: 'Control de Accesos', icon: Shield,      roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
 ]

@@ -92,7 +92,7 @@ function ModuloCard({ icon: Icon, titulo, descripcion, color, bg, href }: Modulo
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function RRHHPage() {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const modulos: ModuloCardProps[] = [
     {

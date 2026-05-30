@@ -80,8 +80,8 @@ const allNavItems: NavItem[] = [
   { href: '/resumen',               label: 'Resumen',           icon: TableProperties, roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'] },
   { href: '/solicitudes',           label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] },
   { href: '/caja-chica',           label: 'Caja Chica',        icon: Wallet,   roles: ['DIRECTOR_CALIDAD'] },
-  { href: '/gerencia/accesos',     label: 'Control de Accesos', icon: Shield,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'] },
-  { href: '/rrhh',                 label: 'RRHH',               icon: Users2,   roles: ['ADMINISTRACION'] },
+  { href: '/gerencia/accesos',     label: 'Control de Accesos', icon: Shield,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION'] },
+  { href: '/rrhh',                 label: 'RRHH',               icon: Users2,   roles: ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'] },
 ]
 
 const operacionesNavItems: NavItem[] = [
@@ -133,6 +133,52 @@ const sectionesAdministracion: NavSection[] = [
       { href: '/rrhh/vacaciones',  label: 'Vacaciones',    icon: PalmtreeIcon,  roles: ['ADMINISTRACION'] },
       { href: '/rrhh/contratos',   label: 'Contratos',     icon: ClipboardList, roles: ['ADMINISTRACION'] },
       { href: '/rrhh/estructura',  label: 'Estructura',    icon: Building2,     roles: ['ADMINISTRACION'] },
+    ],
+  },
+]
+
+// ── Sections for DIRECTOR_ADMINISTRACION ─────────────────────────────────────
+
+const sectionesDirectorAdmin: NavSection[] = [
+  {
+    label: 'Calidad',
+    items: [
+      { href: '/ensayos',   label: 'Ensayos',    icon: FlaskConical,  roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/set',       label: 'SET',         icon: ClipboardList, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/oda',       label: 'ODA',         icon: TestTube,      roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/informes',  label: 'Informes',    icon: FileCheck,     roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/cargos',    label: 'Cargos',      icon: Package,       roles: ['DIRECTOR_ADMINISTRACION'] },
+    ],
+  },
+  {
+    label: 'Administración',
+    items: [
+      { href: '/dashboard',             label: 'Dashboard',    icon: LayoutDashboard, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/clientes',              label: 'Clientes',     icon: Users,           roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/cotizaciones',          label: 'Cotizaciones', icon: FileText,        roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/cotizaciones/papelera', label: 'Papelera',     icon: Trash2,          roles: ['DIRECTOR_ADMINISTRACION'], muted: true },
+      { href: '/ingresos',  label: 'Ingresos',             icon: TrendingUp,      roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/resumen',   label: 'Resumen',              icon: TableProperties, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/finanzas',  label: 'Dashboard Financiero', icon: DollarSign,      roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/kpis',      label: 'KPIs Equipo',          icon: BarChart2,       roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/historial', label: 'Historial',            icon: History,         roles: ['DIRECTOR_ADMINISTRACION'], muted: true },
+      { href: '/solicitudes', label: 'Mis Solicitudes',    icon: ShoppingBag,     roles: ['DIRECTOR_ADMINISTRACION'] },
+    ],
+  },
+  {
+    label: 'RRHH',
+    items: [
+      { href: '/rrhh',             label: 'Resumen RRHH',  icon: Users2,        roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/rrhh/personal',    label: 'Personal',      icon: Users,         roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/rrhh/vacaciones',  label: 'Vacaciones',    icon: PalmtreeIcon,  roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/rrhh/contratos',   label: 'Contratos',     icon: ClipboardList, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/rrhh/estructura',  label: 'Estructura',    icon: Building2,     roles: ['DIRECTOR_ADMINISTRACION'] },
+    ],
+  },
+  {
+    label: 'Gerencia',
+    items: [
+      { href: '/gerencia/accesos', label: 'Control de Accesos', icon: Shield, roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
 ]
@@ -191,6 +237,8 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
 
   if (userRol === 'DIRECTOR_CALIDAD') {
     sections = sectionesDirectorCalidad
+  } else if (userRol === 'DIRECTOR_ADMINISTRACION') {
+    sections = sectionesDirectorAdmin
   } else if (userRol === 'ADMINISTRACION') {
     sections = sectionesAdministracion
   } else if (userRol === 'SUPER_ADMIN') {

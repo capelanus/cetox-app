@@ -1,11 +1,12 @@
 export const ROL_LABELS: Record<string, string> = {
-  GERENTE_TECNICO: 'Gerente Técnico',
-  DIRECTOR_CALIDAD: 'Director de Calidad',
-  ADMINISTRACION: 'Administración',
-  ANALISTA: 'Analista',
-  SUPER_ADMIN: 'Super Admin',
-  JEFE_OPERACIONES: 'Jefe de Operaciones',
-  ASISTENTE_LOGISTICA: 'Asistente de Logística',
+  GERENTE_TECNICO:        'Gerente Técnico',
+  DIRECTOR_CALIDAD:       'Dirección Lab. y Calidad',
+  DIRECTOR_ADMINISTRACION:'Dirección Adm. y Finanzas',
+  ADMINISTRACION:         'Administración',
+  ANALISTA:               'Analista',
+  SUPER_ADMIN:            'Super Admin',
+  JEFE_OPERACIONES:       'Jefe de Operaciones',
+  ASISTENTE_LOGISTICA:    'Asistente de Logística',
 }
 
 export const AREA_LABELS: Record<string, string> = {

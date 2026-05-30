@@ -136,7 +136,7 @@ function DireccionCard({ d }: { d: Direccion }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function EstructuraPage() {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const direcciones: Direccion[] = [
     {

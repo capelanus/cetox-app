@@ -11,7 +11,7 @@ async function requireRRHH() {
   const session = await auth()
   if (!session?.user?.id) throw new Error('No autenticado')
   const rol = session.user.rol
-  if (rol !== 'ADMINISTRACION' && rol !== 'GERENTE_TECNICO' && rol !== 'SUPER_ADMIN') {
+  if (rol !== 'ADMINISTRACION' && rol !== 'DIRECTOR_ADMINISTRACION' && rol !== 'GERENTE_TECNICO' && rol !== 'SUPER_ADMIN') {
     throw new Error('Sin permiso')
   }
   return session

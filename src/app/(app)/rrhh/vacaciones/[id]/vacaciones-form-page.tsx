@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { EditarVacacionesForm } from './editar-vacaciones-form'
 
 export default async function EditarVacacionesPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
   const { id } = await params
 
   const emp = await prisma.empleado.findUnique({

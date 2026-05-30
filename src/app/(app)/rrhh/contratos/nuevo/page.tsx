@@ -15,7 +15,7 @@ export default async function NuevoContratoPage({
 }: {
   searchParams: Promise<{ tipo?: string }>
 }) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const { tipo } = await searchParams
 

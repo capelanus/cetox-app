@@ -38,7 +38,7 @@ const CONTRATO_LABELS: Record<string, string> = {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function PersonalPage() {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const empleados = await prisma.empleado.findMany({
     orderBy: [{ activo: 'desc' }, { nombre: 'asc' }],

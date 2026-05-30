@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { EditarEmpleadoForm } from './editar-empleado-form'
 
 export default async function EditarEmpleadoPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
   const { id } = await params
 
   const emp = await prisma.empleado.findUnique({ where: { id } })

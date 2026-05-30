@@ -6,7 +6,7 @@ import { PalmtreeIcon, Pencil } from 'lucide-react'
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function VacacionesPage() {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const empleados = await prisma.empleado.findMany({
     where: { activo: true },

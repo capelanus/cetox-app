@@ -68,7 +68,7 @@ function TipoCard({ tipo, titulo, subtitulo, descripcion, icon: Icon, color, bg,
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ContratosPage() {
-  await requireRol(['ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const tipos: TipoCardProps[] = [
     {

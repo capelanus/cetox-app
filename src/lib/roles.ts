@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 export type Rol =
   | 'GERENTE_TECNICO'
   | 'DIRECTOR_CALIDAD'
+  | 'DIRECTOR_ADMINISTRACION'
   | 'ADMINISTRACION'
   | 'ANALISTA'
   | 'SUPER_ADMIN'
@@ -30,7 +31,7 @@ export async function requireRol(roles: Rol[]) {
 }
 
 export async function requireNotAnalista() {
-  return requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
+  return requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION'])
 }
 
 export async function requireOperaciones() {

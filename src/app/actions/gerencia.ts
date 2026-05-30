@@ -9,7 +9,7 @@ import { audit } from '@/lib/audit'
 const ROLES_CONTROLABLES = ['ADMINISTRACION', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
 
 // Roles que tienen permiso para ejecutar esta acción
-const ROLES_GERENCIA = ['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'SUPER_ADMIN']
+const ROLES_GERENCIA = ['DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO', 'SUPER_ADMIN']
 
 export async function toggleAccesoUsuario(usuarioId: string, nuevoEstado: boolean) {
   const session = await auth()

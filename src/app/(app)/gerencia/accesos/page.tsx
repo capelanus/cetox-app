@@ -5,24 +5,26 @@ import { UserAvatar } from '@/components/ui/user-avatar'
 import { ToggleAcceso } from './toggle-acceso'
 
 const ROL_LABEL: Record<string, string> = {
-  ADMINISTRACION:      'Administración',
-  JEFE_OPERACIONES:    'Jefe de Operaciones',
-  ASISTENTE_LOGISTICA: 'Asistente de Logística',
-  ANALISTA:            'Analista',
+  DIRECTOR_ADMINISTRACION: 'Dir. Adm. y Finanzas',
+  ADMINISTRACION:          'Administración',
+  JEFE_OPERACIONES:        'Jefe de Operaciones',
+  ASISTENTE_LOGISTICA:     'Asistente de Logística',
+  ANALISTA:                'Analista',
 }
 
 const ROL_COLOR: Record<string, { color: string; bg: string }> = {
-  ADMINISTRACION:      { color: '#1d4ed8', bg: '#dbeafe' },
-  JEFE_OPERACIONES:    { color: '#16a34a', bg: '#dcfce7' },
-  ASISTENTE_LOGISTICA: { color: '#0891b2', bg: '#cffafe' },
-  ANALISTA:            { color: '#d97706', bg: '#fef3c7' },
+  DIRECTOR_ADMINISTRACION: { color: '#7c3aed', bg: '#ede9fe' },
+  ADMINISTRACION:          { color: '#1d4ed8', bg: '#dbeafe' },
+  JEFE_OPERACIONES:        { color: '#16a34a', bg: '#dcfce7' },
+  ASISTENTE_LOGISTICA:     { color: '#0891b2', bg: '#cffafe' },
+  ANALISTA:                { color: '#d97706', bg: '#fef3c7' },
 }
 
 // Roles que esta página puede controlar
-const ROLES_CONTROLABLES = ['ADMINISTRACION', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
+const ROLES_CONTROLABLES = ['DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
 
 export default async function GerenciaAccesosPage() {
-  const session = await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO'])
+  const session = await requireRol(['DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const usuarios = await prisma.usuario.findMany({
     where:   { rol: { in: ROLES_CONTROLABLES } },

@@ -8,7 +8,7 @@ import { formatNumRequerimiento, formatFecha } from '@/lib/format'
 import { AREA_SOLICITANTE_LABELS, ESTADO_REQUERIMIENTO_LABELS } from '@/lib/constants'
 import DeleteRequerimientoButton from '../delete-button'
 
-const TODOS_LOS_ROLES = ['GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'ANALISTA'] as const
+const TODOS_LOS_ROLES = ['GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD', 'ANALISTA'] as const
 
 // Pasos del flujo en orden
 const PASOS = [

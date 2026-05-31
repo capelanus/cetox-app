@@ -137,6 +137,36 @@ const sectionesAdministracion: NavSection[] = [
   },
 ]
 
+// ── Sections for COORDINADOR_CALIDAD ─────────────────────────────────────────
+// Acceso a módulos de laboratorio + admin básico. Sin RRHH, sin Historial,
+// sin KPIs, sin Control de Accesos, sin Caja Chica.
+
+const sectionesCoordinadorCalidad: NavSection[] = [
+  {
+    label: 'Calidad',
+    items: [
+      { href: '/ensayos',  label: 'Ensayos',   icon: FlaskConical,  roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/set',      label: 'SET',        icon: ClipboardList, roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/oda',      label: 'ODA',        icon: TestTube,      roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/informes', label: 'Informes',   icon: FileCheck,     roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/cargos',   label: 'Cargos',     icon: Package,       roles: ['COORDINADOR_CALIDAD'] },
+    ],
+  },
+  {
+    label: 'Administración',
+    items: [
+      { href: '/dashboard',             label: 'Dashboard',           icon: LayoutDashboard, roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/clientes',              label: 'Clientes',            icon: Users,           roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/cotizaciones',          label: 'Cotizaciones',        icon: FileText,        roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/cotizaciones/papelera', label: 'Papelera',            icon: Trash2,          roles: ['COORDINADOR_CALIDAD'], muted: true },
+      { href: '/ingresos',              label: 'Ingresos',            icon: TrendingUp,      roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/resumen',               label: 'Resumen',             icon: TableProperties, roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/finanzas',              label: 'Dashboard Financiero', icon: DollarSign,     roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/solicitudes',           label: 'Mis Solicitudes',     icon: ShoppingBag,     roles: ['COORDINADOR_CALIDAD'] },
+    ],
+  },
+]
+
 // ── Sections for DIRECTOR_ADMINISTRACION ─────────────────────────────────────
 
 const sectionesDirectorAdmin: NavSection[] = [
@@ -243,6 +273,8 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
     sections = sectionesDirectorAdmin
   } else if (userRol === 'ADMINISTRACION') {
     sections = sectionesAdministracion
+  } else if (userRol === 'COORDINADOR_CALIDAD') {
+    sections = sectionesCoordinadorCalidad
   } else if (userRol === 'SUPER_ADMIN') {
     navItems = [...allNavItems, ...operacionesNavItems]
   } else if (userRol === 'JEFE_OPERACIONES' || userRol === 'ASISTENTE_LOGISTICA') {

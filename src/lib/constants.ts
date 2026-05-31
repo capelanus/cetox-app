@@ -4,6 +4,7 @@ export const ROL_LABELS: Record<string, string> = {
   DIRECTOR_CALIDAD:       'Dirección Lab. y Calidad',
   DIRECTOR_ADMINISTRACION:'Dirección Adm. y Finanzas',
   ADMINISTRACION:         'Administración',
+  COORDINADOR_CALIDAD:    'Coordinación de Calidad',
   ANALISTA:               'Analista',
   SUPER_ADMIN:            'Super Admin',
   JEFE_OPERACIONES:       'Jefe de Operaciones',

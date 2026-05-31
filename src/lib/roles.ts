@@ -8,6 +8,7 @@ export type Rol =
   | 'DIRECTOR_CALIDAD'
   | 'DIRECTOR_ADMINISTRACION'
   | 'ADMINISTRACION'
+  | 'COORDINADOR_CALIDAD'
   | 'ANALISTA'
   | 'SUPER_ADMIN'
   | 'JEFE_OPERACIONES'
@@ -41,7 +42,7 @@ export async function requireRol(roles: Rol[]) {
 }
 
 export async function requireNotAnalista() {
-  return requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION'])
+  return requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD'])
 }
 
 export async function requireOperaciones() {

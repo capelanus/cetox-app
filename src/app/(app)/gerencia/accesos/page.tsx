@@ -7,6 +7,7 @@ import { ToggleAcceso } from './toggle-acceso'
 const ROL_LABEL: Record<string, string> = {
   DIRECTOR_ADMINISTRACION: 'Dir. Adm. y Finanzas',
   ADMINISTRACION:          'Administración',
+  COORDINADOR_CALIDAD:     'Coordinación de Calidad',
   JEFE_OPERACIONES:        'Jefe de Operaciones',
   ASISTENTE_LOGISTICA:     'Asistente de Logística',
   ANALISTA:                'Analista',
@@ -15,13 +16,14 @@ const ROL_LABEL: Record<string, string> = {
 const ROL_COLOR: Record<string, { color: string; bg: string }> = {
   DIRECTOR_ADMINISTRACION: { color: '#7c3aed', bg: '#ede9fe' },
   ADMINISTRACION:          { color: '#1d4ed8', bg: '#dbeafe' },
+  COORDINADOR_CALIDAD:     { color: '#0f766e', bg: '#ccfbf1' },
   JEFE_OPERACIONES:        { color: '#16a34a', bg: '#dcfce7' },
   ASISTENTE_LOGISTICA:     { color: '#0891b2', bg: '#cffafe' },
   ANALISTA:                { color: '#d97706', bg: '#fef3c7' },
 }
 
 // Roles que esta página puede controlar
-const ROLES_CONTROLABLES = ['DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
+const ROLES_CONTROLABLES = ['DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
 
 export default async function GerenciaAccesosPage() {
   const session = await requireRol(['DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])

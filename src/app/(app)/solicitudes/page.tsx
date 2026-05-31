@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, CheckCircle2, Clock, AlertCircle, Circle } from 'lucide-react'
 import DeleteRequerimientoButton from './delete-button'
 
-const TODOS_LOS_ROLES = ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] as const
+const TODOS_LOS_ROLES = ['GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'ANALISTA'] as const
 
 const estadoConfig: Record<string, { icon: typeof Circle; color: string; bg: string }> = {
   ENVIADO:             { icon: Clock,         color: 'text-amber-700',  bg: 'bg-amber-50'  },

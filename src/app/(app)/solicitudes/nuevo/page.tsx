@@ -1,15 +1,17 @@
 import { requireRol } from '@/lib/roles'
 import NuevaSolicitudForm from './form'
 
-const TODOS_LOS_ROLES = ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION', 'ANALISTA'] as const
+const TODOS_LOS_ROLES = ['GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'ANALISTA'] as const
 
 function deducirArea(rol: string, area?: string | null): string {
   if (area === 'Q') return 'QUIMICA'
   if (area === 'B') return 'BIOLOGIA'
   if (area === 'M') return 'MICROBIOLOGIA'
-  if (rol === 'DIRECTOR_CALIDAD') return 'CALIDAD'
-  if (rol === 'GERENTE_TECNICO')  return 'GERENCIA'
-  if (rol === 'ADMINISTRACION')   return 'ADMINISTRACION'
+  if (rol === 'DIRECTOR_CALIDAD')        return 'CALIDAD'
+  if (rol === 'GERENTE_TECNICO')         return 'GERENCIA'
+  if (rol === 'GERENTE_GENERAL')         return 'GERENCIA'
+  if (rol === 'ADMINISTRACION')          return 'ADMINISTRACION'
+  if (rol === 'DIRECTOR_ADMINISTRACION') return 'ADMINISTRACION'
   return 'OTRA'
 }
 

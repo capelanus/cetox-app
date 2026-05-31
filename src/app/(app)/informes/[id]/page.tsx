@@ -485,15 +485,23 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 space-y-4">
             <h2 className="font-semibold text-orange-700">Elaboración del informe de ensayo</h2>
 
-            {/* Paso 1: descargar plantilla */}
+            {/* Paso 1: generar PDF o descargar plantilla Word */}
             <div>
-              <p className="text-sm text-slate-600 mb-2">1. Descarga la plantilla Word con los datos del SET y completa los resultados.</p>
-              <a href={`/api/informes/${id}/generar-informe-docx`} download>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Descargar plantilla Word
-                </Button>
-              </a>
+              <p className="text-sm text-slate-600 mb-2">1. Genera el PDF del informe con el membrete oficial, o descarga la plantilla Word para completar manualmente.</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <a href={`/api/informes/${id}/generar-informe-pdf`} target="_blank" rel="noreferrer">
+                  <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                    <Download className="h-4 w-4 mr-2" />
+                    Generar PDF del informe
+                  </Button>
+                </a>
+                <a href={`/api/informes/${id}/generar-informe-docx`} download>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Plantilla Word
+                  </Button>
+                </a>
+              </div>
             </div>
 
             {/* Paso 2: subir informe elaborado */}

@@ -100,12 +100,26 @@ export async function firmarGerenciaTecnica(informeId: string) {
   const pages = pdfDoc.getPages()
   const lastPage = pages[pages.length - 1]
   const { width } = lastPage.getSize()
-  const qrSize = 90
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-  lastPage.drawImage(qrImage, { x: width - qrSize - 20, y: 20, width: qrSize, height: qrSize })
-  lastPage.drawText('Verificar en:', { x: width - qrSize - 20, y: 115, size: 6, font, color: rgb(0.4, 0.4, 0.4) })
-  lastPage.drawText(qrUrl, { x: width - qrSize - 20, y: 108, size: 5.5, font, color: rgb(0.4, 0.4, 0.4) })
-  lastPage.drawText(`Código: ${codigo}  |  Clave: ${clave}`, { x: width - qrSize - 20, y: 101, size: 5.5, font, color: rgb(0.122, 0.306, 0.475) })
+  const qrSize   = 90
+  const qrMargin = 18
+  const qrX      = width - qrSize - qrMargin
+  const qrY      = 22           // base del QR desde el borde inferior de la página
+  const qrTop    = qrY + qrSize // borde superior del QR (= 112)
+
+  // Texto ENCIMA del QR — de abajo hacia arriba, sin superposición con la imagen
+  lastPage.drawText(`Cód: ${codigo}  ·  Clave: ${clave}`, {
+    x: qrX, y: qrTop + 4, size: 5, font: fontBold, color: rgb(0.075, 0.376, 0.173),
+  })
+  lastPage.drawText(qrUrl.length > 62 ? qrUrl.substring(0, 62) + '…' : qrUrl, {
+    x: qrX, y: qrTop + 12, size: 5, font, color: rgb(0.4, 0.4, 0.4),
+  })
+  lastPage.drawText('Verificar autenticidad en:', {
+    x: qrX, y: qrTop + 20, size: 5.5, font, color: rgb(0.4, 0.4, 0.4),
+  })
+  // Imagen del QR
+  lastPage.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize })
 
   const finalBytes = await pdfDoc.save()
   const finalBlob = await put(

@@ -46,7 +46,7 @@ export async function requireNotAnalista() {
 }
 
 export async function requireOperaciones() {
-  return requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
+  return requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
 }
 
 export async function getSession() {

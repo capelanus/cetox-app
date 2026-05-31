@@ -7,7 +7,7 @@ import { crearPago } from '@/app/actions/pagos-proveedor'
 import { Button } from '@/components/ui/button'
 
 export default async function PagosPage() {
-  await requireRol(['DIRECTOR_CALIDAD'])
+  await requireRol(['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
 
   const [pagos, provisiones] = await Promise.all([
     prisma.pago.findMany({

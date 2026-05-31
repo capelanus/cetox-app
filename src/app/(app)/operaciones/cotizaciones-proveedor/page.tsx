@@ -8,7 +8,7 @@ import { Plus, ClipboardCheck, AlertCircle } from 'lucide-react'
 import AprobacionControls from './aprobacion-client'
 
 export default async function CotizacionesProveedorPage() {
-  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
+  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
   const rol = session.user.rol
   const esCalidad = hasRol(rol, 'DIRECTOR_CALIDAD')
 

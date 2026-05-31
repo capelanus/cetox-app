@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 
 export default async function FacturasPage() {
-  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
+  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
   const rol = session.user.rol
 
   const facturas = await prisma.factura.findMany({

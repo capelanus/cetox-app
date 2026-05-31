@@ -26,7 +26,7 @@ const ROL_COLOR: Record<string, { color: string; bg: string }> = {
 const ROLES_CONTROLABLES = ['DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
 
 export default async function GerenciaAccesosPage() {
-  const session = await requireRol(['DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  const session = await requireRol(['DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO', 'COORDINADOR_CALIDAD'])
 
   const usuarios = await prisma.usuario.findMany({
     where:   { rol: { in: ROLES_CONTROLABLES } },

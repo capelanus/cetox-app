@@ -39,8 +39,9 @@ type Movimiento =
   | ({ tipo: 'INGRESO' } & IngresoRow)
 
 interface Props {
-  gastos: GastoRow[]
-  ingresos: IngresoRow[]
+  gastos:    GastoRow[]
+  ingresos:  IngresoRow[]
+  readonly?: boolean
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -73,7 +74,7 @@ function getPeriodo(key: string): { desde: string; hasta: string } {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function CajaChicaView({ gastos, ingresos }: Props) {
+export function CajaChicaView({ gastos, ingresos, readonly = false }: Props) {
   const [desde,      setDesde]      = useState('')
   const [hasta,      setHasta]      = useState('')
   const [catFiltro,  setCatFiltro]  = useState('')
@@ -145,6 +146,20 @@ export function CajaChicaView({ gastos, ingresos }: Props) {
 
   return (
     <div className="space-y-5">
+
+      {/* ── Readonly badge ── */}
+      {readonly && (
+        <div
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"
+          style={{ backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}
+        >
+          <span
+            className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: '#94a3b8' }}
+          />
+          Vista de solo lectura — no se pueden registrar ni modificar movimientos desde esta cuenta
+        </div>
+      )}
 
       {/* ── Balance summary ── */}
       <div className={`grid gap-4 ${hayUSD ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3'}`}>
@@ -296,7 +311,7 @@ export function CajaChicaView({ gastos, ingresos }: Props) {
             <p className="text-slate-400 text-sm">
               {hayFiltros ? 'Sin resultados para los filtros aplicados' : 'Sin movimientos registrados'}
             </p>
-            {!hayFiltros && (
+            {!hayFiltros && !readonly && (
               <Link href="/caja-chica/nuevo" className="text-blue-600 text-sm hover:underline mt-2 inline-block">
                 Registrar el primer gasto
               </Link>
@@ -328,7 +343,7 @@ export function CajaChicaView({ gastos, ingresos }: Props) {
                     <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs">Categoría</th>
                     <th className="text-right px-4 py-3 font-semibold text-slate-600 text-xs">Monto</th>
                     <th className="text-center px-4 py-3 font-semibold text-slate-600 text-xs">Comprobante</th>
-                    <th className="px-4 py-3 w-20" />
+                    {!readonly && <th className="px-4 py-3 w-20" />}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -354,9 +369,11 @@ export function CajaChicaView({ gastos, ingresos }: Props) {
                           +{fmt(m.monto, m.moneda)}
                         </td>
                         <td className="px-4 py-3 text-center text-slate-300 text-xs">—</td>
-                        <td className="px-4 py-3">
-                          <EliminarIngresoBtn id={m.id} />
-                        </td>
+                        {!readonly && (
+                          <td className="px-4 py-3">
+                            <EliminarIngresoBtn id={m.id} />
+                          </td>
+                        )}
                       </tr>
                     ) : (
                       /* ── Gasto row ── */
@@ -402,18 +419,20 @@ export function CajaChicaView({ gastos, ingresos }: Props) {
                             </a>
                           ) : <span className="text-slate-300 text-xs">—</span>}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <Link
-                              href={`/caja-chica/${m.id}/editar`}
-                              title="Editar gasto"
-                              className="text-slate-300 hover:text-blue-500 transition-colors"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Link>
-                            <EliminarGastoBtn id={m.id} />
-                          </div>
-                        </td>
+                        {!readonly && (
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/caja-chica/${m.id}/editar`}
+                                title="Editar gasto"
+                                className="text-slate-300 hover:text-blue-500 transition-colors"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Link>
+                              <EliminarGastoBtn id={m.id} />
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     )
                   )}

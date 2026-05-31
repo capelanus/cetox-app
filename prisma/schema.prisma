@@ -37,6 +37,8 @@ model Usuario {
   cajaChicaIngresos         CajaChicaIngreso[]
   mensajesChat              MensajeChat[]
   auditLogs                 AuditLog[]
+  peticionesCreadas         PeticionEfectivo[]    @relation("PeticionSolicitante")
+  peticionesAprobadas       PeticionEfectivo[]    @relation("PeticionAprobadaPor")
 }
 
 model CanalChat {
@@ -670,6 +672,31 @@ model InventarioItem {
   notas       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ── Petición de Efectivo ──────────────────────────────────────────────────────
+
+model PeticionEfectivo {
+  id              String    @id @default(cuid())
+  numero          Int
+  anio            Int
+  solicitanteId   String
+  solicitante     Usuario   @relation("PeticionSolicitante",  fields: [solicitanteId], references: [id])
+  concepto        String
+  montoSolicitado Float
+  moneda          String    @default("PEN")
+  justificacion   String?
+  estado          String    @default("PENDIENTE")
+  montoAprobado   Float?
+  motivoRechazo   String?
+  aprobadaPorId   String?
+  aprobadaPor     Usuario?  @relation("PeticionAprobadaPor", fields: [aprobadaPorId], references: [id])
+  fechaResolucion DateTime?
+  ingresoId       String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([numero, anio])
 }
 
 // ── Audit Log ─────────────────────────────────────────────────────────────────

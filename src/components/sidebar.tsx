@@ -35,6 +35,7 @@ import {
   DollarSign,
   BarChart2,
   Shield,
+  Banknote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -176,7 +177,9 @@ const sectionesDirectorAdmin: NavSection[] = [
   {
     label: 'Gerencia',
     items: [
-      { href: '/gerencia/accesos', label: 'Control de Accesos', icon: Shield, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/accesos',      label: 'Control de Accesos',     icon: Shield,    roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/caja-chica',            label: 'Gastos Caja Chica',       icon: Wallet,    roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/caja-chica/peticiones', label: 'Peticiones de Efectivo',  icon: Banknote,  roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
 ]
@@ -191,9 +194,10 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/set',        label: 'SET',         icon: ClipboardList, roles: ['DIRECTOR_CALIDAD'] },
       { href: '/oda',        label: 'ODA',         icon: TestTube,      roles: ['DIRECTOR_CALIDAD'] },
       { href: '/informes',   label: 'Informes',    icon: FileCheck,     roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/equipos',            label: 'Equipos',           icon: Wrench,    roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/equipos',            label: 'Equipos',            icon: Wrench,    roles: ['DIRECTOR_CALIDAD'] },
       { href: '/equipos/calendario', label: 'Cal. Mantenimiento', icon: Calendar,  roles: ['DIRECTOR_CALIDAD'], muted: true },
-      { href: '/caja-chica',         label: 'Caja Chica',         icon: Wallet,    roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/caja-chica',            label: 'Caja Chica',          icon: Wallet,    roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/caja-chica/peticiones', label: 'Petición de Efectivo', icon: Banknote,  roles: ['DIRECTOR_CALIDAD'], muted: true },
     ],
   },
   {

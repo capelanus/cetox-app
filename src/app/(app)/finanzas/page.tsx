@@ -17,7 +17,7 @@ function moneda(n: number) {
 }
 
 export default async function FinanzasPage() {
-  await requireRol(['DIRECTOR_CALIDAD', 'ADMINISTRACION'])
+  await requireRol(['DIRECTOR_CALIDAD', 'ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'COORDINADOR_CALIDAD'])
 
   const hoy      = new Date()
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)

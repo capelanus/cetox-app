@@ -243,6 +243,9 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
     navItems = [...allNavItems, ...operacionesNavItems]
   } else if (userRol === 'JEFE_OPERACIONES' || userRol === 'ASISTENTE_LOGISTICA') {
     navItems = operacionesNavItems.filter(item => item.roles.includes(userRol))
+  } else if (userRol === 'GERENTE_GENERAL') {
+    // Gerente General: mismo menú que GERENTE_TECNICO
+    navItems = allNavItems.filter(item => item.roles.includes('GERENTE_TECNICO'))
   } else {
     navItems = allNavItems.filter(item => item.roles.includes(userRol))
   }

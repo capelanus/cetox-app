@@ -3,6 +3,7 @@ import { prisma } from './prisma'
 import { redirect } from 'next/navigation'
 
 export type Rol =
+  | 'GERENTE_GENERAL'
   | 'GERENTE_TECNICO'
   | 'DIRECTOR_CALIDAD'
   | 'DIRECTOR_ADMINISTRACION'
@@ -12,11 +13,20 @@ export type Rol =
   | 'JEFE_OPERACIONES'
   | 'ASISTENTE_LOGISTICA'
 
+/**
+ * GERENTE_GENERAL tiene exactamente los mismos permisos que GERENTE_TECNICO.
+ * En vez de tocar cada requireRol() del código, expandimos la lista aquí.
+ */
+function expandRoles(roles: Rol[]): Rol[] {
+  if (roles.includes('GERENTE_TECNICO')) return [...roles, 'GERENTE_GENERAL']
+  return roles
+}
+
 export async function requireRol(roles: Rol[]) {
   const session = await auth()
   if (!session) redirect('/login')
   if (session.user.rol === 'SUPER_ADMIN') return session
-  if (!roles.includes(session.user.rol as Rol)) {
+  if (!expandRoles(roles).includes(session.user.rol as Rol)) {
     const rol = session.user.rol
     if (rol === 'ANALISTA') redirect('/oda')
     if (rol === 'JEFE_OPERACIONES' || rol === 'ASISTENTE_LOGISTICA') redirect('/operaciones')
@@ -44,6 +54,8 @@ export async function getSession() {
 
 export function hasRol(userRol: string, ...roles: string[]): boolean {
   if (userRol === 'SUPER_ADMIN') return true
+  // GERENTE_GENERAL hereda todos los permisos de GERENTE_TECNICO
+  if (userRol === 'GERENTE_GENERAL' && roles.includes('GERENTE_TECNICO')) return true
   return roles.includes(userRol)
 }
 

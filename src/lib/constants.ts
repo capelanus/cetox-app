@@ -1,4 +1,5 @@
 export const ROL_LABELS: Record<string, string> = {
+  GERENTE_GENERAL:        'Gerente General',
   GERENTE_TECNICO:        'Gerente Técnico',
   DIRECTOR_CALIDAD:       'Dirección Lab. y Calidad',
   DIRECTOR_ADMINISTRACION:'Dirección Adm. y Finanzas',

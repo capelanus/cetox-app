@@ -15,6 +15,12 @@ async function siguienteNumeroPeticion(anio: number): Promise<number> {
   return (last?.numero ?? 0) + 1
 }
 
+function fmtMonto(monto: number, moneda: string) {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency', currency: moneda, minimumFractionDigits: 2,
+  }).format(monto)
+}
+
 export async function crearPeticion(formData: FormData) {
   const session = await auth()
   if (!session?.user?.id) throw new Error('No autenticado')
@@ -33,6 +39,23 @@ export async function crearPeticion(formData: FormData) {
   const p = await prisma.peticionEfectivo.create({
     data: { numero, anio, solicitanteId: session.user.id, concepto, montoSolicitado: monto, moneda, justificacion: null },
   })
+
+  // Notificar a todos los DIRECTOR_ADMINISTRACION (Andrea)
+  const admins = await prisma.usuario.findMany({
+    where: { rol: 'DIRECTOR_ADMINISTRACION', activo: true },
+    select: { id: true },
+  })
+  if (admins.length > 0) {
+    await prisma.notificacion.createMany({
+      data: admins.map(u => ({
+        usuarioId: u.id,
+        tipo:      'PETICION_EFECTIVO',
+        titulo:    `Solicitud de reabastecimiento — ${fmtMonto(monto, moneda)}`,
+        mensaje:   `${session.user.name ?? 'Dirección de Calidad'} solicita ${fmtMonto(monto, moneda)} para reabastecer la Caja Chica.`,
+        enlace:    '/caja-chica/peticiones',
+      })),
+    })
+  }
 
   await audit({ accion: 'CREATE', entidad: 'PeticionEfectivo', entidadId: p.id, detalle: { concepto, monto } })
   revalidatePath('/caja-chica/peticiones')
@@ -57,12 +80,11 @@ export async function resolverPeticion(
   if (accion === 'APROBAR') {
     const monto = montoAprobado ?? peticion.montoSolicitado
 
-    // Create CajaChicaIngreso automatically
     const ingreso = await prisma.cajaChicaIngreso.create({
       data: {
         monto,
         moneda:      peticion.moneda,
-        descripcion: `Aprobación petición #${peticion.numero}-${peticion.anio}: ${peticion.concepto}`,
+        descripcion: `Reabastecimiento aprobado — petición #${String(peticion.numero).padStart(3,'0')}-${peticion.anio}`,
         creadoPorId: session.user.id,
       },
     })
@@ -77,6 +99,17 @@ export async function resolverPeticion(
         ingresoId:       ingreso.id,
       },
     })
+
+    // Notificar al solicitante que fue aprobada
+    await prisma.notificacion.create({
+      data: {
+        usuarioId: peticion.solicitanteId,
+        tipo:      'PETICION_EFECTIVO',
+        titulo:    `Solicitud aprobada — ${fmtMonto(monto, peticion.moneda)}`,
+        mensaje:   `Tu solicitud de reabastecimiento fue aprobada por ${session.user.name ?? 'Dirección Administrativa'} por ${fmtMonto(monto, peticion.moneda)}.`,
+        enlace:    '/caja-chica/peticiones',
+      },
+    })
   } else {
     await prisma.peticionEfectivo.update({
       where: { id: peticionId },
@@ -85,6 +118,19 @@ export async function resolverPeticion(
         motivoRechazo:   motivoRechazo || 'Sin motivo',
         aprobadaPorId:   session.user.id,
         fechaResolucion: new Date(),
+      },
+    })
+
+    // Notificar al solicitante que fue rechazada
+    await prisma.notificacion.create({
+      data: {
+        usuarioId: peticion.solicitanteId,
+        tipo:      'PETICION_EFECTIVO',
+        titulo:    'Solicitud rechazada',
+        mensaje:   motivoRechazo
+          ? `Tu solicitud fue rechazada: ${motivoRechazo}`
+          : `Tu solicitud de reabastecimiento fue rechazada por ${session.user.name ?? 'Dirección Administrativa'}.`,
+        enlace:    '/caja-chica/peticiones',
       },
     })
   }

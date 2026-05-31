@@ -16,10 +16,8 @@ export function NuevaPeticionForm() {
     startTransition(async () => {
       try {
         await crearPeticion(formData)
-        // redirect happens inside crearPeticion on success
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Error al crear la petición'
-        // NEXT_REDIRECT is not a real error — it means the redirect fired correctly
         if (msg.includes('NEXT_REDIRECT')) return
         setError(msg)
         toast.error(msg)
@@ -67,25 +65,18 @@ export function NuevaPeticionForm() {
         </div>
       )}
 
-      <div style={{ marginBottom: 18 }}>
-        <label style={labelStyle}>
-          Concepto <span style={{ color: '#dc2626' }}>*</span>
-        </label>
-        <input
-          name="concepto"
-          type="text"
-          required
-          placeholder="Ej. Compra de útiles de oficina"
-          style={inputStyle}
-          onFocus={e => (e.target.style.borderColor = '#4AC3B2')}
-          onBlur={e => (e.target.style.borderColor = '#d1d5db')}
-        />
+      {/* Concepto fijo — informativo */}
+      <div
+        className="mb-5 px-4 py-3 rounded-lg text-sm"
+        style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#15803d' }}
+      >
+        <span className="font-semibold">Concepto:</span> Reabastecimiento de Caja Chica
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
         <div>
           <label style={labelStyle}>
-            Monto <span style={{ color: '#dc2626' }}>*</span>
+            Monto solicitado <span style={{ color: '#dc2626' }}>*</span>
           </label>
           <input
             name="monto"
@@ -112,18 +103,6 @@ export function NuevaPeticionForm() {
             <option value="USD">Dólares (USD)</option>
           </select>
         </div>
-      </div>
-
-      <div style={{ marginBottom: 24 }}>
-        <label style={labelStyle}>Justificación</label>
-        <textarea
-          name="justificacion"
-          rows={3}
-          placeholder="Describe brevemente el motivo de la solicitud…"
-          style={{ ...inputStyle, resize: 'vertical' }}
-          onFocus={e => (e.target.style.borderColor = '#4AC3B2')}
-          onBlur={e => (e.target.style.borderColor = '#d1d5db')}
-        />
       </div>
 
       <div className="flex justify-end">

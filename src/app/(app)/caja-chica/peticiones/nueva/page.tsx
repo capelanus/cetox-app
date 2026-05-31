@@ -21,12 +21,12 @@ export default async function NuevaPeticionPage() {
           className="text-2xl font-bold"
           style={{ fontFamily: 'var(--font-oswald)', color: '#13602C', letterSpacing: '0.04em' }}
         >
-          Nueva Petición de Efectivo
+          Solicitar Reabastecimiento
         </h1>
       </div>
 
       <p className="text-sm text-slate-500 mb-5">
-        Completa el formulario para solicitar efectivo. Andrea revisará y aprobará la solicitud.
+        Indica el monto que necesitas para reabastecer la caja chica. La solicitud será revisada y aprobada por Dirección Administrativa.
       </p>
 
       <NuevaPeticionForm />

@@ -1,7 +1,7 @@
 import { requireRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Banknote, Clock, CheckCircle2, XCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Banknote, Clock, CheckCircle2, XCircle, Wallet, TrendingDown, TrendingUp } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AprobacionButtons } from './aprobacion-buttons'
@@ -39,14 +39,23 @@ export default async function PeticionesPage() {
   const rol = session.user.rol
   const esAdmin = rol === 'DIRECTOR_ADMINISTRACION' || rol === 'SUPER_ADMIN'
 
-  const peticiones = await prisma.peticionEfectivo.findMany({
-    where: esAdmin ? undefined : { solicitanteId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      solicitante: { select: { nombre: true } },
-      aprobadaPor: { select: { nombre: true } },
-    },
-  })
+  const [peticiones, gastos, ingresos] = await Promise.all([
+    prisma.peticionEfectivo.findMany({
+      where: esAdmin ? undefined : { solicitanteId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        solicitante: { select: { nombre: true } },
+        aprobadaPor: { select: { nombre: true } },
+      },
+    }),
+    prisma.cajaChicaGasto.findMany({ select: { monto: true, moneda: true } }),
+    prisma.cajaChicaIngreso.findMany({ select: { monto: true, moneda: true } }),
+  ])
+
+  // Saldo actual de caja chica (PEN)
+  const totalIngresosPEN = ingresos.filter(i => i.moneda === 'PEN').reduce((s, i) => s + i.monto, 0)
+  const totalGastosPEN   = gastos.filter(g => g.moneda === 'PEN').reduce((s, g) => s + g.monto, 0)
+  const saldoPEN         = totalIngresosPEN - totalGastosPEN
 
   return (
     <div className="max-w-5xl">
@@ -70,8 +79,8 @@ export default async function PeticionesPage() {
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">
               {esAdmin
-                ? 'Revisión y aprobación de solicitudes'
-                : 'Mis solicitudes de efectivo'}
+                ? 'Revisión y aprobación de solicitudes de reabastecimiento'
+                : 'Solicitudes de reabastecimiento de Caja Chica'}
             </p>
           </div>
         </div>
@@ -83,9 +92,36 @@ export default async function PeticionesPage() {
             style={{ backgroundColor: '#13602C' }}
           >
             <Plus className="h-4 w-4" />
-            Nueva Petición
+            Solicitar Reabastecimiento
           </Link>
         )}
+      </div>
+
+      {/* Saldo actual de Caja Chica — contexto para decidir */}
+      <div className="grid grid-cols-3 gap-4 mb-5">
+        <div className={`rounded-xl border shadow-sm p-4 ${saldoPEN >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+          <div className="flex items-center gap-1.5 mb-1">
+            <Wallet className={`h-4 w-4 ${saldoPEN >= 0 ? 'text-emerald-500' : 'text-red-400'}`} />
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo Caja Chica</p>
+          </div>
+          <p className={`text-xl font-bold ${saldoPEN >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+            {fmt(saldoPEN, 'PEN')}
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border shadow-sm p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Ingresos</p>
+          </div>
+          <p className="text-xl font-bold text-emerald-600">{fmt(totalIngresosPEN, 'PEN')}</p>
+        </div>
+        <div className="bg-white rounded-xl border shadow-sm p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingDown className="h-4 w-4 text-rose-400" />
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Gastos</p>
+          </div>
+          <p className="text-xl font-bold text-rose-600">{fmt(totalGastosPEN, 'PEN')}</p>
+        </div>
       </div>
 
       {/* Content */}
@@ -93,18 +129,18 @@ export default async function PeticionesPage() {
         <div className="bg-white rounded-xl border shadow-sm px-6 py-16 text-center">
           <Banknote className="h-12 w-12 text-slate-200 mx-auto mb-3" />
           <p className="text-slate-400 text-sm">
-            {esAdmin ? 'No hay peticiones registradas' : 'Aún no has creado ninguna petición'}
+            {esAdmin ? 'No hay peticiones registradas' : 'Aún no has enviado ninguna solicitud'}
           </p>
           {!esAdmin && (
             <Link href="/caja-chica/peticiones/nueva" className="text-sm mt-2 inline-block font-medium" style={{ color: '#13602C' }}>
-              Crear la primera petición
+              Solicitar reabastecimiento
             </Link>
           )}
         </div>
       ) : (
         <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
           <div className="px-4 py-2.5 border-b bg-slate-50 text-xs text-slate-500 flex items-center gap-3">
-            <span>{peticiones.length} petición{peticiones.length !== 1 ? 'es' : ''}</span>
+            <span>{peticiones.length} solicitud{peticiones.length !== 1 ? 'es' : ''}</span>
             <span className="text-amber-600 font-medium">
               {peticiones.filter(p => p.estado === 'PENDIENTE').length} pendiente(s)
             </span>
@@ -116,7 +152,6 @@ export default async function PeticionesPage() {
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs">#</th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs">Fecha</th>
                   {esAdmin && <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs">Solicitante</th>}
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs">Concepto</th>
                   <th className="text-right px-4 py-3 font-semibold text-slate-600 text-xs">Monto Solicitado</th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs">Estado</th>
                   <th className="text-right px-4 py-3 font-semibold text-slate-600 text-xs">Monto Aprobado</th>
@@ -133,29 +168,23 @@ export default async function PeticionesPage() {
                       #{String(p.numero).padStart(3, '0')}-{p.anio}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                      {format(new Date(p.createdAt), 'dd/MM/yyyy', { locale: es })}
+                      {format(new Date(p.createdAt), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
                     </td>
                     {esAdmin && (
                       <td className="px-4 py-3 text-xs text-slate-700 font-medium">
                         {p.solicitante.nombre}
                       </td>
                     )}
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{p.concepto}</p>
-                      {p.justificacion && (
-                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{p.justificacion}</p>
-                      )}
-                    </td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">
                       {fmt(p.montoSolicitado, p.moneda)}
                     </td>
                     <td className="px-4 py-3">
                       <EstadoBadge estado={p.estado} />
                       {p.estado === 'RECHAZADA' && p.motivoRechazo && (
-                        <p className="text-xs text-red-500 mt-1 max-w-[180px] line-clamp-2">{p.motivoRechazo}</p>
+                        <p className="text-xs text-red-500 mt-1 max-w-[200px] line-clamp-2">{p.motivoRechazo}</p>
                       )}
                       {p.estado !== 'PENDIENTE' && p.aprobadaPor && (
-                        <p className="text-xs text-slate-400 mt-0.5">{p.aprobadaPor.nombre}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">por {p.aprobadaPor.nombre}</p>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">

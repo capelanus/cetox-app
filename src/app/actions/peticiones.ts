@@ -21,18 +21,17 @@ export async function crearPeticion(formData: FormData) {
   if (session.user.rol !== 'DIRECTOR_CALIDAD' && session.user.rol !== 'SUPER_ADMIN')
     throw new Error('Sin permiso')
 
-  const concepto      = formData.get('concepto')      as string
-  const monto         = parseFloat(formData.get('monto') as string)
-  const moneda        = (formData.get('moneda') as string) || 'PEN'
-  const justificacion = (formData.get('justificacion') as string) || null
+  const concepto = 'Reabastecimiento de Caja Chica'
+  const monto    = parseFloat(formData.get('monto') as string)
+  const moneda   = (formData.get('moneda') as string) || 'PEN'
 
-  if (!concepto || isNaN(monto) || monto <= 0) throw new Error('Datos inválidos')
+  if (isNaN(monto) || monto <= 0) throw new Error('Datos inválidos')
 
   const anio   = new Date().getFullYear()
   const numero = await siguienteNumeroPeticion(anio)
 
   const p = await prisma.peticionEfectivo.create({
-    data: { numero, anio, solicitanteId: session.user.id, concepto, montoSolicitado: monto, moneda, justificacion },
+    data: { numero, anio, solicitanteId: session.user.id, concepto, montoSolicitado: monto, moneda, justificacion: null },
   })
 
   await audit({ accion: 'CREATE', entidad: 'PeticionEfectivo', entidadId: p.id, detalle: { concepto, monto } })

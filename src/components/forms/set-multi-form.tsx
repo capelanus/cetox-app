@@ -51,7 +51,7 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
         className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-full bg-[#1F4E79] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+          <div className="w-7 h-7 rounded-full bg-[#13602C] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
             {index + 1}
           </div>
           <div>
@@ -318,9 +318,9 @@ export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCot
 
       {/* Resumen */}
       <div className="flex items-center gap-2 px-1">
-        <Package className="w-4 h-4 text-[#1F4E79]" />
+        <Package className="w-4 h-4 text-[#13602C]" />
         <p className="text-sm font-semibold text-slate-700">
-          Se generarán <span className="text-[#1F4E79]">{muestras.length} SETs</span> — uno por muestra
+          Se generarán <span className="text-[#13602C]">{muestras.length} SETs</span> — uno por muestra
         </p>
       </div>
 
@@ -329,7 +329,7 @@ export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCot
         <MuestraForm key={muestra.id} muestra={muestra} index={i} />
       ))}
 
-      <Button type="submit" style={{ backgroundColor: '#1F4E79' }} disabled={loading} className="w-full">
+      <Button type="submit" style={{ backgroundColor: '#13602C' }} disabled={loading} className="w-full">
         {loading ? 'Generando SETs...' : `Generar ${muestras.length} SET${muestras.length !== 1 ? 's' : ''}`}
       </Button>
     </form>

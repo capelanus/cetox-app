@@ -129,8 +129,8 @@ export function EnsayosTable({ ensayos, canEdit }: Props) {
                   <Badge
                     variant="outline"
                     style={{
-                      borderColor: e.area === 'B' ? '#1F4E79' : e.area === 'Q' ? '#13602C' : '#4AC3B2',
-                      color:       e.area === 'B' ? '#1F4E79' : e.area === 'Q' ? '#13602C' : '#0f766e',
+                      borderColor: e.area === 'B' ? '#13602C' : e.area === 'Q' ? '#13602C' : '#4AC3B2',
+                      color:       e.area === 'B' ? '#13602C' : e.area === 'Q' ? '#13602C' : '#0f766e',
                     }}
                   >
                     {AREA_LABELS[e.area] ?? e.area}

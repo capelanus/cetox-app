@@ -360,7 +360,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
           )}
           {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.sets.length === 0 && (
             <Link href={`/set/nuevo?cotizacionId=${cot.id}`}>
-              <Button style={{ backgroundColor: '#1F4E79' }}>
+              <Button style={{ backgroundColor: '#13602C' }}>
                 {cot.muestras.length > 0
                   ? `Generar ${cot.muestras.length} SET${cot.muestras.length !== 1 ? 's' : ''}`
                   : 'Generar SET'}

@@ -56,7 +56,7 @@ export default async function PersonalPage() {
         <div className="flex items-center gap-3">
           <div
             className="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)' }}
+            style={{ background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)' }}
           >
             <Users2 className="w-4.5 h-4.5 text-white" />
           </div>
@@ -73,7 +73,7 @@ export default async function PersonalPage() {
           href="/rrhh/personal/nuevo"
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all"
           style={{
-            background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)',
+            background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)',
             boxShadow: '0 2px 8px rgba(31,78,121,0.25)',
             fontFamily: 'var(--font-montserrat)',
           }}
@@ -159,7 +159,7 @@ export default async function PersonalPage() {
                         <div className="flex items-center gap-3">
                           {totalPorCobrar > 0 && (
                             <div className="text-center">
-                              <p className="text-xs font-bold" style={{ color: '#1F4E79' }}>{totalPorCobrar}</p>
+                              <p className="text-xs font-bold" style={{ color: '#13602C' }}>{totalPorCobrar}</p>
                               <p className="text-[9px] text-slate-400 whitespace-nowrap">por cobrar</p>
                             </div>
                           )}

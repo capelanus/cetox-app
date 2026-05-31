@@ -314,7 +314,7 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion, areas 
         </div>
       </div>
 
-      <Button type="submit" style={{ backgroundColor: '#1F4E79' }} disabled={loading}>
+      <Button type="submit" style={{ backgroundColor: '#13602C' }} disabled={loading}>
         {loading ? 'Creando...' : 'Crear SET'}
       </Button>
     </form>

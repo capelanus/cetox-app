@@ -107,7 +107,7 @@ export function NuevoEmpleadoForm() {
           type="submit"
           disabled={isPending}
           className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)', fontFamily: 'var(--font-montserrat)' }}
+          style={{ background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)', fontFamily: 'var(--font-montserrat)' }}
         >
           {isPending ? 'Guardando…' : 'Crear empleado'}
         </button>

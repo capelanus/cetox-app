@@ -36,7 +36,7 @@ export async function GET(
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-  const blue = rgb(0.122, 0.306, 0.475) // #1F4E79
+  const blue = rgb(0.122, 0.306, 0.475) // #13602C
   const black = rgb(0, 0, 0)
   const gray = rgb(0.4, 0.4, 0.4)
   const lightGray = rgb(0.95, 0.95, 0.95)

@@ -107,7 +107,7 @@ function FiltrosBadge({ area, estado }: { area?: string; estado?: string }) {
             className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
             style={{
               fontFamily:      'var(--font-montserrat)',
-              backgroundColor: a === area ? '#1F4E79' : 'rgba(0,0,0,0.05)',
+              backgroundColor: a === area ? '#13602C' : 'rgba(0,0,0,0.05)',
               color:           a === area ? 'white'   : '#64748b',
             }}
           >
@@ -180,7 +180,7 @@ function EquipoRow({ equipo }: { equipo: Awaited<ReturnType<typeof getEquipos>>[
         className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
         style={{ backgroundColor: 'rgba(31,78,121,0.07)' }}
       >
-        <AreaIcon className="w-4 h-4" style={{ color: '#1F4E79' }} />
+        <AreaIcon className="w-4 h-4" style={{ color: '#13602C' }} />
       </div>
 
       {/* Code + name */}
@@ -277,7 +277,7 @@ export default async function EquiposPage({
         <div className="flex items-center gap-3 mb-1">
           <div
             className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg,#1F4E79 0%,#2d6fa8 100%)' }}
+            style={{ background: 'linear-gradient(135deg,#13602C 0%,#2d6fa8 100%)' }}
           >
             <Wrench className="w-5 h-5 text-white" />
           </div>

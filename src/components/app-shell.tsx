@@ -37,23 +37,50 @@ export function AppShell({
         userRol={userRol}
         userArea={userArea}
       />
-      <main
-        className="flex-1 p-8 cetox-scroll overflow-y-auto"
+
+      {/* ── Main area ───────────────────────────────────────── */}
+      <div
+        className="flex-1 flex flex-col min-h-screen cetox-scroll overflow-y-auto"
         style={{
           marginLeft: collapsed ? '64px' : '256px',
           transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {/* Top-right bar: search + notifications */}
-        <div className="flex items-center justify-end gap-2 mb-4">
-          <GlobalSearch userRol={userRol} />
-          <NotificationBell notificaciones={notificaciones} />
-        </div>
+        {/* ── Sticky top bar ─────────────────────────────────── */}
+        <header
+          className="sticky top-0 z-30 flex items-center justify-between px-8 py-3"
+          style={{
+            backgroundColor: 'rgba(234,244,244,0.85)',
+            backdropFilter:  'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderBottom:    '1px solid rgba(74,195,178,0.15)',
+            boxShadow:       '0 1px 8px oklch(0 0 0 / 0.04)',
+          }}
+        >
+          {/* Left: breadcrumb-style role/area indicator */}
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs font-semibold tracking-widest uppercase"
+              style={{ color: 'rgba(74,195,178,0.7)' }}
+            >
+              {userArea ?? ''}
+            </span>
+          </div>
 
-        {/* Floating chat FAB — fixed bottom-right, rendered outside content flow */}
-        <ChatPanel userId={userId} userRol={userRol} userName={userName} />
-        {children}
-      </main>
+          {/* Right: search + notifications */}
+          <div className="flex items-center gap-2">
+            <GlobalSearch userRol={userRol} />
+            <NotificationBell notificaciones={notificaciones} />
+          </div>
+        </header>
+
+        {/* ── Page content ───────────────────────────────────── */}
+        <main className="flex-1 px-8 py-6">
+          {/* Floating chat FAB */}
+          <ChatPanel userId={userId} userRol={userRol} userName={userName} />
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

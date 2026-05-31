@@ -74,7 +74,7 @@ export default async function EmpleadoDetailPage({ params }: { params: Promise<{
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center w-14 h-14 rounded-2xl text-white text-xl font-bold flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)', fontFamily: 'var(--font-oswald)' }}
+              style={{ background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)', fontFamily: 'var(--font-oswald)' }}
             >
               {emp.nombre.charAt(0)}
             </div>
@@ -135,7 +135,7 @@ export default async function EmpleadoDetailPage({ params }: { params: Promise<{
                 className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 mt-0.5"
                 style={{ backgroundColor: 'rgba(31,78,121,0.08)' }}
               >
-                <Icon className="w-3.5 h-3.5" style={{ color: '#1F4E79' }} />
+                <Icon className="w-3.5 h-3.5" style={{ color: '#13602C' }} />
               </div>
               <div>
                 <p className="text-[10px] text-slate-400 font-medium">{label}</p>
@@ -172,7 +172,7 @@ export default async function EmpleadoDetailPage({ params }: { params: Promise<{
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Días atrasados',     value: vac.diasAtrasados,        color: '#ef4444', bg: 'rgba(239,68,68,0.08)'   },
-              { label: 'Reglamentarios',     value: vac.diasReglamentarios,   color: '#1F4E79', bg: 'rgba(31,78,121,0.08)'   },
+              { label: 'Reglamentarios',     value: vac.diasReglamentarios,   color: '#13602C', bg: 'rgba(31,78,121,0.08)'   },
               { label: 'Total por cobrar',   value: totalPorCobrar,           color: '#f59e0b', bg: 'rgba(245,158,11,0.08)'  },
               { label: 'Adelantadas pend.',  value: vac.adelantadasPendientes,color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)'  },
             ].map(s => (

@@ -20,7 +20,7 @@ export function EnviarElaboracionButton({ informeId }: { informeId: string }) {
       type="button"
       onClick={handleClick}
       disabled={pending}
-      style={{ backgroundColor: '#1F4E79' }}
+      style={{ backgroundColor: '#13602C' }}
     >
       {pending ? 'Enviando…' : 'Enviar a elaboración'}
     </Button>

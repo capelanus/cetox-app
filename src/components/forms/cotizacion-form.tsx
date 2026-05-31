@@ -125,7 +125,7 @@ export function NuevaCotizacionForm({ clientes, ensayos }: NuevaCotizacionFormPr
         </div>
       )}
 
-      <Button type="submit" style={{ backgroundColor: '#1F4E79' }} disabled={loading}>
+      <Button type="submit" style={{ backgroundColor: '#13602C' }} disabled={loading}>
         {loading ? 'Creando...' : 'Crear cotización'}
       </Button>
     </form>

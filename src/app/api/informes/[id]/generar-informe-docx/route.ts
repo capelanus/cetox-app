@@ -27,7 +27,7 @@ function sectionTitle(num: string, title: string) {
     children: [new TextRun({ text: `${num}. ${title.toUpperCase()}`, bold: true, size: 24 })],
     heading: HeadingLevel.HEADING_2,
     spacing: { before: 300, after: 120 },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '1F4E79' } },
+    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '13602C' } },
   })
 }
 
@@ -83,7 +83,7 @@ export async function GET(
         }),
         new Paragraph({
           children: [
-            new TextRun({ text: 'Centro Toxicológico S.A.C. — CETOX — LE-044', color: '1F4E79' }),
+            new TextRun({ text: 'Centro Toxicológico S.A.C. — CETOX — LE-044', color: '13602C' }),
           ],
           alignment: AlignmentType.CENTER,
           spacing: { after: 400 },
@@ -131,7 +131,7 @@ export async function GET(
           children: [bold('RESULTADOS')],
           heading: HeadingLevel.HEADING_2,
           spacing: { before: 300, after: 120 },
-          border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '1F4E79' } },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '13602C' } },
         }),
         new Paragraph({
           children: [new TextRun({ text: informe.resultadoTexto ?? '(completar con los resultados del ensayo)', color: informe.resultadoTexto ? '000000' : '888888', italics: !informe.resultadoTexto })],

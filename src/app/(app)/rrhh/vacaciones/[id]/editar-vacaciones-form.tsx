@@ -50,7 +50,7 @@ export function EditarVacacionesForm({ empleadoId, nombre, vacacion }: Props) {
         {/* Vacaciones por cobrar */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-4 rounded-full" style={{ backgroundColor: '#1F4E79' }} />
+            <div className="w-1 h-4 rounded-full" style={{ backgroundColor: '#13602C' }} />
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider" style={{ fontFamily: 'var(--font-montserrat)' }}>
               Vacaciones por cobrar
             </p>

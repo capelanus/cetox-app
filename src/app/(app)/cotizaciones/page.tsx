@@ -29,7 +29,7 @@ export default async function CotizacionesPage() {
         <h1 className="text-2xl font-bold text-slate-900">Cotizaciones</h1>
         {canCreate && (
           <Link href="/cotizaciones/nueva">
-            <Button style={{ backgroundColor: '#1F4E79' }}>
+            <Button style={{ backgroundColor: '#13602C' }}>
               <Plus className="h-4 w-4 mr-2" />
               Nueva cotización
             </Button>

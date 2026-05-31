@@ -121,7 +121,7 @@ export async function GET(
     if (!templateDoc) drawFallbackHeader(p, font, fontBold)
     else if (pageNum > 1) {
       // Barra de continuación sobre el membrete
-      p.drawRectangle({ x: 0, y: PAGE_H - 30, width: PAGE_W, height: 30, color: rgb(0, 0, 0, 0.25) })
+      p.drawRectangle({ x: 0, y: PAGE_H - 30, width: PAGE_W, height: 30, color: rgb(0, 0, 0), opacity: 0.25 })
       p.drawText(`${numInforme} — continuación`, {
         x: ML, y: PAGE_H - 20, size: 8, font: fontBold, color: WHITE,
       })

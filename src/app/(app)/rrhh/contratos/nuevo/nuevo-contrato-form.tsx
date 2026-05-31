@@ -32,7 +32,7 @@ const TIPO_META: Record<TipoContrato, { titulo: string; subtitulo: string; color
   INDETERMINADO: {
     titulo:   'Contrato a Plazo Indeterminado',
     subtitulo: 'Modalidad estándar · D.Leg. 728',
-    color:    '#1F4E79',
+    color:    '#13602C',
   },
   INDETERMINADO_ALTA_DIR: {
     titulo:   'Plazo Indeterminado – Alta Dirección',
@@ -612,7 +612,7 @@ function Actions() {
         type="submit"
         className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white transition"
         style={{
-          background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)',
+          background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)',
           fontFamily: 'var(--font-montserrat)',
         }}
       >

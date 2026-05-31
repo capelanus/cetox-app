@@ -44,7 +44,7 @@ export default async function VacacionesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Días atrasados',    value: totAtrasados,    color: '#ef4444', bg: 'rgba(239,68,68,0.08)'   },
-          { label: 'Reglamentarios',    value: totReglament,    color: '#1F4E79', bg: 'rgba(31,78,121,0.08)'   },
+          { label: 'Reglamentarios',    value: totReglament,    color: '#13602C', bg: 'rgba(31,78,121,0.08)'   },
           { label: 'Total por cobrar',  value: totPorCobrar,    color: '#f59e0b', bg: 'rgba(245,158,11,0.08)'  },
           { label: 'Adelantadas pend.', value: totAdPendientes, color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)'  },
         ].map(s => (
@@ -65,7 +65,7 @@ export default async function VacacionesPage() {
                   Empleado
                 </th>
                 {/* Vacaciones por cobrar */}
-                <th colSpan={3} className="text-center px-4 py-2 text-[10px] font-semibold uppercase tracking-widest border-l" style={{ color: '#1F4E79', borderColor: 'rgba(31,78,121,0.1)', backgroundColor: 'rgba(31,78,121,0.04)', fontFamily: 'var(--font-montserrat)' }}>
+                <th colSpan={3} className="text-center px-4 py-2 text-[10px] font-semibold uppercase tracking-widest border-l" style={{ color: '#13602C', borderColor: 'rgba(31,78,121,0.1)', backgroundColor: 'rgba(31,78,121,0.04)', fontFamily: 'var(--font-montserrat)' }}>
                   Vacaciones por cobrar
                 </th>
                 {/* Adelantadas */}

@@ -119,7 +119,7 @@ export function IngresosView({ sets }: Props) {
       <div className="bg-white rounded-xl border shadow-sm p-5 flex items-center justify-between">
         <div>
           <p className="text-slate-500 text-sm">Total del período</p>
-          <p className="text-3xl font-bold" style={{ color: '#1F4E79' }}>
+          <p className="text-3xl font-bold" style={{ color: '#13602C' }}>
             {formatMoneda(totalFiltrado, 'USD')}
           </p>
         </div>
@@ -141,7 +141,7 @@ export function IngresosView({ sets }: Props) {
                   <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, backgroundColor: '#1F4E79' }}
+                      style={{ width: `${pct}%`, backgroundColor: '#13602C' }}
                     />
                   </div>
                   <span className="w-28 text-right font-medium text-slate-700 shrink-0">

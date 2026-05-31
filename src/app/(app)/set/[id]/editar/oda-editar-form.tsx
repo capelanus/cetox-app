@@ -100,7 +100,7 @@ export function OdaEditarForm({ oda }: Props) {
           <button
             type="submit"
             disabled={isPending || isDeleting}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium bg-[#1F4E79] text-white hover:bg-[#163a5b] disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium bg-[#13602C] text-white hover:bg-[#163a5b] disabled:opacity-50 transition-colors"
           >
             {isPending ? (
               <><Loader2 className="w-3.5 h-3.5 animate-spin" />Guardando...</>

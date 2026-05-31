@@ -47,7 +47,7 @@ export async function GET(
   const page = pdfDoc.addPage([595, 842]) // A4
   const { width, height } = page.getSize()
 
-  const blue = rgb(0.122, 0.306, 0.475) // #1F4E79
+  const blue = rgb(0.122, 0.306, 0.475) // #13602C
   const black = rgb(0, 0, 0)
   const gray = rgb(0.4, 0.4, 0.4)
 

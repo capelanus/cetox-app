@@ -77,7 +77,7 @@ export default async function ContratosPage() {
       subtitulo:   'Modalidad estándar',
       descripcion: 'Contrato de trabajo de duración indefinida. Incluye cláusulas de remuneración, horario, obligaciones del trabajador y Ley de Productividad Laboral.',
       icon:        FileText,
-      color:       '#1F4E79',
+      color:       '#13602C',
       bg:          'rgba(31,78,121,0.08)',
       campos:      ['Datos personales', 'Cargo', 'Remuneración', 'Antigüedad', 'Firma'],
     },
@@ -130,7 +130,7 @@ export default async function ContratosPage() {
         <div className="flex items-center gap-3">
           <div
             className="flex items-center justify-center w-10 h-10 rounded-xl"
-            style={{ background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)' }}
+            style={{ background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)' }}
           >
             <FileText className="w-5 h-5 text-white" />
           </div>

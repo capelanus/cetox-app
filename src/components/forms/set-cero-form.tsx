@@ -20,7 +20,7 @@ const MOTIVOS = [
     value: 'INGRESOS_INTERNOS',
     label: 'Ingresos internos',
     desc: 'SET a nombre de CETOX — ensayos para uso o demostración interna del laboratorio',
-    color: '#1F4E79',
+    color: '#13602C',
   },
   {
     value: 'MODIFICACION_SIN_COSTO',

@@ -471,7 +471,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
               <div className="pt-2 border-t border-blue-200">
                 <p className="text-sm text-slate-600 mb-2">2. Genera el QR y el certificado. El QR se incrustará en el documento firmado.</p>
                 <form action={firmarGerenciaAction}>
-                  <Button type="submit" style={{ backgroundColor: '#1F4E79' }}>
+                  <Button type="submit" style={{ backgroundColor: '#13602C' }}>
                     Firmar y generar QR
                   </Button>
                 </form>

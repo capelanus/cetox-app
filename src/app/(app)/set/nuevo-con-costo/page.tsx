@@ -94,7 +94,7 @@ export default async function NuevoSETConCostoPage() {
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/set/nuevo?cotizacionId=${c.id}`}>
-                        <Button size="sm" style={{ backgroundColor: '#1F4E79' }}>
+                        <Button size="sm" style={{ backgroundColor: '#13602C' }}>
                           Seleccionar
                           <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                         </Button>

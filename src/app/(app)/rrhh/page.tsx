@@ -99,7 +99,7 @@ export default async function RRHHPage() {
       icon:        Users2,
       titulo:      'Gestión de Personal',
       descripcion: 'Registro de empleados, datos personales, cargo, área, DNI, fecha de ingreso y estado laboral.',
-      color:       '#1F4E79',
+      color:       '#13602C',
       bg:          'rgba(31,78,121,0.1)',
       href:        '/rrhh/personal',
     },
@@ -151,7 +151,7 @@ export default async function RRHHPage() {
         <div className="flex items-center gap-3 mb-2">
           <div
             className="flex items-center justify-center w-10 h-10 rounded-xl"
-            style={{ background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)' }}
+            style={{ background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)' }}
           >
             <Users2 className="w-5 h-5 text-white" />
           </div>
@@ -206,7 +206,7 @@ export default async function RRHHPage() {
               <div
                 className="flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 font-bold text-white text-sm"
                 style={{
-                  background: 'linear-gradient(135deg, #1F4E79 0%, #2d6fa8 100%)',
+                  background: 'linear-gradient(135deg, #13602C 0%, #2d6fa8 100%)',
                   fontFamily: 'var(--font-oswald)',
                 }}
               >
@@ -221,7 +221,7 @@ export default async function RRHHPage() {
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <span
                   className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: 'rgba(31,78,121,0.1)', color: '#1F4E79' }}
+                  style={{ backgroundColor: 'rgba(31,78,121,0.1)', color: '#13602C' }}
                 >
                   RRHH
                 </span>

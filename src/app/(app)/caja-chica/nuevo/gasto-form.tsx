@@ -177,7 +177,7 @@ export function GastoForm({ proveedores, today }: Props) {
       </div>
 
       <div className="flex gap-3">
-        <Button type="submit" disabled={isPending} style={{ backgroundColor: '#1F4E79' }}>
+        <Button type="submit" disabled={isPending} style={{ backgroundColor: '#13602C' }}>
           {isPending ? 'Guardando…' : 'Registrar gasto'}
         </Button>
         <Button

@@ -181,7 +181,7 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
             )}
             {puedoGenerarODAs && (
               <form action={generateAction}>
-                <Button type="submit" size="sm" style={{ backgroundColor: '#1F4E79' }}>
+                <Button type="submit" size="sm" style={{ backgroundColor: '#13602C' }}>
                   Generar ODAs
                 </Button>
               </form>

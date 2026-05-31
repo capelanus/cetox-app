@@ -244,7 +244,7 @@ export function CajaChicaView({ gastos, ingresos, readonly = false }: Props) {
                 onClick={() => activo ? limpiar() : aplicarPeriodo(key)}
                 className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                   activo
-                    ? 'bg-[#1F4E79] text-white border-[#1F4E79]'
+                    ? 'bg-[#13602C] text-white border-[#13602C]'
                     : 'text-slate-600 border-slate-200 hover:border-slate-400'
                 }`}
               >

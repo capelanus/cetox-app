@@ -51,7 +51,7 @@ export default function ValidationPage({ params }: { params: Promise<{ codigo: s
         <div className="text-center">
           <div
             className="inline-block px-6 py-3 rounded-xl text-white font-bold text-2xl mb-2"
-            style={{ backgroundColor: '#1F4E79' }}
+            style={{ backgroundColor: '#13602C' }}
           >
             CETOX LAB
           </div>
@@ -84,7 +84,7 @@ export default function ValidationPage({ params }: { params: Promise<{ codigo: s
                 <Button
                   type="submit"
                   className="w-full"
-                  style={{ backgroundColor: '#1F4E79' }}
+                  style={{ backgroundColor: '#13602C' }}
                   disabled={loading}
                 >
                   {loading ? 'Verificando...' : 'Verificar'}
@@ -130,7 +130,7 @@ export default function ValidationPage({ params }: { params: Promise<{ codigo: s
                 download
                 className="block mt-2"
               >
-                <Button className="w-full" style={{ backgroundColor: '#1F4E79' }}>
+                <Button className="w-full" style={{ backgroundColor: '#13602C' }}>
                   <Download className="h-4 w-4 mr-2" />
                   Descargar certificado PDF
                 </Button>

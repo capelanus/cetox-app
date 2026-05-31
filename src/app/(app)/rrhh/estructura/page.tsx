@@ -267,7 +267,7 @@ export default async function EstructuraPage() {
       {/* ── Nivel 2: DTG ── */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #1F4E79 0%, #2563a8 100%)', border: '2px solid #163a5a' }}
+        style={{ background: 'linear-gradient(135deg, #13602C 0%, #2563a8 100%)', border: '2px solid #163a5a' }}
       >
         <div className="flex items-center gap-3 px-6 py-4">
           <Inicial nombre="Rosalita Anaya" bg="rgba(255,255,255,0.2)" fg="white" />
@@ -294,7 +294,7 @@ export default async function EstructuraPage() {
         <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Leyenda</span>
         {[
           { color: '#13602C', label: 'Gerencia General' },
-          { color: '#1F4E79', label: 'Dir. Técnica General' },
+          { color: '#13602C', label: 'Dir. Técnica General' },
           { color: '#2563eb', label: 'Direcciones' },
           { color: '#4AC3B2', label: 'Jefaturas / Sub Dir.' },
           { color: '#e2e8f0', label: 'Personal', text: '#94a3b8' },

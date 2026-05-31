@@ -58,7 +58,7 @@ const ACCESO_POR_ROL: Record<string, string[]> = {
 
 const ROL_COLOR: Record<string, string> = {
   DIRECTOR_CALIDAD:    '#4AC3B2',
-  ADMINISTRACION:      '#1F4E79',
+  ADMINISTRACION:      '#13602C',
   GERENTE_TECNICO:     '#7C3AED',
   ANALISTA:            '#F59E0B',
   JEFE_OPERACIONES:    '#10B981',
@@ -553,8 +553,8 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
                 onClick={() => setCanal(slug)}
                 className="relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors border-b-2 flex-shrink-0"
                 style={{
-                  borderBottomColor: active ? '#1F4E79' : 'transparent',
-                  color: active ? '#1F4E79' : unread > 0 ? '#374151' : '#94a3b8',
+                  borderBottomColor: active ? '#13602C' : 'transparent',
+                  color: active ? '#13602C' : unread > 0 ? '#374151' : '#94a3b8',
                   fontWeight: unread > 0 ? 700 : undefined,
                 }}
               >
@@ -566,7 +566,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
                     style={{
                       minWidth: 16, height: 16,
                       fontSize: 9, paddingInline: 3,
-                      backgroundColor: active ? '#1F4E79' : '#ef4444',
+                      backgroundColor: active ? '#13602C' : '#ef4444',
                       color: 'white',
                     }}
                   >
@@ -758,7 +758,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
               type="submit"
               disabled={!canSend}
               className="flex items-center justify-center w-8 h-8 rounded-lg transition-all disabled:opacity-30 flex-shrink-0"
-              style={{ backgroundColor: canSend ? '#1F4E79' : '#E2E8F0' }}
+              style={{ backgroundColor: canSend ? '#13602C' : '#E2E8F0' }}
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#94a3b8' }} />

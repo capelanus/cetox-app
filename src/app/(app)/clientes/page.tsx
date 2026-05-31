@@ -16,7 +16,7 @@ export default async function ClientesPage() {
         <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
         {canEdit && (
           <Link href="/clientes/nuevo">
-            <Button style={{ backgroundColor: '#1F4E79' }}>
+            <Button style={{ backgroundColor: '#13602C' }}>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo cliente
             </Button>

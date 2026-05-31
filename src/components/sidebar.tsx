@@ -330,10 +330,12 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
           gap:             collapsed ? 0 : 12,
           padding:         collapsed ? '10px 0' : muted ? '6px 12px 6px 24px' : '10px 12px',
           justifyContent:  collapsed ? 'center' : 'flex-start',
-          backgroundColor: active ? 'rgba(74,195,178,0.22)' : 'transparent',
+          backgroundColor: active ? 'rgba(74,195,178,0.20)' : 'transparent',
           borderLeft:      active && !collapsed ? '3px solid #4AC3B2' : '3px solid transparent',
+          borderRadius:    '0.5rem',
           transition:      'all 0.15s ease',
           position:        'relative',
+          backdropFilter:  active ? 'blur(4px)' : 'none',
         }}
         onMouseEnter={e => {
           if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.08)'
@@ -399,10 +401,11 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
       className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden"
       onClick={collapsed ? onToggle : undefined}
       style={{
-        backgroundColor: '#13602C',
-        width:           collapsed ? '64px' : '256px',
-        transition:      'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor:          collapsed ? 'pointer' : 'default',
+        background: 'linear-gradient(175deg, #0e4a22 0%, #13602C 40%, #0f5226 100%)',
+        width:      collapsed ? '64px' : '256px',
+        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor:     collapsed ? 'pointer' : 'default',
+        boxShadow:  '4px 0 24px oklch(0 0 0 / 0.18)',
       }}
     >
       {/* ── Logo / Header ── */}

@@ -60,7 +60,7 @@ export default async function CajaChicaPage() {
                 </Button>
               </Link>
               <Link href="/caja-chica/nuevo">
-                <Button style={{ backgroundColor: '#1F4E79' }}>
+                <Button style={{ backgroundColor: '#13602C' }}>
                   <Plus className="h-4 w-4 mr-2" />
                   Registrar gasto
                 </Button>

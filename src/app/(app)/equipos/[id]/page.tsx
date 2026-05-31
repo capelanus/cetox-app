@@ -112,7 +112,7 @@ export default async function EquipoDetallePage({
           {/* Area icon */}
           <div
             className="flex items-center justify-center w-12 h-12 rounded-xl flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg,#1F4E79 0%,#2d6fa8 100%)' }}
+            style={{ background: 'linear-gradient(135deg,#13602C 0%,#2d6fa8 100%)' }}
           >
             <AreaIcon className="w-6 h-6 text-white" />
           </div>

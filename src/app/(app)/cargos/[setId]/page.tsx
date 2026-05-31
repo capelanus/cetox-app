@@ -106,7 +106,7 @@ export default async function CargoDetailPage({ params }: { params: Promise<{ se
                 />
               </div>
             </div>
-            <Button type="submit" style={{ backgroundColor: '#1F4E79' }}>
+            <Button type="submit" style={{ backgroundColor: '#13602C' }}>
               {set.cargoEntrega?.recibidoPor ? 'Actualizar cargo' : 'Registrar entrega'}
             </Button>
           </form>

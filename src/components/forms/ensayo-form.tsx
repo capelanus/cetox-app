@@ -99,7 +99,7 @@ export function EnsayoForm({ action, ensayo }: EnsayoFormProps) {
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <Button type="submit" style={{ backgroundColor: '#1F4E79' }}>
+        <Button type="submit" style={{ backgroundColor: '#13602C' }}>
           {ensayo ? 'Guardar cambios' : 'Crear ensayo'}
         </Button>
       </div>

@@ -162,7 +162,7 @@ export function EditarCotizacionForm({ cotizacion, clientes, ensayos }: Props) {
         </div>
       )}
 
-      <Button type="submit" style={{ backgroundColor: '#1F4E79' }} disabled={loading}>
+      <Button type="submit" style={{ backgroundColor: '#13602C' }} disabled={loading}>
         {loading ? 'Guardando...' : 'Guardar cambios'}
       </Button>
     </form>

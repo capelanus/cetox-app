@@ -82,7 +82,7 @@ const ESTILOS = `
     z-index: 10;
   }
   .btn-print {
-    background: #1F4E79;
+    background: #13602C;
     color: white;
     border: none;
     padding: 10px 24px;

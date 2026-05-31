@@ -272,7 +272,7 @@ export function ResultadoForm({ odaId, initialTexto = '', initialImagenes = [], 
         </div>
       )}
 
-      <Button type="submit" disabled={submitting} style={{ backgroundColor: '#1F4E79' }}>
+      <Button type="submit" disabled={submitting} style={{ backgroundColor: '#13602C' }}>
         {submitting ? 'Guardando...' : buttonLabel}
       </Button>
     </form>

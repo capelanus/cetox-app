@@ -328,7 +328,7 @@ export function SetEditarForm({ set, areas }: Props) {
 
       {/* Botones */}
       <div className="flex gap-3">
-        <Button type="submit" style={{ backgroundColor: '#1F4E79' }} disabled={isPending}>
+        <Button type="submit" style={{ backgroundColor: '#13602C' }} disabled={isPending}>
           {isPending ? 'Guardando...' : 'Guardar cambios'}
         </Button>
         <Button

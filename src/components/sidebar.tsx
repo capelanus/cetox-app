@@ -171,9 +171,8 @@ const sectionesCoordinadorCalidad: NavSection[] = [
       { href: '/operaciones/cotizaciones-proveedor', label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['COORDINADOR_CALIDAD'] },
       { href: '/operaciones/facturas',               label: 'Facturas',          icon: Receipt,         roles: ['COORDINADOR_CALIDAD'] },
       { href: '/operaciones/pagos',                  label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['COORDINADOR_CALIDAD'] },
-      { href: '/solicitudes',                        label: 'Mis Solicitudes',   icon: ShoppingBag,     roles: ['COORDINADOR_CALIDAD'] },
-      { href: '/historial',                          label: 'Historial',         icon: History,         roles: ['COORDINADOR_CALIDAD'], muted: true },
-      { href: '/gerencia/accesos',                   label: 'Control de Accesos', icon: Shield,         roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/solicitudes',                        label: 'Mis Solicitudes',    icon: ShoppingBag,     roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/gerencia/accesos',                   label: 'Control de Accesos', icon: Shield,          roles: ['COORDINADOR_CALIDAD'] },
     ],
   },
 ]

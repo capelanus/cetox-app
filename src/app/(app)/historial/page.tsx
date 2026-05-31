@@ -15,7 +15,7 @@ export default async function HistorialPage({
 }: {
   searchParams: Promise<{ entidad?: string; page?: string }>
 }) {
-  await requireRol(['DIRECTOR_CALIDAD', 'ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_ADMINISTRACION', 'COORDINADOR_CALIDAD'])
+  await requireRol(['DIRECTOR_CALIDAD', 'ADMINISTRACION', 'GERENTE_TECNICO', 'DIRECTOR_ADMINISTRACION'])
 
   const params  = await searchParams
   const entidad = params.entidad ?? ''

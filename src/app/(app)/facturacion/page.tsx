@@ -180,20 +180,16 @@ export default async function FacturacionPage() {
                       <div className="flex items-center gap-1 justify-end">
                         <Link href={`/facturacion/${f.id}`} title="Ver detalle">
                           <button
-                            className="p-1.5 rounded-lg transition-colors"
+                            className="p-1.5 rounded-lg transition-colors hover:bg-slate-100"
                             style={{ color: '#64748b' }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                           >
                             <Eye className="h-4 w-4" />
                           </button>
                         </Link>
                         <a href={`/api/facturacion/${f.id}/generar-pdf`} target="_blank" rel="noreferrer" title="Descargar PDF">
                           <button
-                            className="p-1.5 rounded-lg transition-colors"
+                            className="p-1.5 rounded-lg transition-colors hover:bg-green-100"
                             style={{ color: '#13602C' }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#dcfce7')}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                           >
                             <Download className="h-4 w-4" />
                           </button>

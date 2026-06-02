@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeft, Download, CheckCircle2, XCircle,
+  ArrowLeft, Download, CheckCircle2,
   FileText, Building2, Calendar, DollarSign, Edit3,
 } from 'lucide-react'
 import {
@@ -11,6 +11,7 @@ import {
   formatNumFacturaCliente, formatNumCotizacion,
 } from '@/lib/format'
 import { marcarFacturaPagada, anularFacturaCliente, actualizarFacturaCliente } from '@/app/actions/facturacion'
+import { AnularBtn } from './anular-btn'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -75,10 +76,8 @@ export default async function FacturaDetallePage({
       <div className="flex items-center gap-3 mb-6">
         <Link href="/facturacion">
           <button
-            className="p-2 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors hover:bg-slate-100"
             style={{ color: '#64748b' }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -293,25 +292,7 @@ export default async function FacturaDetallePage({
               )}
 
               {factura.estado !== 'ANULADA' && (
-                <form action={handleAnular}>
-                  <button
-                    type="submit"
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all"
-                    style={{
-                      backgroundColor: '#fee2e2',
-                      color: '#7f1d1d',
-                      border: '1.5px solid #fca5a5',
-                    }}
-                    onClick={e => {
-                      if (!confirm('¿Anular esta factura? Esta acción no se puede deshacer.')) {
-                        e.preventDefault()
-                      }
-                    }}
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Anular factura
-                  </button>
-                </form>
+                <AnularBtn action={handleAnular} />
               )}
 
               <a href={`/api/facturacion/${id}/generar-pdf`} target="_blank" rel="noreferrer" className="block">

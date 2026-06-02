@@ -695,6 +695,7 @@ model FacturaCliente {
   fechaEmision     DateTime   @default(now())
   fechaVencimiento DateTime?
   estado           String     @default("PENDIENTE")  // PENDIENTE | PAGADA | ANULADA
+  itemsJson        String     @default("[]")         // JSON: [{nombre, muestra?, costo}]
   notas            String?
   archivoUrl       String?
   creadoPorId      String

@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
 import { cambiarEstadoCotizacion } from '@/app/actions/cotizaciones'
-import { generarFacturaCliente } from '@/app/actions/facturacion'
 import { CotizacionActionsMenu } from '@/components/cotizacion-actions-menu'
 import { redirect } from 'next/navigation'
 
@@ -65,11 +64,6 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
     await cambiarEstadoCotizacion(id, 'RECHAZADA')
     redirect(`/cotizaciones/${id}`)
   }
-  async function emitirFactura() {
-    'use server'
-    await generarFacturaCliente(id)
-  }
-
   return (
     <div className="max-w-3xl">
       <div className="flex items-center gap-3 mb-6">
@@ -386,15 +380,14 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
                 </Button>
               </Link>
             ) : (
-              <form action={emitirFactura}>
+              <Link href={`/cotizaciones/${id}/facturar`}>
                 <Button
-                  type="submit"
                   style={{ backgroundColor: '#4AC3B2', color: 'white' }}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Emitir Factura
+                  Generar Factura
                 </Button>
-              </form>
+              </Link>
             )
           )}
           {cot.sets.length > 0 && (

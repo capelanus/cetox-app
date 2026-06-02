@@ -37,15 +37,7 @@ export default async function FacturaDetallePage({
     include: {
       cliente:    true,
       creadoPor:  { select: { nombre: true } },
-      cotizacion: {
-        include: {
-          items:    { include: { ensayo: true } },
-          muestras: {
-            include: { items: { include: { ensayo: true } } },
-            orderBy: { orden: 'asc' },
-          },
-        },
-      },
+      cotizacion: true,
     },
   })
   if (!factura) notFound()
@@ -55,12 +47,10 @@ export default async function FacturaDetallePage({
   const estado    = ESTADO_CONFIG[factura.estado] ?? ESTADO_CONFIG.PENDIENTE
   const cot       = factura.cotizacion
 
-  // Items (from cotización)
-  const items = cot.muestras.length > 0
-    ? cot.muestras.flatMap(m =>
-        m.items.map(it => ({ nombre: `${it.ensayo.nombre}`, muestra: m.nombre, costo: it.costo }))
-      )
-    : cot.items.map(it => ({ nombre: it.ensayo.nombre, muestra: null, costo: it.costo }))
+  // Items — read from itemsJson (the exact subset that was invoiced)
+  interface StoredItem { itemId: string; nombre: string; muestra: string | null; costo: number; moneda: string }
+  const storedItems: StoredItem[] = JSON.parse(factura.itemsJson || '[]')
+  const items = storedItems.map(it => ({ nombre: it.nombre, muestra: it.muestra, costo: it.costo }))
 
   // Server actions bound to this factura
   async function handleMarcarPagada() {

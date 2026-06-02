@@ -35,12 +35,7 @@ export async function GET(
     where: { id },
     include: {
       cliente:    true,
-      cotizacion: {
-        include: {
-          items:   { include: { ensayo: true } },
-          muestras: { include: { items: { include: { ensayo: true } } }, orderBy: { orden: 'asc' } },
-        },
-      },
+      cotizacion: true,
       creadoPor:  true,
     },
   })
@@ -118,19 +113,22 @@ export async function GET(
   y -= 22
 
   // ── Items ───────────────────────────────────────────────────────────────────
-  // Collect items from cotizacion
-  const allItems = cot.muestras.length > 0
-    ? cot.muestras.flatMap(m =>
-        m.items.map(it => ({ nombre: `${it.ensayo.nombre} — ${m.nombre}`, costo: it.costo }))
-      )
-    : cot.items.map(it => ({ nombre: it.ensayo.nombre, costo: it.costo }))
+  // Use itemsJson (the exact items invoiced, which may be a subset of cotización items)
+  interface StoredItem { itemId: string; nombre: string; muestra: string | null; costo: number; moneda: string }
+  const storedItems: StoredItem[] = JSON.parse(factura.itemsJson || '[]')
+  const allItems = storedItems.length > 0
+    ? storedItems.map(it => ({
+        nombre: it.muestra ? `${it.nombre} — ${it.muestra}` : it.nombre,
+        costo:  it.costo,
+      }))
+    : []
 
   allItems.forEach((item, idx) => {
     const rowBg = idx % 2 === 1 ? LIGHT_GRAY : WHITE
     page.drawRectangle({ x: ML, y: y - 4, width: CW, height: 16, color: rowBg })
     page.drawText(String(idx + 1), { x: ML + 5, y: y + 0, size: 7.5, font, color: GRAY })
     page.drawText(item.nombre.substring(0, 72), { x: ML + 30, y: y + 0, size: 7.5, font, color: BLACK })
-    page.drawText(formatMoneda(item.costo, cot.moneda as 'USD' | 'PEN'), { x: PAGE_W - MR - 60, y: y + 0, size: 7.5, font, color: BLACK })
+    page.drawText(formatMoneda(item.costo, factura.moneda as 'USD' | 'PEN'), { x: PAGE_W - MR - 60, y: y + 0, size: 7.5, font, color: BLACK })
     y -= 16
   })
 

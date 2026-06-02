@@ -699,6 +699,14 @@ model FacturaCliente {
   itemsJson        String     @default("[]")         // JSON: [{nombre, muestra?, costo}]
   notas            String?
   archivoUrl       String?
+  // ── Registro de cobranza ──────────────────────────────────────────────────
+  concepto              String?   // descripción libre (ej. "De veterquimica peru s")
+  numeroOperacion       String?   // Nº operación bancaria
+  porcentajeDetraccion  Int?      // % detracción: 100, 88, etc. null = no aplica
+  sujetaDetraccion      Boolean?  // SI / NO
+  montoIngresado        Float?    // monto $ efectivamente ingresado
+  adelantoSet           Float?    // adelanto al SET
+  saldoSet              Float?    // saldo pendiente del SET
   creadoPorId      String
   creadoPor        Usuario    @relation("FacturaClientePor", fields: [creadoPorId], references: [id])
   createdAt        DateTime   @default(now())

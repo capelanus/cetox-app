@@ -162,14 +162,28 @@ export async function actualizarFacturaCliente(
 ) {
   await requireRol(['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO'])
 
-  const notas            = (formData.get('notas')            as string) || null
-  const fechaVencimiento = (formData.get('fechaVencimiento') as string) || null
+  const notas               = (formData.get('notas')               as string) || null
+  const fechaVencimiento    = (formData.get('fechaVencimiento')     as string) || null
+  const concepto            = (formData.get('concepto')             as string) || null
+  const numeroOperacion     = (formData.get('numeroOperacion')      as string) || null
+  const pctStr              = (formData.get('porcentajeDetraccion') as string) || null
+  const sujetaStr           = (formData.get('sujetaDetraccion')     as string) || null
+  const montoStr            = (formData.get('montoIngresado')       as string) || null
+  const adelantoStr         = (formData.get('adelantoSet')          as string) || null
+  const saldoStr            = (formData.get('saldoSet')             as string) || null
 
   await prisma.facturaCliente.update({
     where: { id: facturaId },
     data: {
       notas,
-      fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null,
+      fechaVencimiento:    fechaVencimiento ? new Date(fechaVencimiento) : null,
+      concepto,
+      numeroOperacion,
+      porcentajeDetraccion: pctStr    ? parseInt(pctStr)     : null,
+      sujetaDetraccion:     sujetaStr ? sujetaStr === 'SI'   : null,
+      montoIngresado:       montoStr  ? parseFloat(montoStr) : null,
+      adelantoSet:          adelantoStr ? parseFloat(adelantoStr) : null,
+      saldoSet:             saldoStr    ? parseFloat(saldoStr)    : null,
     },
   })
   revalidatePath('/facturacion')

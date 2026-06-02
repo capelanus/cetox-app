@@ -124,26 +124,33 @@ export default async function FacturacionPage() {
               <thead>
                 <tr style={{ backgroundColor: '#13602C' }}>
                   {[
-                    { label: 'FECHA',       align: 'left'   },
-                    { label: 'N° FACTURA',  align: 'left'   },
-                    { label: 'CLIENTE',     align: 'left'   },
-                    { label: 'COTIZACIÓN',  align: 'center' },
-                    { label: 'MONEDA',      align: 'center' },
-                    { label: 'SUBTOTAL',    align: 'right'  },
-                    { label: 'IGV',         align: 'right'  },
-                    { label: 'TOTAL',       align: 'right'  },
-                    { label: 'VENCIMIENTO', align: 'center' },
-                    { label: 'ESTADO',      align: 'center' },
-                    { label: '',            align: 'center' },
+                    { label: 'FECHA',                 align: 'center' },
+                    { label: 'CONCEPTO',              align: 'left'   },
+                    { label: 'Nº OPERACIÓN',          align: 'center' },
+                    { label: 'FACTURA',               align: 'center' },
+                    { label: '% DETRACCIÓN',          align: 'center' },
+                    { label: 'SUJETA A\nDETRACCIÓN', align: 'center' },
+                    { label: 'OBSERVACIONES',         align: 'left'   },
+                    { label: 'MONTO $\nINGRESADO',   align: 'right'  },
+                    { label: 'ADELANTO\nSET',         align: 'right'  },
+                    { label: 'SALDO\nSET',            align: 'right'  },
+                    { label: '',                      align: 'center' },
                   ].map((col, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 font-bold text-xs tracking-widest uppercase whitespace-nowrap text-${col.align}`}
                       style={{
                         color: 'white',
-                        borderRight: i < 10 ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                        padding: '10px 12px',
                         fontFamily: 'var(--font-montserrat)',
-                        letterSpacing: '0.06em',
+                        fontWeight: 700,
+                        fontSize: 10,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        textAlign: col.align as 'left' | 'center' | 'right',
+                        borderRight: i < 10 ? '1px solid rgba(255,255,255,0.18)' : 'none',
+                        whiteSpace: 'pre-line',
+                        lineHeight: 1.35,
+                        verticalAlign: 'middle',
                       }}
                     >
                       {col.label}
@@ -155,58 +162,86 @@ export default async function FacturacionPage() {
                 {facturas.map((f, idx) => (
                   <tr
                     key={f.id}
-                    className="transition-colors"
-                    style={{ backgroundColor: idx % 2 === 0 ? 'white' : '#f8faf9', borderBottom: '1px solid #e2e8f0' }}
+                    style={{ backgroundColor: idx % 2 === 0 ? 'white' : '#f4faf7', borderBottom: '1px solid #e2e8f0' }}
                   >
-                    <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: '#64748b' }}>
+                    {/* FECHA */}
+                    <td style={{ padding: '10px 12px', textAlign: 'center', color: '#475569', fontSize: 12, whiteSpace: 'nowrap', borderRight: '1px solid #e9eff5' }}>
                       {formatFecha(f.fechaEmision)}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="font-mono font-bold text-xs" style={{ color: '#13602C' }}>
+                    {/* CONCEPTO */}
+                    <td style={{ padding: '10px 12px', borderRight: '1px solid #e9eff5', maxWidth: 200 }}>
+                      {f.concepto ? (
+                        <p style={{ fontSize: 12, color: '#1e293b', fontWeight: 600 }}>{f.concepto}</p>
+                      ) : (
+                        <p style={{ fontSize: 12, color: '#1e293b', fontWeight: 600 }}>{f.cliente.razonSocial}</p>
+                      )}
+                    </td>
+                    {/* Nº OPERACIÓN */}
+                    <td style={{ padding: '10px 12px', textAlign: 'center', borderRight: '1px solid #e9eff5' }}>
+                      {f.numeroOperacion ? (
+                        <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#334155' }}>{f.numeroOperacion}</span>
+                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                    </td>
+                    {/* FACTURA */}
+                    <td style={{ padding: '10px 12px', textAlign: 'center', borderRight: '1px solid #e9eff5' }}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 11, color: '#13602C' }}>
                         {formatNumFacturaCliente(f.serie, f.numero, f.anio)}
                       </span>
                     </td>
-                    <td className="px-4 py-3" style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <p className="font-semibold text-sm" style={{ color: '#1e293b' }}>
-                        {f.cliente.razonSocial}
-                      </p>
-                      <p className="text-xs" style={{ color: '#94a3b8' }}>{f.cliente.ruc}</p>
+                    {/* % DETRACCIÓN */}
+                    <td style={{ padding: '10px 12px', textAlign: 'center', borderRight: '1px solid #e9eff5' }}>
+                      {f.porcentajeDetraccion != null ? (
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>{f.porcentajeDetraccion}%</span>
+                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <Link
-                        href={`/cotizaciones/${f.cotizacionId}`}
-                        className="text-xs font-medium hover:underline"
-                        style={{ color: '#4AC3B2' }}
-                      >
-                        {formatNumCotizacion(f.cotizacion.numero, f.cotizacion.anio, f.cotizacion.sufijo)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: '#EAF4F4', color: '#13602C' }}>
-                        {f.moneda}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-mono" style={{ color: '#475569' }}>
-                      {formatMoneda(f.subtotal, f.moneda as 'USD' | 'PEN')}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-mono" style={{ color: '#475569' }}>
-                      {formatMoneda(f.igv, f.moneda as 'USD' | 'PEN')}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-sm font-mono" style={{ color: '#13602C' }}>
-                      {formatMoneda(f.total, f.moneda as 'USD' | 'PEN')}
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm">
-                      {f.fechaVencimiento ? (
-                        <span className="text-xs whitespace-nowrap" style={{ color: new Date(f.fechaVencimiento) < new Date() && f.estado === 'PENDIENTE' ? '#dc2626' : '#64748b' }}>
-                          {formatFecha(f.fechaVencimiento)}
+                    {/* SUJETA A DETRACCIÓN */}
+                    <td style={{ padding: '10px 12px', textAlign: 'center', borderRight: '1px solid #e9eff5' }}>
+                      {f.sujetaDetraccion != null ? (
+                        <span
+                          style={{
+                            fontSize: 11, fontWeight: 700,
+                            padding: '2px 8px', borderRadius: 4,
+                            backgroundColor: f.sujetaDetraccion ? '#dcfce7' : '#fee2e2',
+                            color: f.sujetaDetraccion ? '#065f46' : '#7f1d1d',
+                          }}
+                        >
+                          {f.sujetaDetraccion ? 'SI' : 'NO'}
                         </span>
                       ) : <span style={{ color: '#cbd5e1' }}>—</span>}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <EstadoBadge estado={f.estado} />
+                    {/* OBSERVACIONES */}
+                    <td style={{ padding: '10px 12px', borderRight: '1px solid #e9eff5', maxWidth: 220 }}>
+                      <p style={{ fontSize: 11, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
+                        {f.notas ?? '—'}
+                      </p>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 justify-end">
+                    {/* MONTO $ INGRESADO */}
+                    <td style={{ padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #e9eff5' }}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#13602C' }}>
+                        {f.montoIngresado != null
+                          ? formatMoneda(f.montoIngresado, f.moneda as 'USD' | 'PEN')
+                          : formatMoneda(f.total, f.moneda as 'USD' | 'PEN')}
+                      </span>
+                    </td>
+                    {/* ADELANTO SET */}
+                    <td style={{ padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #e9eff5' }}>
+                      {f.adelantoSet != null ? (
+                        <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#475569' }}>
+                          {formatMoneda(f.adelantoSet, f.moneda as 'USD' | 'PEN')}
+                        </span>
+                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                    </td>
+                    {/* SALDO SET */}
+                    <td style={{ padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #e9eff5' }}>
+                      {f.saldoSet != null ? (
+                        <span style={{ fontFamily: 'monospace', fontSize: 12, color: f.saldoSet > 0 ? '#dc2626' : '#065f46', fontWeight: 700 }}>
+                          {formatMoneda(f.saldoSet, f.moneda as 'USD' | 'PEN')}
+                        </span>
+                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                    </td>
+                    {/* ACCIONES */}
+                    <td style={{ padding: '10px 8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
                         <Link href={`/facturacion/${f.id}`} title="Ver detalle">
                           <button className="p-1.5 rounded-lg transition-colors hover:bg-slate-100" style={{ color: '#64748b' }}>
                             <Eye className="h-4 w-4" />

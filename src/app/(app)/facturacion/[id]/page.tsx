@@ -238,6 +238,82 @@ export default async function FacturaDetallePage({
               </h2>
               <form action={handleActualizar} className="space-y-3">
                 <div>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>Concepto</label>
+                  <input
+                    type="text"
+                    name="concepto"
+                    defaultValue={factura.concepto ?? ''}
+                    className="cetox-input text-sm"
+                    placeholder="Ej. De veterquimica peru s"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>Nº Operación</label>
+                  <input
+                    type="text"
+                    name="numeroOperacion"
+                    defaultValue={factura.numeroOperacion ?? ''}
+                    className="cetox-input text-sm font-mono"
+                    placeholder="Número de operación bancaria"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>% Detracción</label>
+                    <input
+                      type="number"
+                      name="porcentajeDetraccion"
+                      defaultValue={factura.porcentajeDetraccion ?? ''}
+                      className="cetox-input text-sm"
+                      placeholder="100"
+                      min={0} max={100}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>Sujeta a detracción</label>
+                    <select name="sujetaDetraccion" defaultValue={factura.sujetaDetraccion == null ? '' : factura.sujetaDetraccion ? 'SI' : 'NO'} className="cetox-input text-sm">
+                      <option value="">—</option>
+                      <option value="SI">SI</option>
+                      <option value="NO">NO</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>Monto $ ingresado</label>
+                  <input
+                    type="number"
+                    name="montoIngresado"
+                    defaultValue={factura.montoIngresado ?? ''}
+                    className="cetox-input text-sm font-mono"
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>Adelanto SET</label>
+                    <input
+                      type="number"
+                      name="adelantoSet"
+                      defaultValue={factura.adelantoSet ?? ''}
+                      className="cetox-input text-sm font-mono"
+                      placeholder="0.00"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>Saldo SET</label>
+                    <input
+                      type="number"
+                      name="saldoSet"
+                      defaultValue={factura.saldoSet ?? ''}
+                      className="cetox-input text-sm font-mono"
+                      placeholder="0.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+                <div>
                   <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>
                     Fecha de vencimiento
                   </label>
@@ -250,14 +326,14 @@ export default async function FacturaDetallePage({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>
-                    Notas internas
+                    Observaciones
                   </label>
                   <textarea
                     name="notas"
                     defaultValue={factura.notas ?? ''}
                     rows={3}
                     className="cetox-input text-sm resize-none"
-                    placeholder="Condiciones de pago, observaciones…"
+                    placeholder="Observaciones adicionales…"
                   />
                 </div>
                 <button type="submit" className="cetox-btn-secondary w-full text-sm py-2">

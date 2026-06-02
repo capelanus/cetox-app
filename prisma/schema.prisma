@@ -40,6 +40,7 @@ model Usuario {
   peticionesCreadas         PeticionEfectivo[]    @relation("PeticionSolicitante")
   peticionesAprobadas       PeticionEfectivo[]    @relation("PeticionAprobadaPor")
   facturasCliente           FacturaCliente[]      @relation("FacturaClientePor")
+  solicitudesVacaciones     SolicitudVacaciones[] @relation("SolicitudVacPor")
 }
 
 model CanalChat {
@@ -729,6 +730,31 @@ model PeticionEfectivo {
   updatedAt       DateTime  @updatedAt
 
   @@unique([numero, anio])
+}
+
+// ── Solicitud de Vacaciones ───────────────────────────────────────────────────
+
+model SolicitudVacaciones {
+  id                String   @id @default(cuid())
+  usuarioId         String
+  usuario           Usuario  @relation("SolicitudVacPor", fields: [usuarioId], references: [id])
+  cargo             String   // cargo al momento de la solicitud
+  departamento      String   // área / departamento
+  jefeInmediato     String   // nombre del jefe inmediato superior
+  diasSolicitados   String   // JSON: ["2026-04-24", "2026-04-27", ...]
+  tipoVacaciones    String   // REGLAMENTARIA | ATRASADA | ADELANTADA
+  tipoLicencia      String   // CON_GOCE | SIN_GOCE | MOTIVOS_PERSONALES | OTROS
+  personaDelegada   String?
+  observaciones     String?
+  estado            String   @default("PENDIENTE") // PENDIENTE | AUTORIZADA | APROBADA | RECHAZADA
+  fechaSolicitud    DateTime @default(now())
+  fechaAutorizacion DateTime?
+  fechaAprobacion   DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([usuarioId])
+  @@index([estado])
 }
 
 // ── Audit Log ─────────────────────────────────────────────────────────────────

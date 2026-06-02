@@ -1,7 +1,7 @@
 import { prisma } from './prisma'
 
 export async function siguienteCorrelativo(
-  modelo: 'cotizacion' | 'set' | 'oda' | 'informe' | 'cargo' | 'requerimiento' | 'cotizacion_proveedor' | 'orden_compra' | 'recepcion' | 'devolucion' | 'pago',
+  modelo: 'cotizacion' | 'set' | 'oda' | 'informe' | 'cargo' | 'requerimiento' | 'cotizacion_proveedor' | 'orden_compra' | 'recepcion' | 'devolucion' | 'pago' | 'factura_cliente',
   anio: number,
   prefijo?: string
 ): Promise<number> {
@@ -47,6 +47,10 @@ export async function siguienteCorrelativo(
   }
   if (modelo === 'pago') {
     const last = await prisma.pago.findFirst({ where: { anio }, orderBy: { numero: 'desc' } })
+    return (last?.numero ?? 0) + 1
+  }
+  if (modelo === 'factura_cliente') {
+    const last = await prisma.facturaCliente.findFirst({ where: { anio }, orderBy: { numero: 'desc' } })
     return (last?.numero ?? 0) + 1
   }
   return 1

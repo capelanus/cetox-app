@@ -36,6 +36,7 @@ import {
   BarChart2,
   Shield,
   Banknote,
+  Landmark,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -120,9 +121,10 @@ const sectionesAdministracion: NavSection[] = [
       { href: '/cotizaciones/papelera', label: 'Papelera',     icon: Trash2,          roles: ['ADMINISTRACION'], muted: true },
       { href: '/ingresos',  label: 'Ingresos',             icon: TrendingUp,      roles: ['ADMINISTRACION'] },
       { href: '/resumen',   label: 'Resumen',              icon: TableProperties, roles: ['ADMINISTRACION'] },
-      { href: '/finanzas',  label: 'Dashboard Financiero', icon: DollarSign,      roles: ['ADMINISTRACION'] },
-      { href: '/historial', label: 'Historial',            icon: History,         roles: ['ADMINISTRACION'], muted: true },
-      { href: '/solicitudes',           label: 'Mis Solicitudes', icon: ShoppingBag,  roles: ['ADMINISTRACION'] },
+      { href: '/finanzas',     label: 'Dashboard Financiero', icon: DollarSign,   roles: ['ADMINISTRACION'] },
+      { href: '/facturacion',  label: 'Facturación',          icon: Landmark,     roles: ['ADMINISTRACION'] },
+      { href: '/historial',    label: 'Historial',            icon: History,      roles: ['ADMINISTRACION'], muted: true },
+      { href: '/solicitudes',  label: 'Mis Solicitudes',      icon: ShoppingBag,  roles: ['ADMINISTRACION'] },
     ],
   },
   {
@@ -161,7 +163,8 @@ const sectionesCoordinadorCalidad: NavSection[] = [
       { href: '/cotizaciones/papelera', label: 'Papelera',             icon: Trash2,          roles: ['COORDINADOR_CALIDAD'], muted: true },
       { href: '/ingresos',              label: 'Ingresos',             icon: TrendingUp,      roles: ['COORDINADOR_CALIDAD'] },
       { href: '/resumen',               label: 'Resumen',              icon: TableProperties, roles: ['COORDINADOR_CALIDAD'] },
-      { href: '/finanzas',              label: 'Dashboard Financiero', icon: DollarSign,      roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/finanzas',     label: 'Dashboard Financiero', icon: DollarSign, roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/facturacion',  label: 'Facturación',          icon: Landmark,   roles: ['COORDINADOR_CALIDAD'] },
     ],
   },
   {
@@ -198,9 +201,10 @@ const sectionesDirectorAdmin: NavSection[] = [
       { href: '/cotizaciones/papelera', label: 'Papelera',     icon: Trash2,          roles: ['DIRECTOR_ADMINISTRACION'], muted: true },
       { href: '/ingresos',  label: 'Ingresos',             icon: TrendingUp,      roles: ['DIRECTOR_ADMINISTRACION'] },
       { href: '/resumen',   label: 'Resumen',              icon: TableProperties, roles: ['DIRECTOR_ADMINISTRACION'] },
-      { href: '/finanzas',  label: 'Dashboard Financiero', icon: DollarSign,      roles: ['DIRECTOR_ADMINISTRACION'] },
-      { href: '/historial', label: 'Historial',            icon: History,         roles: ['DIRECTOR_ADMINISTRACION'], muted: true },
-      { href: '/solicitudes', label: 'Mis Solicitudes',    icon: ShoppingBag,     roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/finanzas',    label: 'Dashboard Financiero', icon: DollarSign,  roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/facturacion', label: 'Facturación',          icon: Landmark,    roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/historial',   label: 'Historial',            icon: History,     roles: ['DIRECTOR_ADMINISTRACION'], muted: true },
+      { href: '/solicitudes', label: 'Mis Solicitudes',      icon: ShoppingBag, roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
   {
@@ -249,8 +253,9 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/cargos',                label: 'Cargos de Entrega', icon: Package,         roles: ['DIRECTOR_CALIDAD'] },
       { href: '/ingresos',  label: 'Ingresos',          icon: TrendingUp,    roles: ['DIRECTOR_CALIDAD'] },
       { href: '/resumen',   label: 'Resumen',           icon: TableProperties, roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/finanzas',  label: 'Dashboard Financiero', icon: DollarSign, roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/kpis',      label: 'KPIs Equipo',       icon: BarChart2,     roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/finanzas',    label: 'Dashboard Financiero', icon: DollarSign, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/facturacion', label: 'Facturación',          icon: Landmark,   roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/kpis',        label: 'KPIs Equipo',          icon: BarChart2,  roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
   {

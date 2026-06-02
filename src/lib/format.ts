@@ -70,3 +70,7 @@ export function formatNumDevolucion(numero: number, anio: number): string {
 export function formatNumPago(numero: number, anio: number): string {
   return `PAG-${String(numero).padStart(4, '0')}-${anio}`
 }
+
+export function formatNumFacturaCliente(serie: string, numero: number, anio: number): string {
+  return `${serie}-${String(numero).padStart(5, '0')} / ${anio}`
+}

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucide-react'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
 import { cambiarEstadoCotizacion } from '@/app/actions/cotizaciones'
+import { generarFacturaCliente } from '@/app/actions/facturacion'
 import { CotizacionActionsMenu } from '@/components/cotizacion-actions-menu'
 import { redirect } from 'next/navigation'
 
@@ -40,7 +41,8 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
         include: { items: { include: { ensayo: true } } },
         orderBy: { orden: 'asc' },
       },
-      sets: { select: { id: true, numero: true, anio: true } },
+      sets:           { select: { id: true, numero: true, anio: true } },
+      facturasCliente: { where: { estado: { not: 'ANULADA' } }, select: { id: true, serie: true, numero: true, anio: true, estado: true } },
     },
   })
   if (!cot) notFound()
@@ -62,6 +64,10 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
     'use server'
     await cambiarEstadoCotizacion(id, 'RECHAZADA')
     redirect(`/cotizaciones/${id}`)
+  }
+  async function emitirFactura() {
+    'use server'
+    await generarFacturaCliente(id)
   }
 
   return (
@@ -366,6 +372,30 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
                   : 'Generar SET'}
               </Button>
             </Link>
+          )}
+          {/* ── Facturación ── */}
+          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD') && (
+            cot.facturasCliente.length > 0 ? (
+              <Link href={`/facturacion/${cot.facturasCliente[0].id}`}>
+                <Button variant="outline" style={{ borderColor: '#4AC3B2', color: '#13602C' }}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Ver factura {cot.facturasCliente[0].serie}-{String(cot.facturasCliente[0].numero).padStart(5,'0')}
+                  {cot.facturasCliente[0].estado === 'PAGADA' && (
+                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Pagada</span>
+                  )}
+                </Button>
+              </Link>
+            ) : (
+              <form action={emitirFactura}>
+                <Button
+                  type="submit"
+                  style={{ backgroundColor: '#4AC3B2', color: 'white' }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Emitir Factura
+                </Button>
+              </form>
+            )
           )}
           {cot.sets.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center text-sm text-slate-600">

@@ -39,6 +39,7 @@ model Usuario {
   auditLogs                 AuditLog[]
   peticionesCreadas         PeticionEfectivo[]    @relation("PeticionSolicitante")
   peticionesAprobadas       PeticionEfectivo[]    @relation("PeticionAprobadaPor")
+  facturasCliente           FacturaCliente[]      @relation("FacturaClientePor")
 }
 
 model CanalChat {
@@ -115,8 +116,9 @@ model Cliente {
   activo        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
-  cotizaciones Cotizacion[]
-  sets         SET[]
+  cotizaciones     Cotizacion[]
+  sets             SET[]
+  facturasCliente  FacturaCliente[]
 }
 
 model Ensayo {
@@ -174,6 +176,7 @@ model Cotizacion {
   items            CotizacionItem[]
   muestras         CotizacionMuestra[]
   sets             SET[]
+  facturasCliente  FacturaCliente[]
 
   @@unique([numero, anio, sufijo])
 }
@@ -672,6 +675,34 @@ model InventarioItem {
   notas       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ── Factura al Cliente (generada desde Cotización) ───────────────────────────
+
+model FacturaCliente {
+  id               String     @id @default(cuid())
+  serie            String     @default("F001")
+  numero           Int
+  anio             Int
+  cotizacionId     String
+  cotizacion       Cotizacion @relation(fields: [cotizacionId], references: [id])
+  clienteId        String
+  cliente          Cliente    @relation(fields: [clienteId], references: [id])
+  moneda           String     @default("USD")
+  subtotal         Float
+  igv              Float
+  total            Float
+  fechaEmision     DateTime   @default(now())
+  fechaVencimiento DateTime?
+  estado           String     @default("PENDIENTE")  // PENDIENTE | PAGADA | ANULADA
+  notas            String?
+  archivoUrl       String?
+  creadoPorId      String
+  creadoPor        Usuario    @relation("FacturaClientePor", fields: [creadoPorId], references: [id])
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@unique([numero, anio, serie])
 }
 
 // ── Petición de Efectivo ──────────────────────────────────────────────────────

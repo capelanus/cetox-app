@@ -368,7 +368,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             </Link>
           )}
           {/* ── Facturación ── */}
-          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD') && (
+          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'COORDINADOR_CALIDAD') && (
             cot.facturasCliente.length > 0 ? (
               <Link href={`/facturacion/${cot.facturasCliente[0].id}`}>
                 <Button variant="outline" style={{ borderColor: '#4AC3B2', color: '#13602C' }}>

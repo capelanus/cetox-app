@@ -120,35 +120,59 @@ export default async function FacturacionPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="cetox-table">
+            <table className="w-full text-sm border-collapse">
               <thead>
-                <tr>
-                  <th>N° Factura</th>
-                  <th>Cliente</th>
-                  <th>Cotización</th>
-                  <th>Emisión</th>
-                  <th>Vencimiento</th>
-                  <th>Moneda</th>
-                  <th className="text-right">Total</th>
-                  <th>Estado</th>
-                  <th></th>
+                <tr style={{ backgroundColor: '#13602C' }}>
+                  {[
+                    { label: 'FECHA',       align: 'left'   },
+                    { label: 'N° FACTURA',  align: 'left'   },
+                    { label: 'CLIENTE',     align: 'left'   },
+                    { label: 'COTIZACIÓN',  align: 'center' },
+                    { label: 'MONEDA',      align: 'center' },
+                    { label: 'SUBTOTAL',    align: 'right'  },
+                    { label: 'IGV',         align: 'right'  },
+                    { label: 'TOTAL',       align: 'right'  },
+                    { label: 'VENCIMIENTO', align: 'center' },
+                    { label: 'ESTADO',      align: 'center' },
+                    { label: '',            align: 'center' },
+                  ].map((col, i) => (
+                    <th
+                      key={i}
+                      className={`px-4 py-3 font-bold text-xs tracking-widest uppercase whitespace-nowrap text-${col.align}`}
+                      style={{
+                        color: 'white',
+                        borderRight: i < 10 ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                        fontFamily: 'var(--font-montserrat)',
+                        letterSpacing: '0.06em',
+                      }}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {facturas.map(f => (
-                  <tr key={f.id}>
-                    <td>
+                {facturas.map((f, idx) => (
+                  <tr
+                    key={f.id}
+                    className="transition-colors"
+                    style={{ backgroundColor: idx % 2 === 0 ? 'white' : '#f8faf9', borderBottom: '1px solid #e2e8f0' }}
+                  >
+                    <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: '#64748b' }}>
+                      {formatFecha(f.fechaEmision)}
+                    </td>
+                    <td className="px-4 py-3">
                       <span className="font-mono font-bold text-xs" style={{ color: '#13602C' }}>
                         {formatNumFacturaCliente(f.serie, f.numero, f.anio)}
                       </span>
                     </td>
-                    <td>
+                    <td className="px-4 py-3" style={{ borderRight: '1px solid #e2e8f0' }}>
                       <p className="font-semibold text-sm" style={{ color: '#1e293b' }}>
                         {f.cliente.razonSocial}
                       </p>
                       <p className="text-xs" style={{ color: '#94a3b8' }}>{f.cliente.ruc}</p>
                     </td>
-                    <td>
+                    <td className="px-4 py-3 text-center">
                       <Link
                         href={`/cotizaciones/${f.cotizacionId}`}
                         className="text-xs font-medium hover:underline"
@@ -157,40 +181,39 @@ export default async function FacturacionPage() {
                         {formatNumCotizacion(f.cotizacion.numero, f.cotizacion.anio, f.cotizacion.sufijo)}
                       </Link>
                     </td>
-                    <td className="text-sm">{formatFecha(f.fechaEmision)}</td>
-                    <td className="text-sm">
-                      {f.fechaVencimiento ? (
-                        <span style={{ color: new Date(f.fechaVencimiento) < new Date() && f.estado === 'PENDIENTE' ? '#dc2626' : 'inherit' }}>
-                          {formatFecha(f.fechaVencimiento)}
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td>
+                    <td className="px-4 py-3 text-center">
                       <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: '#EAF4F4', color: '#13602C' }}>
                         {f.moneda}
                       </span>
                     </td>
-                    <td className="text-right font-bold text-sm" style={{ color: '#1e293b' }}>
+                    <td className="px-4 py-3 text-right text-sm font-mono" style={{ color: '#475569' }}>
+                      {formatMoneda(f.subtotal, f.moneda as 'USD' | 'PEN')}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-mono" style={{ color: '#475569' }}>
+                      {formatMoneda(f.igv, f.moneda as 'USD' | 'PEN')}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-sm font-mono" style={{ color: '#13602C' }}>
                       {formatMoneda(f.total, f.moneda as 'USD' | 'PEN')}
                     </td>
-                    <td>
+                    <td className="px-4 py-3 text-center text-sm">
+                      {f.fechaVencimiento ? (
+                        <span className="text-xs whitespace-nowrap" style={{ color: new Date(f.fechaVencimiento) < new Date() && f.estado === 'PENDIENTE' ? '#dc2626' : '#64748b' }}>
+                          {formatFecha(f.fechaVencimiento)}
+                        </span>
+                      ) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-center">
                       <EstadoBadge estado={f.estado} />
                     </td>
-                    <td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
                         <Link href={`/facturacion/${f.id}`} title="Ver detalle">
-                          <button
-                            className="p-1.5 rounded-lg transition-colors hover:bg-slate-100"
-                            style={{ color: '#64748b' }}
-                          >
+                          <button className="p-1.5 rounded-lg transition-colors hover:bg-slate-100" style={{ color: '#64748b' }}>
                             <Eye className="h-4 w-4" />
                           </button>
                         </Link>
                         <a href={`/api/facturacion/${f.id}/generar-pdf`} target="_blank" rel="noreferrer" title="Descargar PDF">
-                          <button
-                            className="p-1.5 rounded-lg transition-colors hover:bg-green-100"
-                            style={{ color: '#13602C' }}
-                          >
+                          <button className="p-1.5 rounded-lg transition-colors hover:bg-green-100" style={{ color: '#13602C' }}>
                             <Download className="h-4 w-4" />
                           </button>
                         </a>

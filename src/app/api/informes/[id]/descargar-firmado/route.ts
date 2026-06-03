@@ -85,7 +85,7 @@ export async function GET(
   lastPage.drawText(infoLine, {
     x:    42,                   // izquierda
     y:    GREEN_BAR_TOP + 6,   // justo encima de la barra verde
-    size: 4.5,
+    size: 5.5,
     font: fontBold,
     color: GREEN,
   })
@@ -97,10 +97,9 @@ export async function GET(
   const STAMP_W  = QR_SIZE + PAD * 2      // 93pt
   const STAMP_H  = TITLE_H + QR_SIZE + PAD * 2  // ~103pt
 
-  const MARGIN_R = 8
-  // Ancla la BASE del sello más cerca de la barra verde
-  const BASE_Y   = GREEN_BAR_TOP - 15
-  const STAMP_X  = width - STAMP_W - MARGIN_R
+  // Ancla la BASE del sello más cerca de la barra verde, centrado en el espacio blanco
+  const BASE_Y   = GREEN_BAR_TOP - 25
+  const STAMP_X  = (width - STAMP_W) / 2
 
   // Fondo blanco (cubre fondo del footer)
   lastPage.drawRectangle({

@@ -83,7 +83,7 @@ export async function GET(
   // ── 1. Línea de texto justo encima de la barra verde ─────────────────────
   const infoLine = `Dra. Rosalía Anaya · Gerente Técnico   CETOX LAB — LE-044   Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`
   lastPage.drawText(infoLine, {
-    x:    280,                  // empieza a la derecha del disclaimer text
+    x:    42,                   // izquierda
     y:    GREEN_BAR_TOP + 6,   // justo encima de la barra verde
     size: 4.5,
     font: fontBold,
@@ -98,8 +98,8 @@ export async function GET(
   const STAMP_H  = TITLE_H + QR_SIZE + PAD * 2  // ~103pt
 
   const MARGIN_R = 8
-  // Ancla la BASE del sello justo sobre la línea de texto
-  const BASE_Y   = GREEN_BAR_TOP + 18
+  // Ancla la BASE del sello más cerca de la barra verde
+  const BASE_Y   = GREEN_BAR_TOP - 15
   const STAMP_X  = width - STAMP_W - MARGIN_R
 
   // Fondo blanco (cubre fondo del footer)

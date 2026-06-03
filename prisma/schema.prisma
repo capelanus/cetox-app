@@ -35,7 +35,9 @@ model Usuario {
   notificaciones            Notificacion[]
   cajaChicaGastos           CajaChicaGasto[]
   cajaChicaIngresos         CajaChicaIngreso[]
-  mensajesChat              MensajeChat[]
+  mensajesEnviados          MensajeDM[]
+  conversacionesA           ConversacionDM[]      @relation("ConvA")
+  conversacionesB           ConversacionDM[]      @relation("ConvB")
   auditLogs                 AuditLog[]
   peticionesCreadas         PeticionEfectivo[]    @relation("PeticionSolicitante")
   peticionesAprobadas       PeticionEfectivo[]    @relation("PeticionAprobadaPor")
@@ -43,24 +45,29 @@ model Usuario {
   solicitudesVacaciones     SolicitudVacaciones[] @relation("SolicitudVacPor")
 }
 
-model CanalChat {
-  id       String        @id @default(cuid())
-  slug     String        @unique
-  nombre   String
-  mensajes MensajeChat[]
+model ConversacionDM {
+  id         String      @id @default(cuid())
+  usuarioAId String
+  usuarioBId String
+  usuarioA   Usuario     @relation("ConvA", fields: [usuarioAId], references: [id], onDelete: Cascade)
+  usuarioB   Usuario     @relation("ConvB", fields: [usuarioBId], references: [id], onDelete: Cascade)
+  mensajes   MensajeDM[]
+  createdAt  DateTime    @default(now())
+
+  @@unique([usuarioAId, usuarioBId])
 }
 
-model MensajeChat {
-  id            String    @id @default(cuid())
-  canalId       String
-  canal         CanalChat @relation(fields: [canalId], references: [id], onDelete: Cascade)
-  autorId       String
-  autor         Usuario   @relation(fields: [autorId], references: [id])
-  contenido     String
-  archivoUrl    String?   // Vercel Blob URL
-  archivoNombre String?   // nombre original del archivo
-  archivoTipo   String?   // MIME type: image/png, application/pdf, etc.
-  createdAt     DateTime  @default(now())
+model MensajeDM {
+  id             String         @id @default(cuid())
+  conversacionId String
+  conversacion   ConversacionDM @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  autorId        String
+  autor          Usuario        @relation(fields: [autorId], references: [id])
+  contenido      String
+  archivoUrl     String?
+  archivoNombre  String?
+  archivoTipo    String?
+  createdAt      DateTime       @default(now())
 }
 
 model CajaChicaGasto {

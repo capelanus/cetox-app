@@ -1,15 +1,8 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-const CANALES_NOMBRES: Record<string, string> = {
-  general:        'General',
-  gerencia:       'Gerencia',
-  administracion: 'Administración',
-  operaciones:    'Operaciones',
-  calidad:        'Calidad',
-  biologia:       'Biología',
-  quimica:        'Química',
-  microbiologia:  'Microbiología',
+function ordenarUsuarios(a: string, b: string): [string, string] {
+  return a < b ? [a, b] : [b, a]
 }
 
 export async function GET(request: Request) {
@@ -18,20 +11,27 @@ export async function GET(request: Request) {
     return Response.json({ error: 'No autorizado' }, { status: 401 })
   }
 
+  const userId = session.user.id
   const { searchParams } = new URL(request.url)
-  const slug  = searchParams.get('canal') || 'general'
-  const desde = searchParams.get('desde')  // ISO timestamp
+  const otroId = searchParams.get('usuario')
+  const desde  = searchParams.get('desde')
 
-  // Auto-create channel if first time
-  const canal = await prisma.canalChat.upsert({
-    where:  { slug },
-    create: { slug, nombre: CANALES_NOMBRES[slug] ?? slug },
+  if (!otroId || otroId === userId) {
+    return Response.json([])
+  }
+
+  const [usuarioAId, usuarioBId] = ordenarUsuarios(userId, otroId)
+
+  // Auto-create conversation if first time
+  const conv = await prisma.conversacionDM.upsert({
+    where:  { usuarioAId_usuarioBId: { usuarioAId, usuarioBId } },
+    create: { usuarioAId, usuarioBId },
     update: {},
   })
 
-  const mensajes = await prisma.mensajeChat.findMany({
+  const mensajes = await prisma.mensajeDM.findMany({
     where: {
-      canalId: canal.id,
+      conversacionId: conv.id,
       ...(desde ? { createdAt: { gt: new Date(desde) } } : {}),
     },
     include: { autor: { select: { id: true, nombre: true, rol: true } } },
@@ -39,7 +39,6 @@ export async function GET(request: Request) {
     ...(desde ? {} : { take: 60 }),
   })
 
-  // Initial load comes desc → reverse to asc for display
   const result = desde ? mensajes : [...mensajes].reverse()
 
   return Response.json(

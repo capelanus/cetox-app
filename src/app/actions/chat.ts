@@ -3,17 +3,6 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-const CANALES_NOMBRES: Record<string, string> = {
-  general:        'General',
-  gerencia:       'Gerencia',
-  administracion: 'Administración',
-  operaciones:    'Operaciones',
-  calidad:        'Calidad',
-  biologia:       'Biología',
-  quimica:        'Química',
-  microbiologia:  'Microbiología',
-}
-
 export interface MensajeEnviado {
   id:            string
   contenido:     string
@@ -25,8 +14,21 @@ export interface MensajeEnviado {
   autor:         { nombre: string; rol: string }
 }
 
+function ordenarUsuarios(a: string, b: string): [string, string] {
+  return a < b ? [a, b] : [b, a]
+}
+
+async function obtenerConversacion(userId: string, otroUsuarioId: string) {
+  const [usuarioAId, usuarioBId] = ordenarUsuarios(userId, otroUsuarioId)
+  return prisma.conversacionDM.upsert({
+    where:  { usuarioAId_usuarioBId: { usuarioAId, usuarioBId } },
+    create: { usuarioAId, usuarioBId },
+    update: {},
+  })
+}
+
 export async function enviarMensaje(
-  canalSlug:     string,
+  destinatarioId: string,
   contenido:     string,
   archivoUrl?:   string | null,
   archivoNombre?: string | null,
@@ -34,25 +36,21 @@ export async function enviarMensaje(
 ): Promise<MensajeEnviado> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('No autenticado')
+  if (destinatarioId === session.user.id) throw new Error('No puedes enviarte mensajes a ti mismo')
 
   const text = contenido.trim()
-  // Allow empty text if there's an attachment
   if (!archivoUrl && (!text || text.length > 2000)) throw new Error('Mensaje inválido')
 
-  const canal = await prisma.canalChat.upsert({
-    where:  { slug: canalSlug },
-    create: { slug: canalSlug, nombre: CANALES_NOMBRES[canalSlug] ?? canalSlug },
-    update: {},
-  })
+  const conv = await obtenerConversacion(session.user.id, destinatarioId)
 
-  const msg = await prisma.mensajeChat.create({
+  const msg = await prisma.mensajeDM.create({
     data: {
-      canalId:       canal.id,
-      autorId:       session.user.id,
-      contenido:     text,
-      archivoUrl:    archivoUrl    ?? null,
-      archivoNombre: archivoNombre ?? null,
-      archivoTipo:   archivoTipo   ?? null,
+      conversacionId: conv.id,
+      autorId:        session.user.id,
+      contenido:      text,
+      archivoUrl:     archivoUrl    ?? null,
+      archivoNombre:  archivoNombre ?? null,
+      archivoTipo:    archivoTipo   ?? null,
     },
     include: { autor: { select: { nombre: true, rol: true } } },
   })

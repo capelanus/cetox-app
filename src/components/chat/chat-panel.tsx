@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition, useCallback } from 'react'
-import { MessageSquare, X, Send, Hash, Paperclip, FileText, Image, File, Download, Loader2 } from 'lucide-react'
+import { MessageSquare, X, Send, Paperclip, FileText, Image, File, Download, Loader2, ArrowLeft, Search } from 'lucide-react'
 import { enviarMensaje } from '@/app/actions/chat'
 import { format, isToday, isYesterday } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -22,6 +22,12 @@ interface Mensaje {
 
 interface MensajeAgrupado extends Mensaje { showHeader: boolean }
 
+interface Usuario {
+  id:     string
+  nombre: string
+  rol:    string
+}
+
 interface Props {
   userId:   string
   userRol:  string
@@ -29,32 +35,6 @@ interface Props {
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const TODOS_LOS_CANALES = [
-  'general', 'gerencia', 'administracion', 'operaciones',
-  'calidad', 'biologia', 'quimica', 'microbiologia',
-]
-
-const CANALES_INFO: Record<string, string> = {
-  general:        'General',
-  gerencia:       'Gerencia',
-  administracion: 'Administración',
-  operaciones:    'Operaciones',
-  calidad:        'Calidad',
-  biologia:       'Biología',
-  quimica:        'Química',
-  microbiologia:  'Microbiología',
-}
-
-const ACCESO_POR_ROL: Record<string, string[]> = {
-  DIRECTOR_CALIDAD:    TODOS_LOS_CANALES,
-  GERENTE_TECNICO:     TODOS_LOS_CANALES,
-  ADMINISTRACION:      TODOS_LOS_CANALES,
-  ANALISTA:            TODOS_LOS_CANALES,
-  JEFE_OPERACIONES:    TODOS_LOS_CANALES,
-  ASISTENTE_LOGISTICA: TODOS_LOS_CANALES,
-  SUPER_ADMIN:         TODOS_LOS_CANALES,
-}
 
 const ROL_COLOR: Record<string, string> = {
   DIRECTOR_CALIDAD:    '#4AC3B2',
@@ -76,7 +56,7 @@ const ROL_LABEL: Record<string, string> = {
   SUPER_ADMIN:         'Admin',
 }
 
-const LS_KEY = 'cetox_chat_lastRead'
+const LS_KEY = 'cetox_chat_dm_lastRead'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -119,14 +99,7 @@ function agrupar(mensajes: Mensaje[]): MensajeAgrupado[] {
 function loadLastRead(): Record<string, string> {
   if (typeof window === 'undefined') return {}
   try {
-    const stored: Record<string, string> = JSON.parse(localStorage.getItem(LS_KEY) || '{}')
-    const now = new Date().toISOString()
-    let changed = false
-    for (const slug of TODOS_LOS_CANALES) {
-      if (!stored[slug]) { stored[slug] = now; changed = true }
-    }
-    if (changed) localStorage.setItem(LS_KEY, JSON.stringify(stored))
-    return stored
+    return JSON.parse(localStorage.getItem(LS_KEY) || '{}')
   } catch { return {} }
 }
 
@@ -144,9 +117,9 @@ function FileIconComponent({ tipo }: { tipo: string | null }) {
 
 interface PendingFile {
   file:      File
-  preview?:  string   // object URL for images
+  preview?:  string
   uploading: boolean
-  url?:      string   // blob URL after upload
+  url?:      string
   error?:    string
 }
 
@@ -216,9 +189,11 @@ function AttachmentBubble({ msg, esPropio }: { msg: Mensaje; esPropio: boolean }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ChatPanel({ userId, userRol, userName }: Props) {
+export function ChatPanel({ userId }: Props) {
   const [open,          setOpen]         = useState(false)
-  const [canal,         setCanal]        = useState('general')
+  const [usuarios,      setUsuarios]     = useState<Usuario[]>([])
+  const [activoId,      setActivoId]     = useState<string | null>(null)
+  const [busqueda,      setBusqueda]     = useState('')
   const [mensajes,      setMensajes]     = useState<Mensaje[]>([])
   const [texto,         setTexto]        = useState('')
   const [cargando,      setCargando]     = useState(false)
@@ -229,7 +204,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
 
   const lastTsRef       = useRef<string | null>(null)
   const isOpenRef       = useRef(false)
-  const activeCanalRef  = useRef('general')
+  const activoIdRef     = useRef<string | null>(null)
   const messagesEndRef  = useRef<HTMLDivElement>(null)
   const inputRef        = useRef<HTMLInputElement>(null)
   const fileInputRef    = useRef<HTMLInputElement>(null)
@@ -237,20 +212,31 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
   const msgPollRef      = useRef<ReturnType<typeof setInterval> | null>(null)
   const unreadPollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const canales = ACCESO_POR_ROL[userRol] ?? TODOS_LOS_CANALES
-
-  useEffect(() => { isOpenRef.current = open },    [open])
-  useEffect(() => { activeCanalRef.current = canal }, [canal])
+  useEffect(() => { isOpenRef.current = open },        [open])
+  useEffect(() => { activoIdRef.current = activoId },  [activoId])
 
   const totalUnread = Object.values(unreadCounts).reduce((s, n) => s + n, 0)
+  const usuarioActivo = usuarios.find(u => u.id === activoId)
+  const usuariosFiltrados = usuarios.filter(u =>
+    u.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  )
 
-  // ── Mark channel as read ──────────────────────────────────────────────────
+  // ── Load users list once on mount ─────────────────────────────────────────
 
-  const marcarLeido = useCallback((slug: string) => {
+  useEffect(() => {
+    fetch('/api/chat/usuarios')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Usuario[]) => setUsuarios(data))
+      .catch(() => {})
+  }, [])
+
+  // ── Mark conversation as read ──────────────────────────────────────────────
+
+  const marcarLeido = useCallback((otroId: string) => {
     const now = new Date().toISOString()
-    setUnreadCounts(prev => ({ ...prev, [slug]: 0 }))
+    setUnreadCounts(prev => ({ ...prev, [otroId]: 0 }))
     setLastRead(prev => {
-      const updated = { ...prev, [slug]: now }
+      const updated = { ...prev, [otroId]: now }
       saveLastRead(updated)
       return updated
     })
@@ -258,25 +244,27 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
 
   // ── Fetch unread counts (background) ─────────────────────────────────────
 
-  const fetchUnread = useCallback(async (currentLastRead: Record<string, string>) => {
+  const fetchUnread = useCallback(async (currentLastRead: Record<string, string>, lista: Usuario[]) => {
+    if (!lista.length) return
     try {
       const params = new URLSearchParams()
-      for (const slug of canales) {
-        if (currentLastRead[slug]) params.set(slug, currentLastRead[slug])
+      for (const u of lista) {
+        const ts = currentLastRead[u.id] ?? new Date(0).toISOString()
+        params.set(u.id, ts)
       }
       const res  = await fetch(`/api/chat/unread?${params}`)
       if (!res.ok) return
       const data: Record<string, number> = await res.json()
       setUnreadCounts(prev => {
         const updated = { ...prev }
-        for (const slug of Object.keys(data)) {
-          if (isOpenRef.current && slug === activeCanalRef.current) continue
-          updated[slug] = data[slug] ?? 0
+        for (const otroId of Object.keys(data)) {
+          if (isOpenRef.current && otroId === activoIdRef.current) continue
+          updated[otroId] = data[otroId] ?? 0
         }
         return updated
       })
     } catch { /* ignore */ }
-  }, [canales])
+  }, [])
 
   // ── Messages ──────────────────────────────────────────────────────────────
 
@@ -290,26 +278,26 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
     messagesEndRef.current?.scrollIntoView({ behavior })
   }
 
-  async function cargar(slug: string) {
+  async function cargar(otroId: string) {
     setCargando(true)
     lastTsRef.current = null
     try {
-      const res  = await fetch(`/api/chat/mensajes?canal=${slug}`)
+      const res  = await fetch(`/api/chat/mensajes?usuario=${otroId}`)
       if (!res.ok) return
       const data: Mensaje[] = await res.json()
       setMensajes(data)
       if (data.length) lastTsRef.current = data[data.length - 1].createdAt
       setTimeout(() => scrollToBottom('instant'), 50)
-      marcarLeido(slug)
+      marcarLeido(otroId)
     } finally {
       setCargando(false)
     }
   }
 
-  async function pollMensajes(slug: string) {
+  async function pollMensajes(otroId: string) {
     if (!lastTsRef.current) return
     try {
-      const res  = await fetch(`/api/chat/mensajes?canal=${slug}&desde=${encodeURIComponent(lastTsRef.current)}`)
+      const res  = await fetch(`/api/chat/mensajes?usuario=${otroId}&desde=${encodeURIComponent(lastTsRef.current)}`)
       if (!res.ok) return
       const data: Mensaje[] = await res.json()
       if (!data.length) return
@@ -321,52 +309,48 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
         if (isNearBottom()) setTimeout(scrollToBottom, 80)
         return [...prev, ...news]
       })
-      marcarLeido(slug)
+      marcarLeido(otroId)
     } catch { /* ignore */ }
   }
 
   // ── Unread poll (background, even when closed) ────────────────────────────
 
   useEffect(() => {
-    fetchUnread(lastRead)
-    unreadPollRef.current = setInterval(() => { fetchUnread(lastRead) }, 8000)
-    return () => { if (unreadPollRef.current) clearInterval(unreadPollRef.current) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
+    if (!usuarios.length) return
+    fetchUnread(lastRead, usuarios)
     if (unreadPollRef.current) clearInterval(unreadPollRef.current)
-    unreadPollRef.current = setInterval(() => fetchUnread(lastRead), 8000)
+    unreadPollRef.current = setInterval(() => fetchUnread(lastRead, usuarios), 8000)
     return () => { if (unreadPollRef.current) clearInterval(unreadPollRef.current) }
-  }, [lastRead, fetchUnread])
+  }, [usuarios, lastRead, fetchUnread])
 
-  // ── Messages poll when panel open ────────────────────────────────────────
+  // ── Messages poll when panel open and a user is active ────────────────────
 
   useEffect(() => {
-    if (!open) return
-    cargar(canal)
+    if (!open || !activoId) return
+    cargar(activoId)
     if (msgPollRef.current) clearInterval(msgPollRef.current)
-    msgPollRef.current = setInterval(() => pollMensajes(canal), 3000)
+    msgPollRef.current = setInterval(() => pollMensajes(activoId), 3000)
     return () => { if (msgPollRef.current) clearInterval(msgPollRef.current) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, canal])
-
-  // ── Auto-switch to channel with unread on open ────────────────────────────
+  }, [open, activoId])
 
   function handleOpen() {
-    let maxCount = 0
-    let target = canal
-    for (const slug of canales) {
-      const count = unreadCounts[slug] ?? 0
-      if (count > maxCount) { maxCount = count; target = slug }
-    }
-    if (target !== canal) setCanal(target)
     setOpen(true)
   }
 
+  function abrirConversacion(otroId: string) {
+    setActivoId(otroId)
+  }
+
+  function volverALista() {
+    setActivoId(null)
+    setMensajes([])
+    if (msgPollRef.current) clearInterval(msgPollRef.current)
+  }
+
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 250)
-  }, [open])
+    if (open && activoId) setTimeout(() => inputRef.current?.focus(), 250)
+  }, [open, activoId])
 
   // ── File attachment ───────────────────────────────────────────────────────
 
@@ -374,7 +358,6 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // 20 MB limit
     if (file.size > 20 * 1024 * 1024) {
       alert('El archivo no puede superar 20 MB')
       e.target.value = ''
@@ -382,16 +365,13 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
     }
 
     const newPending: PendingFile = { file, uploading: true }
-
-    // Create preview for images
     if (file.type.startsWith('image/')) {
       newPending.preview = URL.createObjectURL(file)
     }
 
     setPendingFile(newPending)
-    e.target.value = '' // reset input
+    e.target.value = ''
 
-    // Upload immediately
     const formData = new FormData()
     formData.append('file', file)
 
@@ -418,9 +398,10 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
+    if (!activoId) return
     const contenido = texto.trim()
     if ((!contenido && !pendingFile?.url) || isPending) return
-    if (pendingFile?.uploading) return // wait for upload to finish
+    if (pendingFile?.uploading) return
 
     const archivoUrl    = pendingFile?.url    ?? null
     const archivoNombre = pendingFile?.file.name ?? null
@@ -432,13 +413,13 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
 
     startTransition(async () => {
       try {
-        const nuevo = await enviarMensaje(canal, contenido, archivoUrl, archivoNombre, archivoTipo)
+        const nuevo = await enviarMensaje(activoId, contenido, archivoUrl, archivoNombre, archivoTipo)
         setMensajes(prev => {
           if (prev.find(m => m.id === nuevo.id)) return prev
           return [...prev, nuevo]
         })
         lastTsRef.current = nuevo.createdAt
-        marcarLeido(canal)
+        marcarLeido(activoId)
         setTimeout(scrollToBottom, 80)
       } catch {
         setTexto(contenido)
@@ -447,7 +428,7 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
   }
 
   const agrupados = agrupar(mensajes)
-  const canSend   = (texto.trim().length > 0 || (pendingFile?.url != null)) && !isPending && !pendingFile?.uploading
+  const canSend   = activoId !== null && (texto.trim().length > 0 || (pendingFile?.url != null)) && !isPending && !pendingFile?.uploading
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -520,20 +501,48 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" style={{ color: 'rgba(255,255,255,0.6)' }} />
-            <span className="text-white font-semibold text-sm" style={{ fontFamily: 'var(--font-montserrat)' }}>
-              Chat interno
-            </span>
-            {totalUnread > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
-                {totalUnread}
-              </span>
+          <div className="flex items-center gap-2 min-w-0">
+            {activoId && (
+              <button
+                onClick={volverALista}
+                className="flex items-center justify-center w-7 h-7 rounded-md transition-colors flex-shrink-0"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.1)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
+                title="Volver"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
+            {usuarioActivo ? (
+              <>
+                <UserAvatar nombre={usuarioActivo.nombre} size="sm" />
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm truncate" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    {usuarioActivo.nombre}
+                  </p>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {ROL_LABEL[usuarioActivo.rol] ?? usuarioActivo.rol}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <MessageSquare className="h-4 w-4" style={{ color: 'rgba(255,255,255,0.6)' }} />
+                <span className="text-white font-semibold text-sm" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  Mensajes
+                </span>
+                {totalUnread > 0 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                    {totalUnread}
+                  </span>
+                )}
+              </>
             )}
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
+            className="flex items-center justify-center w-7 h-7 rounded-md transition-colors flex-shrink-0"
             style={{ color: 'rgba(255,255,255,0.5)' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLElement).style.color = 'white' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)' }}
@@ -542,241 +551,264 @@ export function ChatPanel({ userId, userRol, userName }: Props) {
           </button>
         </div>
 
-        {/* Channel tabs */}
-        <div className="flex flex-shrink-0 border-b bg-slate-50 overflow-x-auto cetox-scroll">
-          {canales.map((slug) => {
-            const active  = canal === slug
-            const unread  = unreadCounts[slug] ?? 0
-            return (
-              <button
-                key={slug}
-                onClick={() => setCanal(slug)}
-                className="relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors border-b-2 flex-shrink-0"
-                style={{
-                  borderBottomColor: active ? '#13602C' : 'transparent',
-                  color: active ? '#13602C' : unread > 0 ? '#374151' : '#94a3b8',
-                  fontWeight: unread > 0 ? 700 : undefined,
-                }}
-              >
-                <Hash className="h-3 w-3 flex-shrink-0" />
-                {CANALES_INFO[slug] ?? slug}
-                {unread > 0 && (
-                  <span
-                    className="flex items-center justify-center font-bold leading-none rounded-full"
-                    style={{
-                      minWidth: 16, height: 16,
-                      fontSize: 9, paddingInline: 3,
-                      backgroundColor: active ? '#13602C' : '#ef4444',
-                      color: 'white',
-                    }}
-                  >
-                    {unread > 99 ? '99+' : unread}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 cetox-scroll">
-          {cargando ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-slate-300 text-sm">Cargando…</p>
+        {/* ── User list (when no active conversation) ── */}
+        {!activoId && (
+          <>
+            <div className="flex-shrink-0 px-3 py-2 border-b bg-slate-50">
+              <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-white border">
+                <Search className="w-3.5 h-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={busqueda}
+                  onChange={e => setBusqueda(e.target.value)}
+                  placeholder="Buscar usuario…"
+                  className="flex-1 bg-transparent text-xs text-slate-700 placeholder-slate-400 outline-none"
+                />
+              </div>
             </div>
-          ) : agrupados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
-              <Hash className="h-10 w-10 text-slate-200" />
-              <p className="text-slate-400 text-sm font-medium">Sin mensajes aún</p>
-              <p className="text-slate-300 text-xs">¡Sé el primero en escribir!</p>
-            </div>
-          ) : (
-            <div className="space-y-0.5">
-              {agrupados.map((m) => {
-                const esPropio = m.autorId === userId
-                const color    = ROL_COLOR[m.autor.rol] ?? '#94a3b8'
-
-                return (
-                  <div
-                    key={m.id}
-                    className={`flex gap-2 ${esPropio ? 'flex-row-reverse' : 'flex-row'} ${m.showHeader ? 'mt-4' : 'mt-0.5'}`}
-                  >
-                    {m.showHeader ? (
-                      <UserAvatar
-                        nombre={m.autor.nombre}
-                        size="sm"
-                        title={`${m.autor.nombre} · ${ROL_LABEL[m.autor.rol] ?? m.autor.rol}`}
-                        style={{ marginTop: 2 }}
-                      />
-                    ) : (
-                      <div className="w-7 flex-shrink-0" />
-                    )}
-
-                    <div className={`flex-1 min-w-0 flex flex-col ${esPropio ? 'items-end' : 'items-start'}`}>
-                      {m.showHeader && (
-                        <div className={`flex items-center gap-2 mb-1 ${esPropio ? 'flex-row-reverse' : 'flex-row'}`}>
-                          <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]">
-                            {esPropio ? 'Tú' : m.autor.nombre.split(' ')[0]}
-                          </span>
-                          <span
-                            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                            style={{ backgroundColor: `${color}20`, color }}
-                          >
-                            {ROL_LABEL[m.autor.rol] ?? m.autor.rol}
-                          </span>
-                          <span className="text-[10px] text-slate-300">{formatFecha(m.createdAt)}</span>
-                        </div>
-                      )}
-
-                      {/* Text bubble (only if there's text) */}
-                      {m.contenido && (
-                        <div
-                          className="group relative inline-block px-3 py-2 rounded-2xl text-sm leading-relaxed break-words"
-                          style={{
-                            maxWidth: 260,
-                            backgroundColor: esPropio ? '#4AC3B2' : '#F1F5F9',
-                            color: esPropio ? 'white' : '#334155',
-                            borderTopRightRadius: esPropio && m.showHeader ? 4 : 16,
-                            borderTopLeftRadius:  !esPropio && m.showHeader ? 4 : 16,
-                          }}
+            <div className="flex-1 overflow-y-auto cetox-scroll">
+              {usuariosFiltrados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
+                  <MessageSquare className="h-10 w-10 text-slate-200" />
+                  <p className="text-slate-400 text-sm font-medium">Sin usuarios</p>
+                </div>
+              ) : (
+                <ul>
+                  {usuariosFiltrados.map((u) => {
+                    const unread = unreadCounts[u.id] ?? 0
+                    const color  = ROL_COLOR[u.rol] ?? '#94a3b8'
+                    return (
+                      <li key={u.id}>
+                        <button
+                          onClick={() => abrirConversacion(u.id)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors border-b"
                         >
-                          {m.contenido}
-                          {!m.showHeader && (
-                            <span className="absolute bottom-full left-0 mb-1 text-[10px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                              {formatHora(m.createdAt)}
+                          <UserAvatar nombre={u.nombre} size="sm" />
+                          <div className="flex-1 min-w-0 text-left">
+                            <p className="text-sm font-semibold text-slate-700 truncate">{u.nombre}</p>
+                            <p className="text-[10px] font-medium" style={{ color }}>
+                              {ROL_LABEL[u.rol] ?? u.rol}
+                            </p>
+                          </div>
+                          {unread > 0 && (
+                            <span
+                              className="flex items-center justify-center font-bold leading-none rounded-full flex-shrink-0"
+                              style={{
+                                minWidth: 18, height: 18,
+                                fontSize: 10, paddingInline: 4,
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                              }}
+                            >
+                              {unread > 99 ? '99+' : unread}
                             </span>
                           )}
-                        </div>
-                      )}
-
-                      {/* Attachment */}
-                      <AttachmentBubble msg={m} esPropio={esPropio} />
-                    </div>
-                  </div>
-                )
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </div>
-
-        {/* ── File preview strip (shown when a file is selected) ── */}
-        {pendingFile && (
-          <div
-            className="flex-shrink-0 mx-3 mb-2 rounded-xl overflow-hidden border"
-            style={{ borderColor: pendingFile.error ? '#fecaca' : '#e2e8f0', backgroundColor: pendingFile.error ? '#fef2f2' : '#f8fafc' }}
-          >
-            <div className="flex items-center gap-2 px-3 py-2">
-              {/* Image preview or file icon */}
-              {pendingFile.preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={pendingFile.preview} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#dbeafe' }}>
-                  <FileIconComponent tipo={pendingFile.file.type} />
-                </div>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
               )}
-
-              {/* File info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-slate-700 truncate">{pendingFile.file.name}</p>
-                <p className="text-[10px] text-slate-400">
-                  {formatBytes(pendingFile.file.size)}
-                  {pendingFile.error && (
-                    <span className="text-red-500 ml-1">· {pendingFile.error}</span>
-                  )}
-                </p>
-              </div>
-
-              {/* Status */}
-              {pendingFile.uploading ? (
-                <Loader2 className="w-4 h-4 text-slate-400 animate-spin flex-shrink-0" />
-              ) : pendingFile.url ? (
-                <span className="text-[10px] text-green-600 font-semibold flex-shrink-0">✓ Listo</span>
-              ) : null}
-
-              {/* Cancel */}
-              <button
-                onClick={cancelFile}
-                className="flex items-center justify-center w-6 h-6 rounded-full transition-colors flex-shrink-0"
-                style={{ color: '#94a3b8' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#f1f5f9'; (e.currentTarget as HTMLElement).style.color = '#374151' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94a3b8' }}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
             </div>
-          </div>
+          </>
         )}
 
-        {/* Input */}
-        <form onSubmit={handleSend} className="flex-shrink-0 px-3 py-3 border-t bg-white">
-          <div
-            className="flex items-center gap-2 rounded-xl px-3 py-2 border transition-colors focus-within:border-slate-300"
-            style={{ backgroundColor: '#F8FAFC' }}
-          >
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-
-            {/* Attach button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!!pendingFile}
-              title="Adjuntar archivo"
-              className="flex items-center justify-center w-7 h-7 rounded-lg transition-all flex-shrink-0 disabled:opacity-30"
-              style={{ color: '#94a3b8' }}
-              onMouseEnter={e => { if (!pendingFile) { (e.currentTarget as HTMLElement).style.backgroundColor = '#e2e8f0'; (e.currentTarget as HTMLElement).style.color = '#475569' } }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94a3b8' }}
-            >
-              <Paperclip className="w-4 h-4" />
-            </button>
-
-            <input
-              ref={inputRef}
-              type="text"
-              value={texto}
-              onChange={e => setTexto(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend(e as unknown as React.FormEvent)
-                }
-              }}
-              placeholder={pendingFile ? 'Añade un mensaje (opcional)…' : `Mensaje en #${CANALES_INFO[canal] ?? canal}…`}
-              maxLength={2000}
-              className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none"
-            />
-
-            <button
-              type="submit"
-              disabled={!canSend}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all disabled:opacity-30 flex-shrink-0"
-              style={{ backgroundColor: canSend ? '#13602C' : '#E2E8F0' }}
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#94a3b8' }} />
+        {/* ── Conversation (messages + input) ── */}
+        {activoId && (
+          <>
+            {/* Messages */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 cetox-scroll">
+              {cargando ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-slate-300 text-sm">Cargando…</p>
+                </div>
+              ) : agrupados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+                  <MessageSquare className="h-10 w-10 text-slate-200" />
+                  <p className="text-slate-400 text-sm font-medium">Sin mensajes aún</p>
+                  <p className="text-slate-300 text-xs">¡Envía el primer mensaje!</p>
+                </div>
               ) : (
-                <Send className="h-4 w-4" style={{ color: canSend ? 'white' : '#94a3b8' }} />
-              )}
-            </button>
-          </div>
+                <div className="space-y-0.5">
+                  {agrupados.map((m) => {
+                    const esPropio = m.autorId === userId
+                    const color    = ROL_COLOR[m.autor.rol] ?? '#94a3b8'
 
-          <p className="text-[10px] text-slate-300 mt-1.5 px-1">
-            {pendingFile?.uploading
-              ? 'Subiendo archivo…'
-              : pendingFile?.url
-                ? 'Archivo listo · Enter para enviar'
-                : `Clip para adjuntar · Enter para enviar · ${2000 - texto.length} caracteres`
-            }
-          </p>
-        </form>
+                    return (
+                      <div
+                        key={m.id}
+                        className={`flex gap-2 ${esPropio ? 'flex-row-reverse' : 'flex-row'} ${m.showHeader ? 'mt-4' : 'mt-0.5'}`}
+                      >
+                        {m.showHeader ? (
+                          <UserAvatar
+                            nombre={m.autor.nombre}
+                            size="sm"
+                            title={`${m.autor.nombre} · ${ROL_LABEL[m.autor.rol] ?? m.autor.rol}`}
+                            style={{ marginTop: 2 }}
+                          />
+                        ) : (
+                          <div className="w-7 flex-shrink-0" />
+                        )}
+
+                        <div className={`flex-1 min-w-0 flex flex-col ${esPropio ? 'items-end' : 'items-start'}`}>
+                          {m.showHeader && (
+                            <div className={`flex items-center gap-2 mb-1 ${esPropio ? 'flex-row-reverse' : 'flex-row'}`}>
+                              <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]">
+                                {esPropio ? 'Tú' : m.autor.nombre.split(' ')[0]}
+                              </span>
+                              <span
+                                className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                                style={{ backgroundColor: `${color}20`, color }}
+                              >
+                                {ROL_LABEL[m.autor.rol] ?? m.autor.rol}
+                              </span>
+                              <span className="text-[10px] text-slate-300">{formatFecha(m.createdAt)}</span>
+                            </div>
+                          )}
+
+                          {m.contenido && (
+                            <div
+                              className="group relative inline-block px-3 py-2 rounded-2xl text-sm leading-relaxed break-words"
+                              style={{
+                                maxWidth: 260,
+                                backgroundColor: esPropio ? '#4AC3B2' : '#F1F5F9',
+                                color: esPropio ? 'white' : '#334155',
+                                borderTopRightRadius: esPropio && m.showHeader ? 4 : 16,
+                                borderTopLeftRadius:  !esPropio && m.showHeader ? 4 : 16,
+                              }}
+                            >
+                              {m.contenido}
+                              {!m.showHeader && (
+                                <span className="absolute bottom-full left-0 mb-1 text-[10px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                  {formatHora(m.createdAt)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          <AttachmentBubble msg={m} esPropio={esPropio} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </div>
+
+            {/* File preview */}
+            {pendingFile && (
+              <div
+                className="flex-shrink-0 mx-3 mb-2 rounded-xl overflow-hidden border"
+                style={{ borderColor: pendingFile.error ? '#fecaca' : '#e2e8f0', backgroundColor: pendingFile.error ? '#fef2f2' : '#f8fafc' }}
+              >
+                <div className="flex items-center gap-2 px-3 py-2">
+                  {pendingFile.preview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={pendingFile.preview} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#dbeafe' }}>
+                      <FileIconComponent tipo={pendingFile.file.type} />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-700 truncate">{pendingFile.file.name}</p>
+                    <p className="text-[10px] text-slate-400">
+                      {formatBytes(pendingFile.file.size)}
+                      {pendingFile.error && (
+                        <span className="text-red-500 ml-1">· {pendingFile.error}</span>
+                      )}
+                    </p>
+                  </div>
+
+                  {pendingFile.uploading ? (
+                    <Loader2 className="w-4 h-4 text-slate-400 animate-spin flex-shrink-0" />
+                  ) : pendingFile.url ? (
+                    <span className="text-[10px] text-green-600 font-semibold flex-shrink-0">✓ Listo</span>
+                  ) : null}
+
+                  <button
+                    onClick={cancelFile}
+                    className="flex items-center justify-center w-6 h-6 rounded-full transition-colors flex-shrink-0"
+                    style={{ color: '#94a3b8' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#f1f5f9'; (e.currentTarget as HTMLElement).style.color = '#374151' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94a3b8' }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Input */}
+            <form onSubmit={handleSend} className="flex-shrink-0 px-3 py-3 border-t bg-white">
+              <div
+                className="flex items-center gap-2 rounded-xl px-3 py-2 border transition-colors focus-within:border-slate-300"
+                style={{ backgroundColor: '#F8FAFC' }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={!!pendingFile}
+                  title="Adjuntar archivo"
+                  className="flex items-center justify-center w-7 h-7 rounded-lg transition-all flex-shrink-0 disabled:opacity-30"
+                  style={{ color: '#94a3b8' }}
+                  onMouseEnter={e => { if (!pendingFile) { (e.currentTarget as HTMLElement).style.backgroundColor = '#e2e8f0'; (e.currentTarget as HTMLElement).style.color = '#475569' } }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94a3b8' }}
+                >
+                  <Paperclip className="w-4 h-4" />
+                </button>
+
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={texto}
+                  onChange={e => setTexto(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSend(e as unknown as React.FormEvent)
+                    }
+                  }}
+                  placeholder={pendingFile ? 'Añade un mensaje (opcional)…' : `Mensaje a ${usuarioActivo?.nombre.split(' ')[0] ?? ''}…`}
+                  maxLength={2000}
+                  className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none"
+                />
+
+                <button
+                  type="submit"
+                  disabled={!canSend}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg transition-all disabled:opacity-30 flex-shrink-0"
+                  style={{ backgroundColor: canSend ? '#13602C' : '#E2E8F0' }}
+                >
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#94a3b8' }} />
+                  ) : (
+                    <Send className="h-4 w-4" style={{ color: canSend ? 'white' : '#94a3b8' }} />
+                  )}
+                </button>
+              </div>
+
+              <p className="text-[10px] text-slate-300 mt-1.5 px-1">
+                {pendingFile?.uploading
+                  ? 'Subiendo archivo…'
+                  : pendingFile?.url
+                    ? 'Archivo listo · Enter para enviar'
+                    : `Clip para adjuntar · Enter para enviar · ${2000 - texto.length} caracteres`
+                }
+              </p>
+            </form>
+          </>
+        )}
       </div>
     </>
   )

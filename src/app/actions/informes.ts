@@ -7,8 +7,6 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { nanoid } from 'nanoid'
 import { put } from '@vercel/blob'
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
-import QRCode from 'qrcode'
 
 export async function firmarConformidadCalidad(informeId: string, formData: FormData) {
   await requireRol(['DIRECTOR_CALIDAD'])
@@ -83,54 +81,19 @@ export async function firmarGerenciaTecnica(informeId: string) {
     throw new Error('Debes subir el documento firmado antes de generar el QR')
   }
 
-  const anio = new Date().getFullYear()
-  const num = String(Math.floor(Math.random() * 900) + 100)
+  // Generar código y URL del QR — el sello se estampa dinámicamente en descargar-firmado
+  const anio  = new Date().getFullYear()
+  const num   = String(Math.floor(Math.random() * 900) + 100)
   const codigo = `${anio}-${num}`
-  const clave = nanoid(16)
-  const base = process.env.NEXTAUTH_URL ?? 'https://cetox-app.vercel.app'
-  const qrUrl = `${base}/validation/${codigo}`
+  const clave  = nanoid(16)
+  const base   = process.env.NEXTAUTH_URL ?? 'https://cetox-app.vercel.app'
+  const qrUrl  = `${base}/validation/${codigo}`
 
-  // Embed QR into the signed PDF
-  const docBytes = await fetch(informe.archivoFirmadoGerencia).then((r) => r.arrayBuffer())
-  const pdfDoc = await PDFDocument.load(docBytes)
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-  const qrBuffer = await QRCode.toBuffer(qrUrl, { width: 120, margin: 1 })
-  const qrImage = await pdfDoc.embedPng(qrBuffer)
-
-  const pages = pdfDoc.getPages()
-  const lastPage = pages[pages.length - 1]
-  const { width } = lastPage.getSize()
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
-
-  const qrSize   = 90
-  const qrMargin = 18
-  const qrX      = width - qrSize - qrMargin
-  const qrY      = 22           // base del QR desde el borde inferior de la página
-  const qrTop    = qrY + qrSize // borde superior del QR (= 112)
-
-  // Texto ENCIMA del QR — de abajo hacia arriba, sin superposición con la imagen
-  lastPage.drawText(`Cód: ${codigo}  ·  Clave: ${clave}`, {
-    x: qrX, y: qrTop + 4, size: 5, font: fontBold, color: rgb(0.075, 0.376, 0.173),
-  })
-  lastPage.drawText(qrUrl.length > 62 ? qrUrl.substring(0, 62) + '…' : qrUrl, {
-    x: qrX, y: qrTop + 12, size: 5, font, color: rgb(0.4, 0.4, 0.4),
-  })
-  lastPage.drawText('Verificar autenticidad en:', {
-    x: qrX, y: qrTop + 20, size: 5.5, font, color: rgb(0.4, 0.4, 0.4),
-  })
-  // Imagen del QR
-  lastPage.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize })
-
-  const finalBytes = await pdfDoc.save()
-  const finalBlob = await put(
-    `informes-finales/${informeId}/informe-firmado-qr.pdf`,
-    Buffer.from(finalBytes),
-    { access: 'public' }
-  )
-
+  // archivoPdf apunta al documento subido por gerencia (sin QR embebido aquí)
+  // El QR se estampa en tiempo de descarga por /api/informes/[id]/descargar-firmado
   await prisma.informe.update({
     where: { id: informeId },
-    data: { estado: 'FIRMADO', firmaGerencia: new Date(), archivoPdf: finalBlob.url },
+    data: { estado: 'FIRMADO', firmaGerencia: new Date(), archivoPdf: informe.archivoFirmadoGerencia },
   })
 
   await prisma.certificado.create({

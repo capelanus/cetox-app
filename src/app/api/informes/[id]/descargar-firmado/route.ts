@@ -65,69 +65,61 @@ export async function GET(
   const lastPage           = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
   const { width }          = lastPage.getSize()
 
-  // Dimensiones del sello
-  const QR_SIZE   = 108   // imagen QR en puntos
-  const LABEL_H   = 52    // altura reservada para las 5 líneas de texto sobre el QR
-  const SIDE_PAD  = 6     // padding horizontal interior
-  const STAMP_W   = QR_SIZE + SIDE_PAD * 2  // ancho total del sello
-  const STAMP_H   = QR_SIZE + LABEL_H + 8   // alto total del sello
+  // Dimensiones del sello — compacto, esquina inferior derecha
+  const QR_SIZE  = 68    // imagen QR (pequeña pero escaneable)
+  const PAD      = 4     // padding interior
+  const STAMP_W  = QR_SIZE + PAD * 2   // 76pt
+  const TITLE_H  = 11   // barra de título
+  const LINES_H  = 34   // 4 líneas de texto bajo el título
+  const STAMP_H  = TITLE_H + LINES_H + QR_SIZE + PAD * 2  // ≈ 121pt
 
-  // Posición: esquina inferior derecha, clears template footer (≈88pt)
-  const MARGIN_R  = 16                       // margen desde borde derecho
-  const BASE_Y    = 96                       // y inferior del sello (sobre el footer)
-  const STAMP_X   = width - STAMP_W - MARGIN_R
+  const MARGIN_R = 10
+  const BASE_Y   = 92   // sobre el footer del template (≈88pt)
+  const STAMP_X  = width - STAMP_W - MARGIN_R
 
-  // Fondo blanco + borde verde claro
+  // Fondo blanco + borde verde
   lastPage.drawRectangle({
-    x:           STAMP_X,
-    y:           BASE_Y,
-    width:       STAMP_W,
-    height:      STAMP_H,
-    color:       WHITE,
+    x: STAMP_X, y: BASE_Y,
+    width: STAMP_W, height: STAMP_H,
+    color: WHITE,
     borderColor: rgb(0.18, 0.55, 0.28),
-    borderWidth: 0.8,
+    borderWidth: 0.7,
   })
 
-  // Barra de título verde en la parte superior del sello
+  // Barra de título verde
   lastPage.drawRectangle({
-    x:      STAMP_X,
-    y:      BASE_Y + STAMP_H - 14,
-    width:  STAMP_W,
-    height: 14,
-    color:  GREEN,
+    x: STAMP_X, y: BASE_Y + STAMP_H - TITLE_H,
+    width: STAMP_W, height: TITLE_H,
+    color: GREEN,
   })
   lastPage.drawText('FIRMADO DIGITALMENTE', {
-    x:    STAMP_X + SIDE_PAD,
-    y:    BASE_Y + STAMP_H - 10,
-    size: 5.5, font: fontBold, color: WHITE,
+    x: STAMP_X + PAD, y: BASE_Y + STAMP_H - 7.5,
+    size: 4.8, font: fontBold, color: WHITE,
   })
 
-  // Líneas de texto intermedias (de arriba hacia abajo, dentro del fondo blanco)
-  const TEXT_START_Y = BASE_Y + STAMP_H - 20  // primera línea bajo la barra
+  // Líneas de texto (debajo del título, sobre el QR)
+  const TY = BASE_Y + STAMP_H - TITLE_H - 7  // primera línea
   lastPage.drawText('Dra. Rosalía Anaya · Gerente Técnico', {
-    x: STAMP_X + SIDE_PAD, y: TEXT_START_Y,
-    size: 5, font, color: GRAY,
-  })
-  lastPage.drawText('CETOX LAB — LE-044', {
-    x: STAMP_X + SIDE_PAD, y: TEXT_START_Y - 9,
-    size: 4.5, font, color: GRAY,
-  })
-  lastPage.drawText(`Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`, {
-    x: STAMP_X + SIDE_PAD, y: TEXT_START_Y - 19,
-    size: 4.5, font: fontBold, color: GREEN,
-  })
-  lastPage.drawText('Escanear para verificar autenticidad', {
-    x: STAMP_X + SIDE_PAD, y: TEXT_START_Y - 29,
+    x: STAMP_X + PAD, y: TY,
     size: 4, font, color: GRAY,
   })
+  lastPage.drawText('CETOX LAB — LE-044', {
+    x: STAMP_X + PAD, y: TY - 8,
+    size: 4, font, color: GRAY,
+  })
+  lastPage.drawText(`Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`, {
+    x: STAMP_X + PAD, y: TY - 17,
+    size: 4, font: fontBold, color: GREEN,
+  })
+  lastPage.drawText('Escanear para verificar', {
+    x: STAMP_X + PAD, y: TY - 26,
+    size: 3.8, font, color: GRAY,
+  })
 
-  // Imagen QR centrada en la parte inferior del sello
-  const qrX = STAMP_X + SIDE_PAD
-  const qrY = BASE_Y + 4
+  // Imagen QR en la parte inferior del sello
   lastPage.drawImage(qrImage, {
-    x: qrX, y: qrY,
-    width:  QR_SIZE,
-    height: QR_SIZE,
+    x: STAMP_X + PAD, y: BASE_Y + PAD,
+    width: QR_SIZE, height: QR_SIZE,
   })
 
   // ── 4. Devolver el PDF modificado ─────────────────────────────────────────

@@ -65,58 +65,62 @@ export async function GET(
   const lastPage           = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
   const { width }          = lastPage.getSize()
 
-  // Dimensiones del sello — compacto, esquina inferior derecha
-  const QR_SIZE  = 68    // imagen QR (pequeña pero escaneable)
-  const PAD      = 4     // padding interior
-  const STAMP_W  = QR_SIZE + PAD * 2   // 76pt
-  const TITLE_H  = 11   // barra de título
-  const LINES_H  = 34   // 4 líneas de texto bajo el título
-  const STAMP_H  = TITLE_H + LINES_H + QR_SIZE + PAD * 2  // ≈ 121pt
+  // ── Sello QR anclado al pie de página ────────────────────────────────────
+  // El template tiene un espacio reservado a la derecha del disclaimer de pie de página.
+  // El QR se posiciona con la base en el pie de página y el sello sube hacia el contenido.
+  const QR_SIZE  = 62   // QR escaneable, compacto
+  const PAD      = 3
+  const STAMP_W  = QR_SIZE + PAD * 2    // 68pt
+  const TITLE_H  = 10   // barra "FIRMADO DIGITALMENTE"
+  const STAMP_H  = TITLE_H + 28 + QR_SIZE + PAD  // título + 3 líneas + QR
 
-  const MARGIN_R = 10
-  const BASE_Y   = 92   // sobre el footer del template (≈88pt)
+  const MARGIN_R = 8
+  const BASE_Y   = 8    // ancla al pie de página (por encima del borde físico)
   const STAMP_X  = width - STAMP_W - MARGIN_R
 
-  // Fondo blanco + borde verde
+  // Fondo blanco detrás del sello (cubre el color de fondo del footer del template)
+  lastPage.drawRectangle({
+    x: STAMP_X - 1, y: BASE_Y - 1,
+    width: STAMP_W + 2, height: STAMP_H + 2,
+    color: WHITE,
+  })
+
+  // Borde exterior
   lastPage.drawRectangle({
     x: STAMP_X, y: BASE_Y,
     width: STAMP_W, height: STAMP_H,
     color: WHITE,
     borderColor: rgb(0.18, 0.55, 0.28),
-    borderWidth: 0.7,
+    borderWidth: 0.6,
   })
 
-  // Barra de título verde
+  // Barra de título verde (parte superior del sello)
   lastPage.drawRectangle({
     x: STAMP_X, y: BASE_Y + STAMP_H - TITLE_H,
     width: STAMP_W, height: TITLE_H,
     color: GREEN,
   })
   lastPage.drawText('FIRMADO DIGITALMENTE', {
-    x: STAMP_X + PAD, y: BASE_Y + STAMP_H - 7.5,
-    size: 4.8, font: fontBold, color: WHITE,
+    x: STAMP_X + PAD, y: BASE_Y + STAMP_H - 7,
+    size: 4.5, font: fontBold, color: WHITE,
   })
 
-  // Líneas de texto (debajo del título, sobre el QR)
-  const TY = BASE_Y + STAMP_H - TITLE_H - 7  // primera línea
+  // Líneas de texto bajo el título
+  const TY = BASE_Y + STAMP_H - TITLE_H - 6
   lastPage.drawText('Dra. Rosalía Anaya · Gerente Técnico', {
     x: STAMP_X + PAD, y: TY,
-    size: 4, font, color: GRAY,
+    size: 3.8, font, color: GRAY,
   })
   lastPage.drawText('CETOX LAB — LE-044', {
     x: STAMP_X + PAD, y: TY - 8,
-    size: 4, font, color: GRAY,
-  })
-  lastPage.drawText(`Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`, {
-    x: STAMP_X + PAD, y: TY - 17,
-    size: 4, font: fontBold, color: GREEN,
-  })
-  lastPage.drawText('Escanear para verificar', {
-    x: STAMP_X + PAD, y: TY - 26,
     size: 3.8, font, color: GRAY,
   })
+  lastPage.drawText(`Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`, {
+    x: STAMP_X + PAD, y: TY - 16,
+    size: 3.8, font: fontBold, color: GREEN,
+  })
 
-  // Imagen QR en la parte inferior del sello
+  // Imagen QR (parte inferior del sello)
   lastPage.drawImage(qrImage, {
     x: STAMP_X + PAD, y: BASE_Y + PAD,
     width: QR_SIZE, height: QR_SIZE,

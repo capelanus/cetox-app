@@ -192,3 +192,13 @@ export async function enviarARevision(informeId: string) {
   revalidatePath(`/informes/${informeId}`)
   revalidatePath('/informes')
 }
+
+export async function resetearInformesAFirma() {
+  await requireRol(['GERENTE_TECNICO'])
+  const result = await prisma.informe.updateMany({
+    where: { estado: 'FIRMADO' },
+    data: { estado: 'EN_FIRMA_GERENCIA' },
+  })
+  revalidatePath('/informes')
+  return { count: result.count }
+}

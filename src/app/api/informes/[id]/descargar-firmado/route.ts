@@ -83,8 +83,8 @@ export async function GET(
   // ── 1. Línea de texto justo encima de la barra verde ─────────────────────
   const infoLine = `Dra. Rosalía Anaya · Gerente Técnico   CETOX LAB — LE-044   Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`
   lastPage.drawText(infoLine, {
-    x:    42,                   // izquierda
-    y:    45,                   // 5px por encima del footer
+    x:    35,                   // a la izquierda
+    y:    20,                   // a la altura del texto del footer
     size: 7.5,
     font: fontBold,
     color: GREEN,

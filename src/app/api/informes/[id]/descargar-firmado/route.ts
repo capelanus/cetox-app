@@ -97,7 +97,7 @@ export async function GET(
   const STAMP_W  = QR_SIZE + PAD * 2      // 93pt
   const STAMP_H  = TITLE_H + QR_SIZE + PAD * 2  // ~103pt
 
-  const MARGIN_R = 12
+  const MARGIN_R = 20
   // Ancla la BASE del sello en la esquina derecha con espacios simétricos
   const BASE_Y   = MARGIN_R
   const STAMP_X  = width - STAMP_W - MARGIN_R

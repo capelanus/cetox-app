@@ -84,8 +84,8 @@ export async function GET(
   const infoLine = `Dra. Rosalía Anaya · Gerente Técnico   CETOX LAB — LE-044   Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`
   lastPage.drawText(infoLine, {
     x:    42,                   // izquierda
-    y:    20,                   // altura del texto del pie de página
-    size: 6.5,
+    y:    45,                   // 5px por encima del footer
+    size: 7.5,
     font: fontBold,
     color: GREEN,
   })
@@ -97,9 +97,9 @@ export async function GET(
   const STAMP_W  = QR_SIZE + PAD * 2      // 93pt
   const STAMP_H  = TITLE_H + QR_SIZE + PAD * 2  // ~103pt
 
-  const MARGIN_R = 20
+  const MARGIN_R = 22
   // Ancla la BASE del sello en la esquina derecha con espacios simétricos
-  const BASE_Y   = MARGIN_R
+  const BASE_Y   = 10
   const STAMP_X  = width - STAMP_W - MARGIN_R
 
   // Fondo blanco (cubre fondo del footer)

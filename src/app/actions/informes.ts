@@ -96,8 +96,10 @@ export async function firmarGerenciaTecnica(informeId: string) {
     data: { estado: 'FIRMADO', firmaGerencia: new Date(), archivoPdf: informe.archivoFirmadoGerencia },
   })
 
-  await prisma.certificado.create({
-    data: { codigo, informeId, clave, qrUrl },
+  await prisma.certificado.upsert({
+    where:  { informeId },
+    create: { codigo, informeId, clave, qrUrl },
+    update: { codigo, clave, qrUrl, fechaEmision: new Date() },
   })
 
   await prisma.oDA.update({

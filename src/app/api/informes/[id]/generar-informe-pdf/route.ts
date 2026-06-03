@@ -22,6 +22,14 @@ const ML = 42                              // margen izquierdo
 const MR = 42                              // margen derecho
 const CW = PAGE_W - ML - MR               // ancho de contenido
 
+// ── Posición fija del QR (esquina inferior derecha del espacio en blanco) ─────
+// El template tiene: barra verde inferior (~35px) + textos de descargo (~40px)
+// El QR se ancla sobre esa área, siempre visible independiente del contenido.
+const QR_SIZE   = 110                      // tamaño QR en puntos
+const QR_MARGIN = 14                       // margen desde el borde derecho
+const QR_X      = PAGE_W - QR_SIZE - QR_MARGIN   // ≈ 471
+const QR_BASE_Y = 82                       // y desde abajo (despeja footer del template)
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Intenta cargar el membrete oficial; si falla, retorna null */
@@ -98,7 +106,7 @@ export async function GET(
   // ── Cargar membrete ───────────────────────────────────────────────────────
   const templateDoc = await loadTemplate()
   const HEADER_H    = templateDoc ? 158 : 80   // alto del header en puntos
-  const FOOTER_H    = templateDoc ? 60  : 50   // alto del footer
+  const FOOTER_H    = templateDoc ? 88  : 50   // alto del footer (despeja footer del template)
   const TOP_Y       = PAGE_H - HEADER_H - 12   // coordenada y de inicio del contenido
 
   // ── Crear documento ───────────────────────────────────────────────────────
@@ -272,28 +280,46 @@ export async function GET(
   page.drawText('Centro Toxicológico S.A.C. "CETOX"', { x: sig2X + 10, y: sigY - 13, size: 8, font: fontBold, color: GRAY })
   y = sigY - 28
 
-  // ── QR en esquina inferior derecha (solo si ya está certificado) ──────────
+  // ── QR — esquina inferior derecha (posición fija sobre el espacio en blanco) ─
   if (informe.certificadoQR) {
-    const cert      = informe.certificadoQR
-    const qrBuffer  = await QRCode.toBuffer(cert.qrUrl, { width: 130, margin: 1 })
-    const qrImage   = await pdfDoc.embedPng(qrBuffer)
-    const qrSize    = 90
-    const qrMargin  = 18
-    const qrX       = PAGE_W - qrSize - qrMargin
-    const qrY       = FOOTER_H + 6
-    const qrTop     = qrY + qrSize
+    const cert     = informe.certificadoQR
+    const qrBuffer = await QRCode.toBuffer(cert.qrUrl, { width: 200, margin: 1, errorCorrectionLevel: 'H' })
+    const qrImage  = await pdfDoc.embedPng(qrBuffer)
 
-    const lastPageN = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
-    lastPageN.drawText('Verificar autenticidad en:', {
-      x: qrX, y: qrTop + 20, size: 5.5, font, color: GRAY,
+    const lastPage = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
+    const qrTop    = QR_BASE_Y + QR_SIZE   // punto y superior del bloque QR
+
+    // Fondo blanco detrás del QR (para que destaque sobre el template)
+    lastPage.drawRectangle({
+      x: QR_X - 6, y: QR_BASE_Y - 20,
+      width: QR_SIZE + 12, height: QR_SIZE + 36,
+      color: WHITE,
+      borderColor: rgb(0.88, 0.92, 0.88),
+      borderWidth: 0.5,
     })
-    lastPageN.drawText(cert.qrUrl.length > 62 ? cert.qrUrl.substring(0, 62) + '…' : cert.qrUrl, {
-      x: qrX, y: qrTop + 12, size: 5, font, color: GRAY,
+
+    // Etiqueta superior
+    lastPage.drawText('FIRMADO DIGITALMENTE', {
+      x: QR_X, y: qrTop + 14,
+      size: 5.5, font: fontBold, color: GREEN,
     })
-    lastPageN.drawText(`Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`, {
-      x: qrX, y: qrTop + 4, size: 5, font: fontBold, color: GREEN,
+    lastPage.drawText('Dra. Rosalía Anaya · Gerente Técnico', {
+      x: QR_X, y: qrTop + 6,
+      size: 5, font, color: GRAY,
     })
-    lastPageN.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize })
+
+    // QR image
+    lastPage.drawImage(qrImage, { x: QR_X, y: QR_BASE_Y, width: QR_SIZE, height: QR_SIZE })
+
+    // Código bajo el QR
+    lastPage.drawText(`Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`, {
+      x: QR_X, y: QR_BASE_Y - 9,
+      size: 4.5, font: fontBold, color: GREEN,
+    })
+    lastPage.drawText('Escanear para verificar autenticidad', {
+      x: QR_X, y: QR_BASE_Y - 16,
+      size: 4, font, color: GRAY,
+    })
   }
 
   // ── Devolver PDF ──────────────────────────────────────────────────────────

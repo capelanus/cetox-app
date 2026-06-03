@@ -79,14 +79,29 @@ model CajaChicaGasto {
   categoria       String?
   proveedorId     String?
   proveedor       Proveedor? @relation(fields: [proveedorId], references: [id])
-  proveedorNombre String?    // nombre libre cuando proveedorId es null
-  proveedorRuc    String?    // RUC libre o copiado del proveedor
+  proveedorNombre String?
+  proveedorRuc    String?
   numeroFactura   String?
   comprobante     String?
   notas           String?
   creadoPorId     String
   creadoPor       Usuario    @relation(fields: [creadoPorId], references: [id])
   createdAt       DateTime   @default(now())
+
+  // Campos contables adicionales
+  caja             String?   @default("102102 CAJA CHICA DE CETOX")
+  numComprobante   String?
+  tipoDocumento    String?
+  serie            String?
+  numero           String?
+  fechaEmision     DateTime?
+  fechaVencimiento DateTime?
+  condicion        String?
+  tipoCambio       Float?
+  glosa            String?
+  centroCosto      String?
+  ctaGasto         String?
+  afecto           Boolean   @default(false)
 }
 
 model CajaChicaIngreso {

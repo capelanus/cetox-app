@@ -65,62 +65,68 @@ export async function GET(
   const lastPage           = pdfDoc.getPage(pdfDoc.getPageCount() - 1)
   const { width }          = lastPage.getSize()
 
-  // ── Sello QR anclado al pie de página ────────────────────────────────────
-  // El template tiene un espacio reservado a la derecha del disclaimer de pie de página.
-  // El QR se posiciona con la base en el pie de página y el sello sube hacia el contenido.
-  const QR_SIZE  = 62   // QR escaneable, compacto
-  const PAD      = 3
-  const STAMP_W  = QR_SIZE + PAD * 2    // 68pt
-  const TITLE_H  = 10   // barra "FIRMADO DIGITALMENTE"
-  const STAMP_H  = TITLE_H + 28 + QR_SIZE + PAD  // título + 3 líneas + QR
+  // ── Sello QR en el espacio blanco del footer ──────────────────────────────
+  // Layout:
+  //   [espacio blanco del footer derecho]
+  //   ┌────────────────────┐
+  //   │ FIRMADO DIGITALMENTE│  ← barra verde
+  //   │                    │
+  //   │    [QR IMAGE]      │  ← solo imagen, sin texto dentro
+  //   │                    │
+  //   └────────────────────┘
+  //   Dra. Rosalía Anaya · Gerente Técnico  CETOX LAB — LE-044  Cód: …  ← línea única encima de la barra verde
+  //   ════════════════════════════════════════════════════════ ← barra verde oscura del footer
+
+  // Estimación del tope de la barra verde oscura del footer (≈ 40pt desde abajo del page)
+  const GREEN_BAR_TOP = 40
+
+  // ── 1. Línea de texto justo encima de la barra verde ─────────────────────
+  const infoLine = `Dra. Rosalía Anaya · Gerente Técnico   CETOX LAB — LE-044   Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`
+  lastPage.drawText(infoLine, {
+    x:    280,                  // empieza a la derecha del disclaimer text
+    y:    GREEN_BAR_TOP + 6,   // justo encima de la barra verde
+    size: 4.5,
+    font: fontBold,
+    color: GREEN,
+  })
+
+  // ── 2. Sello QR (recuadro con barra de título + imagen QR) ───────────────
+  const QR_SIZE  = 85   // más grande ahora que hay espacio
+  const PAD      = 4
+  const TITLE_H  = 11
+  const STAMP_W  = QR_SIZE + PAD * 2      // 93pt
+  const STAMP_H  = TITLE_H + QR_SIZE + PAD * 2  // ~103pt
 
   const MARGIN_R = 8
-  const BASE_Y   = 8    // ancla al pie de página (por encima del borde físico)
+  // Ancla la BASE del sello justo sobre la línea de texto
+  const BASE_Y   = GREEN_BAR_TOP + 18
   const STAMP_X  = width - STAMP_W - MARGIN_R
 
-  // Fondo blanco detrás del sello (cubre el color de fondo del footer del template)
+  // Fondo blanco (cubre fondo del footer)
   lastPage.drawRectangle({
     x: STAMP_X - 1, y: BASE_Y - 1,
     width: STAMP_W + 2, height: STAMP_H + 2,
     color: WHITE,
   })
-
-  // Borde exterior
+  // Borde verde
   lastPage.drawRectangle({
     x: STAMP_X, y: BASE_Y,
     width: STAMP_W, height: STAMP_H,
     color: WHITE,
     borderColor: rgb(0.18, 0.55, 0.28),
-    borderWidth: 0.6,
+    borderWidth: 0.7,
   })
-
-  // Barra de título verde (parte superior del sello)
+  // Barra de título
   lastPage.drawRectangle({
     x: STAMP_X, y: BASE_Y + STAMP_H - TITLE_H,
     width: STAMP_W, height: TITLE_H,
     color: GREEN,
   })
   lastPage.drawText('FIRMADO DIGITALMENTE', {
-    x: STAMP_X + PAD, y: BASE_Y + STAMP_H - 7,
-    size: 4.5, font: fontBold, color: WHITE,
+    x: STAMP_X + PAD, y: BASE_Y + STAMP_H - 7.5,
+    size: 5, font: fontBold, color: WHITE,
   })
-
-  // Líneas de texto bajo el título
-  const TY = BASE_Y + STAMP_H - TITLE_H - 6
-  lastPage.drawText('Dra. Rosalía Anaya · Gerente Técnico', {
-    x: STAMP_X + PAD, y: TY,
-    size: 3.8, font, color: GRAY,
-  })
-  lastPage.drawText('CETOX LAB — LE-044', {
-    x: STAMP_X + PAD, y: TY - 8,
-    size: 3.8, font, color: GRAY,
-  })
-  lastPage.drawText(`Cód: ${cert.codigo}  ·  Clave: ${cert.clave}`, {
-    x: STAMP_X + PAD, y: TY - 16,
-    size: 3.8, font: fontBold, color: GREEN,
-  })
-
-  // Imagen QR (parte inferior del sello)
+  // QR image
   lastPage.drawImage(qrImage, {
     x: STAMP_X + PAD, y: BASE_Y + PAD,
     width: QR_SIZE, height: QR_SIZE,

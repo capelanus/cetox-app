@@ -97,9 +97,10 @@ export async function GET(
   const STAMP_W  = QR_SIZE + PAD * 2      // 93pt
   const STAMP_H  = TITLE_H + QR_SIZE + PAD * 2  // ~103pt
 
-  // Ancla la BASE del sello más cerca de la barra verde, centrado en el espacio blanco
+  const MARGIN_R = 8
+  // Ancla la BASE del sello en la esquina derecha, cerca de la barra verde
   const BASE_Y   = GREEN_BAR_TOP - 25
-  const STAMP_X  = (width - STAMP_W) / 2
+  const STAMP_X  = width - STAMP_W - MARGIN_R
 
   // Fondo blanco (cubre fondo del footer)
   lastPage.drawRectangle({

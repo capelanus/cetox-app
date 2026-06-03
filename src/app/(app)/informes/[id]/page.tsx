@@ -337,7 +337,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
               <p><span className="text-slate-500">Emitido:</span> {formatFecha(informe.certificadoQR.fechaEmision)}</p>
             </div>
             <a
-              href={`/api/informes/${id}/generar-qr`}
+              href={`/api/informes/${id}/descargar-firmado`}
               className="inline-block mt-3"
             >
               <Button size="sm" className="bg-green-700 hover:bg-green-800 text-white">

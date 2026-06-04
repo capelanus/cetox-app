@@ -15,6 +15,7 @@ interface Props {
     cargo:        string
     area:         string
     notas:        string
+    funciones:    string
     activo:       boolean
   }
 }
@@ -104,6 +105,17 @@ export function EditarEmpleadoForm({ empleado }: Props) {
           <option value="true">Activo</option>
           <option value="false">Inactivo</option>
         </select>
+      </div>
+
+      {/* Funciones */}
+      <div>
+        <label className={labelCls}>Funciones del trabajador</label>
+        <textarea
+          name="funciones" rows={5} maxLength={4000}
+          defaultValue={empleado.funciones}
+          placeholder="Detalle de las funciones según el puesto asignado..."
+          className={`${inputCls} resize-y`}
+        />
       </div>
 
       {/* Notas */}

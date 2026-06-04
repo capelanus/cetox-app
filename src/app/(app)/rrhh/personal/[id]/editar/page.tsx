@@ -25,6 +25,7 @@ export default async function EditarEmpleadoPage({ params }: { params: Promise<{
         cargo:        emp.cargo ?? '',
         area:         emp.area  ?? '',
         notas:        emp.notas ?? '',
+        funciones:    emp.funciones ?? '',
         activo:       emp.activo,
       }} />
     </div>

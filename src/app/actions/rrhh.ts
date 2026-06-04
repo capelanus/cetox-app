@@ -71,6 +71,7 @@ export async function editarEmpleado(id: string, formData: FormData) {
   const cargo        = (formData.get('cargo') as string | null)?.trim() || null
   const area         = (formData.get('area') as string | null)?.trim() || null
   const notas        = (formData.get('notas') as string | null)?.trim() || null
+  const funciones    = (formData.get('funciones') as string | null)?.trim() || null
   const activo       = formData.get('activo') === 'true'
 
   await prisma.empleado.update({
@@ -84,6 +85,7 @@ export async function editarEmpleado(id: string, formData: FormData) {
       cargo,
       area,
       notas,
+      funciones,
       activo,
     },
   })
@@ -91,6 +93,58 @@ export async function editarEmpleado(id: string, formData: FormData) {
   revalidatePath('/rrhh/personal')
   revalidatePath(`/rrhh/personal/${id}`)
   redirect(`/rrhh/personal/${id}`)
+}
+
+export async function actualizarFunciones(empleadoId: string, funciones: string) {
+  await requireRRHH()
+  await prisma.empleado.update({
+    where: { id: empleadoId },
+    data:  { funciones: funciones.trim() || null },
+  })
+  revalidatePath(`/rrhh/personal/${empleadoId}`)
+}
+
+export async function subirDocumentoEmpleado(empleadoId: string, formData: FormData) {
+  await requireRRHH()
+  const { put } = await import('@vercel/blob')
+
+  const file        = formData.get('archivo') as File | null
+  const nombre      = (formData.get('nombre') as string)?.trim() || ''
+  const tipo        = (formData.get('tipo')   as string)?.trim() || null
+
+  if (!file || file.size === 0) throw new Error('Debes adjuntar un archivo')
+  if (!nombre) throw new Error('El nombre es obligatorio')
+  if (file.size > 25 * 1024 * 1024) throw new Error('El archivo no puede superar 25 MB')
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const blob = await put(
+    `rrhh/empleados/${empleadoId}/${Date.now()}-${safeName}`,
+    file,
+    { access: 'public' },
+  )
+
+  await prisma.documentoEmpleado.create({
+    data: {
+      empleadoId,
+      nombre,
+      tipo,
+      archivoUrl:  blob.url,
+      archivoTipo: file.type || null,
+      tamanio:     file.size,
+    },
+  })
+
+  revalidatePath(`/rrhh/personal/${empleadoId}`)
+}
+
+export async function eliminarDocumentoEmpleado(documentoId: string) {
+  await requireRRHH()
+  const doc = await prisma.documentoEmpleado.findUniqueOrThrow({
+    where:  { id: documentoId },
+    select: { empleadoId: true },
+  })
+  await prisma.documentoEmpleado.delete({ where: { id: documentoId } })
+  revalidatePath(`/rrhh/personal/${doc.empleadoId}`)
 }
 
 export async function desactivarEmpleado(id: string) {

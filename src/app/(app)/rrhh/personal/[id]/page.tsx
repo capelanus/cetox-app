@@ -7,8 +7,9 @@ import { es } from 'date-fns/locale'
 import {
   Users2, Pencil, ChevronLeft,
   Calendar, FileText, BadgeCheck,
-  PalmtreeIcon, Clock,
+  PalmtreeIcon, Clock, ListChecks,
 } from 'lucide-react'
+import { DocumentosSection } from './documentos-section'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -48,13 +49,25 @@ export default async function EmpleadoDetailPage({ params }: { params: Promise<{
 
   const emp = await prisma.empleado.findUnique({
     where: { id },
-    include: { vacacion: true },
+    include: {
+      vacacion:   true,
+      documentos: { orderBy: { createdAt: 'desc' } },
+    },
   })
   if (!emp) notFound()
 
   const estadoCont = estadoContrato(emp.finContrato)
   const vac        = emp.vacacion
   const totalPorCobrar = (vac?.diasAtrasados ?? 0) + (vac?.diasReglamentarios ?? 0)
+  const documentos = emp.documentos.map((d) => ({
+    id:          d.id,
+    nombre:      d.nombre,
+    tipo:        d.tipo,
+    archivoUrl:  d.archivoUrl,
+    archivoTipo: d.archivoTipo,
+    tamanio:     d.tamanio,
+    createdAt:   d.createdAt.toISOString(),
+  }))
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -150,6 +163,31 @@ export default async function EmpleadoDetailPage({ params }: { params: Promise<{
             <p className="text-xs text-slate-600 leading-relaxed">{emp.notas}</p>
           </div>
         )}
+      </div>
+
+      {/* Funciones del trabajador */}
+      <div className="cetox-card p-5 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <ListChecks className="w-3.5 h-3.5" style={{ color: '#13602C' }} />
+          <p
+            className="text-[10px] font-semibold tracking-widest uppercase text-slate-400"
+            style={{ fontFamily: 'var(--font-montserrat)' }}
+          >
+            Funciones del trabajador
+          </p>
+        </div>
+        {emp.funciones ? (
+          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{emp.funciones}</p>
+        ) : (
+          <p className="text-xs text-slate-400 italic">
+            Sin funciones definidas. Edita el empleado para añadir las funciones según el puesto.
+          </p>
+        )}
+      </div>
+
+      {/* Documentos */}
+      <div className="mb-4">
+        <DocumentosSection empleadoId={id} documentos={documentos} />
       </div>
 
       {/* Vacaciones */}

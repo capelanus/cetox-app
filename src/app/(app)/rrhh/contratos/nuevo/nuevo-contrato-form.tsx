@@ -77,6 +77,11 @@ function FormIndeterminado({
     const g = (k: string) => (fd.get(k) as string | null) ?? ''
     const isAltaDir = (fd.get('_tipo') as string) === 'INDETERMINADO_ALTA_DIR'
 
+    const funcionesEspecificas = g('funcionesEspecificas')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+
     const campos = {
       trabajadorNombre:       g('trabajadorNombre'),
       trabajadorDni:          g('trabajadorDni'),
@@ -86,6 +91,7 @@ function FormIndeterminado({
       fechaIngresoServicios:  g('fechaIngresoServicios'),
       remuneracionNum:        parseFloat(g('remuneracionNum')) || 0,
       fechaAntiguedadTexto:   g('fechaAntiguedadTexto'),
+      funcionesEspecificas,
       diaFirma:               g('diaFirma'),
       mesFirma:               g('mesFirma'),
       anioFirma:              g('anioFirma'),
@@ -164,6 +170,20 @@ function FormIndeterminado({
             />
             <p className="text-[10px] text-slate-400 mt-1">Puede ser igual o anterior al inicio</p>
           </div>
+        </div>
+
+        <div>
+          <label className={labelCls}>Funciones específicas del cargo (cláusula 7)</label>
+          <textarea
+            name="funcionesEspecificas"
+            rows={6}
+            placeholder={'Una función por línea. Ej:\nApoyar en la elaboración de informes técnicos\nRealizar el control de calidad de los ensayos\nMantener actualizada la documentación del SGC'}
+            className={`${inputCls} resize-y`}
+          />
+          <p className="text-[10px] text-slate-400 mt-1">
+            Se listarán como A), B), C)… en la cláusula 7 (Obligaciones del Trabajador).
+            Déjalo vacío para usar el texto genérico (solo MOF).
+          </p>
         </div>
       </Section>
 

@@ -18,6 +18,8 @@ export interface CamposIndeterminado {
   remuneracionNum:     number
   // Antigüedad (cláusula 11a)
   fechaAntiguedadTexto: string    // e.g. "01/10/2017"
+  // Funciones específicas del cargo (cláusula 7a)
+  funcionesEspecificas?: string[]
   // Firma
   diaFirma:   string
   mesFirma:   string

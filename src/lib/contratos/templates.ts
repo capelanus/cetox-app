@@ -149,8 +149,23 @@ function htmlWrapper(titulo: string, cuerpo: string): string {
 
 // ── 1. CONTRATO A PLAZO INDETERMINADO (Estándar) ─────────────────────────────
 
+function buildFuncionesEspecificas(funciones?: string[]): string {
+  const items = (funciones ?? [])
+    .map((f) => f.trim())
+    .filter((f) => f.length > 0)
+  if (items.length === 0) {
+    return 'Desempeñar las funciones propias de su cargo detalladas en el Manual de Organización y Funciones (MOF).'
+  }
+  const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const especificas = items
+    .map((item, i) => `${letras[i] ?? `${i + 1}`}). ${item}`)
+    .join(' ')
+  return `Desempeñar las funciones propias de su cargo detalladas en el Manual de Organización y Funciones (MOF), así como las funciones específicas: ${especificas}`
+}
+
 export function generarIndeterminado(c: CamposIndeterminado): string {
   const rem = formatearSoles(c.remuneracionNum)
+  const funcionesItem = buildFuncionesEspecificas(c.funcionesEspecificas)
   const cuerpo = `
 <h1>Contrato de Trabajo a Plazo Indeterminado</h1>
 
@@ -207,7 +222,7 @@ export function generarIndeterminado(c: CamposIndeterminado): string {
   <li>Mantener una conducta ética y profesional conforme a los lineamientos de calidad y buenas prácticas del laboratorio.</li>
   <li>Cuidar y utilizar adecuadamente los equipos, instrumentos, materiales e instalaciones asignados.</li>
   <li>Registrar su asistencia diariamente de acuerdo con los mecanismos establecidos por la empresa.</li>
-  <li>Desempeñar las funciones propias de su cargo detalladas en el Manual de Organización y Funciones (MOF).</li>
+  <li>${funcionesItem}</li>
 </ul>
 
 <h3>Octava: Confidencialidad y Responsabilidad Penal</h3>

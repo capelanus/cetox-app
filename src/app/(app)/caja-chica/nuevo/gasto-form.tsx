@@ -92,7 +92,27 @@ export function GastoForm({ proveedores, today }: Props) {
   const [proveedorId,    setProveedorId]    = useState<string | null>(null)
   const [moneda,         setMoneda]         = useState('PEN')
   const [afecto,         setAfecto]         = useState(false)
+  const [centroCosto,    setCentroCosto]    = useState('')
+  const [ctaGasto,       setCtaGasto]       = useState('')
+  const [importe,        setImporte]        = useState('')
   const lookupTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Cálculo del resumen ────────────────────────────────────────────────
+  const IGV_RATE = 0.18
+  const importeNum = parseFloat(importe) || 0
+  const subTotal = afecto ? importeNum / (1 + IGV_RATE) : importeNum
+  const igv      = afecto ? importeNum - subTotal       : 0
+  const total    = importeNum
+
+  // Centro costo: "20000 CALIDAD" → código: 20000, nombre: CALIDAD
+  const ccCodigo = centroCosto.split(' ')[0] ?? ''
+  // Cta gasto: "0000000013 ACTIVO FIJO MENOR DE 1/4 UIT — 945617"
+  const [ctaPre, ctaCuentaNum] = ctaGasto.split(' — ')
+  const ctaCodigo = ctaPre?.split(' ')[0] ?? ''
+  const ctaDescripcion = ctaPre?.split(' ').slice(1).join(' ') ?? ''
+  const ctaDescCompleta = ctaPre && ctaCuentaNum
+    ? `${ctaDescripcion}-${ctaCuentaNum}`
+    : ctaDescripcion
 
   // ── Auto-buscar proveedor por RUC ──────────────────────────────────────
   useEffect(() => {
@@ -295,6 +315,8 @@ export function GastoForm({ proveedores, today }: Props) {
             <Label htmlFor="centroCosto">Centro Costo</Label>
             <select
               id="centroCosto" name="centroCosto"
+              value={centroCosto}
+              onChange={(e) => setCentroCosto(e.target.value)}
               className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
             >
               <option value="">—</option>
@@ -305,6 +327,8 @@ export function GastoForm({ proveedores, today }: Props) {
             <Label htmlFor="ctaGasto">Cta Gasto</Label>
             <select
               id="ctaGasto" name="ctaGasto"
+              value={ctaGasto}
+              onChange={(e) => setCtaGasto(e.target.value)}
               className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
             >
               <option value="">—</option>
@@ -320,6 +344,8 @@ export function GastoForm({ proveedores, today }: Props) {
             <Input
               id="monto" name="monto" type="number"
               step="0.01" min="0.01" placeholder="0.00" required
+              value={importe}
+              onChange={(e) => setImporte(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2 h-9">
@@ -343,6 +369,59 @@ export function GastoForm({ proveedores, today }: Props) {
             type="file" accept="image/*,application/pdf"
             className="cursor-pointer"
           />
+        </div>
+      </div>
+
+      {/* ── Resumen del gasto ── */}
+      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="px-4 py-2 bg-slate-50 border-b">
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Resumen</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-slate-100 border-b">
+              <tr className="text-left text-slate-600 font-semibold">
+                <th className="px-3 py-2">C.COSTO</th>
+                <th className="px-3 py-2">N° Cuenta</th>
+                <th className="px-3 py-2">Descripción de Gasto/Ingreso</th>
+                <th className="px-3 py-2 text-right">Importe</th>
+                <th className="px-3 py-2 text-center">Afecto/I</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="px-3 py-2 font-mono text-slate-700">{ccCodigo || '—'}</td>
+                <td className="px-3 py-2 font-mono text-slate-700">{ctaCuentaNum || '—'}</td>
+                <td className="px-3 py-2 text-slate-700">{ctaDescCompleta || '—'}</td>
+                <td className="px-3 py-2 text-right font-mono text-slate-700">
+                  {importeNum > 0 ? importeNum.toFixed(2) : '—'}
+                </td>
+                <td className="px-3 py-2 text-center font-bold text-slate-700">
+                  {afecto ? 'A' : 'I'}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-3 bg-slate-50 border-t flex items-center justify-end gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-xs">Sub Total:</span>
+            <span className="font-mono font-semibold text-slate-700 w-20 text-right">
+              {subTotal.toFixed(2)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-xs">IGV (18%):</span>
+            <span className="font-mono font-semibold text-slate-700 w-20 text-right">
+              {igv.toFixed(2)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-xs">Total:</span>
+            <span className="font-mono font-bold text-emerald-700 text-base w-24 text-right">
+              {total.toFixed(2)}
+            </span>
+          </div>
         </div>
       </div>
 

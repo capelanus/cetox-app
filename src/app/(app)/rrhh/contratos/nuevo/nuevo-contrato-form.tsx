@@ -217,21 +217,28 @@ function FormPlazoFijo({ onGenerar }: { onGenerar: (html: string) => void }) {
     const fd = new FormData(e.currentTarget)
     const g = (k: string) => (fd.get(k) as string | null) ?? ''
 
+    const funcionesEspecificas = g('funcionesEspecificas')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+
     const campos = {
-      trabajadorNombre:    g('trabajadorNombre'),
-      trabajadorDni:       g('trabajadorDni'),
-      trabajadorDomicilio: g('trabajadorDomicilio'),
-      trabajadorDistrito:  g('trabajadorDistrito'),
-      trabajadorProfesion: g('trabajadorProfesion'),
-      cargo:               g('cargo'),
-      causaObjetiva:       g('causaObjetiva'),
-      remuneracionNum:     parseFloat(g('remuneracionNum')) || 0,
-      duracionTexto:       g('duracionTexto'),
-      fechaInicio:         g('fechaInicio'),
-      fechaFin:            g('fechaFin'),
-      diaFirma:            g('diaFirma'),
-      mesFirma:            g('mesFirma'),
-      anioFirma:           g('anioFirma'),
+      trabajadorNombre:       g('trabajadorNombre'),
+      trabajadorDni:          g('trabajadorDni'),
+      trabajadorDomicilio:    g('trabajadorDomicilio'),
+      trabajadorDistrito:     g('trabajadorDistrito'),
+      trabajadorProfesion:    g('trabajadorProfesion'),
+      cargo:                  g('cargo'),
+      actividadArea:          g('actividadArea'),
+      causaObjetivaIncremento: g('causaObjetivaIncremento'),
+      funcionesEspecificas,
+      remuneracionNum:        parseFloat(g('remuneracionNum')) || 0,
+      duracionTexto:          g('duracionTexto'),
+      fechaInicio:            g('fechaInicio'),
+      fechaFin:               g('fechaFin'),
+      diaFirma:               g('diaFirma'),
+      mesFirma:               g('mesFirma'),
+      anioFirma:              g('anioFirma'),
     }
 
     onGenerar(generarPlazoFijo(campos))
@@ -291,14 +298,44 @@ function FormPlazoFijo({ onGenerar }: { onGenerar: (html: string) => void }) {
           </div>
         </div>
         <div>
-          <label className={labelCls}>Causa objetiva / descripción del servicio *</label>
-          <textarea
-            name="causaObjetiva"
+          <label className={labelCls}>Actividad / área del laboratorio *</label>
+          <input
+            name="actividadArea"
             required
-            rows={3}
-            placeholder="Describe el servicio específico que justifica el contrato modal..."
+            placeholder='Ej: "del Laboratorio de Química" o "del área de Microbiología"'
+            className={inputCls}
+          />
+          <p className="text-[10px] text-slate-400 mt-1">
+            Completa la frase: &quot;…realice actividades propias <em>[esto]</em> del CENTRO TOXICOLÓGICO…&quot;
+          </p>
+        </div>
+
+        <div>
+          <label className={labelCls}>Causa objetiva del incremento *</label>
+          <textarea
+            name="causaObjetivaIncremento"
+            required
+            rows={2}
+            placeholder='Ej: "de muestras recibidas durante el periodo de campaña fitosanitaria 2026"'
             className={`${inputCls} resize-none`}
           />
+          <p className="text-[10px] text-slate-400 mt-1">
+            Completa la frase: &quot;…en atención al incremento objetivo <em>[esto]</em>…&quot;
+          </p>
+        </div>
+
+        <div>
+          <label className={labelCls}>Funciones específicas del cargo (cláusula 2) *</label>
+          <textarea
+            name="funcionesEspecificas"
+            required
+            rows={6}
+            placeholder={'Una función por línea. Ej:\nRecepcionar, codificar y procesar las muestras\nEjecutar los ensayos según los métodos aprobados\nRegistrar los resultados en el sistema de gestión\nReportar al jefe de laboratorio'}
+            className={`${inputCls} resize-y`}
+          />
+          <p className="text-[10px] text-slate-400 mt-1">
+            Se listarán como viñetas en la cláusula 2 (Obligaciones del Trabajador).
+          </p>
         </div>
       </Section>
 
@@ -312,27 +349,27 @@ function FormPlazoFijo({ onGenerar }: { onGenerar: (html: string) => void }) {
               placeholder="tres (03) meses"
               className={inputCls}
             />
-            <p className="text-[10px] text-slate-400 mt-1">Ej: "seis (06) meses"</p>
+            <p className="text-[10px] text-slate-400 mt-1">Ej: &quot;seis (06) meses&quot;</p>
           </div>
           <div>
             <label className={labelCls}>Fecha de inicio *</label>
             <input
               name="fechaInicio"
               required
-              placeholder="DD/MM/YYYY"
-              maxLength={10}
+              placeholder="01 de octubre de 2026"
               className={inputCls}
             />
+            <p className="text-[10px] text-slate-400 mt-1">Texto libre (aparece tal cual)</p>
           </div>
           <div>
             <label className={labelCls}>Fecha de fin *</label>
             <input
               name="fechaFin"
               required
-              placeholder="DD/MM/YYYY"
-              maxLength={10}
+              placeholder="31 de diciembre de 2026"
               className={inputCls}
             />
+            <p className="text-[10px] text-slate-400 mt-1">Texto libre (aparece tal cual)</p>
           </div>
         </div>
       </Section>

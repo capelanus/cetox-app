@@ -35,12 +35,16 @@ export interface CamposPlazoFijo {
   trabajadorProfesion: string
   // Laboral
   cargo:               string
-  causaObjetiva:       string    // actividades/descripción específica
+  // Texto que completa "...actividades propias [actividadArea] del CENTRO TOXICOLÓGICO..."
+  actividadArea:       string
+  // Texto que completa "...en atención al incremento objetivo [causaObjetivaIncremento]..."
+  causaObjetivaIncremento: string
+  funcionesEspecificas: string[]
   remuneracionNum:     number
   // Vigencia
   duracionTexto:       string    // e.g. "tres (03) meses"
-  fechaInicio:         string    // DD/MM/YYYY
-  fechaFin:            string    // DD/MM/YYYY
+  fechaInicio:         string    // texto libre, e.g. "01 de octubre de 2026"
+  fechaFin:            string    // texto libre, e.g. "31 de diciembre de 2026"
   // Firma
   diaFirma:   string
   mesFirma:   string

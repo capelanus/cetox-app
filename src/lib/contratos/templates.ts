@@ -360,69 +360,81 @@ export function generarIndeterminadoAltaDireccion(c: CamposIndeterminado): strin
 
 export function generarPlazoFijo(c: CamposPlazoFijo): string {
   const rem = formatearSoles(c.remuneracionNum)
+
+  const funcionesItems = (c.funcionesEspecificas ?? [])
+    .map((f) => f.trim())
+    .filter((f) => f.length > 0)
+  const funcionesLista = funcionesItems.length > 0
+    ? `<ul>${funcionesItems.map((f) => `<li>${f}</li>`).join('')}</ul>`
+    : '<p><em>(Sin funciones específicas detalladas)</em></p>'
+
   const cuerpo = `
 <h1>Contrato de Trabajo a Plazo Determinado<br/>Sujeto a Modalidad por Servicio Específico</h1>
 
-<p>Conste por el presente documento el Contrato de Trabajo sujeto a modalidad <strong>"Servicio Específico"</strong>, que celebran al amparo del Art. 63° de la Ley de Productividad y Competitividad Laboral aprobado por D.S. N.° 003-97-TR, y normas complementarias, de una parte:</p>
+<p>Conste por el presente documento el Contrato de Trabajo sujeto a modalidad <strong>"Contrato para Obra Determinada" o "Servicio Específico"</strong>, que celebran al amparo del Art. 63° de la Ley de Productividad y Competitividad Laboral aprobado por D.S. N.° 003-97-TR, y normas complementarias, de una parte, <strong>LA EMPRESA: CENTRO TOXICOLÓGICO SAC</strong>, con R.U.C. N.° 20506303746, con domicilio fiscal en Av. Angamos este Nro. 2670 Urb. La Calera Lima - Lima - Surquillo, debidamente representada por su Gerente General el Dr. <strong>FERNANDEZ ANAYA LUIS ALBERTO</strong>, con D.N.I. N.° 10810341, quien en adelante se le denominará <strong>"EL EMPLEADOR"</strong>; y la otra parte <strong>${c.trabajadorNombre.toUpperCase()}</strong>, con DNI N.° ${c.trabajadorDni} con domicilio en ${c.trabajadorDomicilio}, distrito de ${c.trabajadorDistrito} a quien en adelante se le denominará <strong>"EL TRABAJADOR"</strong>; en los términos y condiciones siguientes:</p>
 
-<h2>I. Partes del Contrato</h2>
+<h3>I. PRIMERO: ANTECEDENTES Y CAUSA OBJETIVA DE CONTRATACIÓN</h3>
+<p>EL EMPLEADOR es una persona jurídica de derecho privado cuya actividad principal es la realización de ensayos y análisis técnicos de laboratorio. Se encuentra debidamente inscrita en el Régimen Laboral de La Actividad Privada, regulado por el Texto Único Ordenado del Decreto Legislativo N.° 728 – Ley de Productividad y Competitividad Laboral.</p>
+<p>EL TRABAJADOR es una persona natural, de profesión <strong>${c.trabajadorProfesion}</strong>, quien declara contar con la formación académica, conocimientos y experiencia necesarios para desempeñar labores similares a aquellas que motivan la presente contratación.</p>
+<p>EL EMPLEADOR ha suscrito el presente contrato con EL TRABAJADOR con la finalidad de que éste realice actividades propias <strong>${c.actividadArea}</strong> del CENTRO TOXICOLÓGICO S.A.C. – CETOX LAB, en atención al incremento objetivo <strong>${c.causaObjetivaIncremento}</strong>, lo cual ha generado la necesidad de reforzar el personal del área para el adecuado cumplimiento de los servicios ofrecidos por la empresa.</p>
+<p>En virtud de lo expuesto, se requiere la contratación temporal de EL TRABAJADOR bajo la modalidad de Contrato de Trabajo de Naturaleza Temporal, en la sub modalidad de Servicio Específico, conforme a lo establecido en el artículo 63 del Decreto Legislativo N.° 728 – Ley de Productividad y Competitividad Laboral.</p>
+<p>EL TRABAJADOR se desempeñará como <strong>${c.cargo.toUpperCase()}</strong>, en su calidad de profesional <strong>${c.trabajadorProfesion}</strong>, comprometiéndose a ejecutar las funciones que le sean asignadas, a cumplir estrictamente con las labores encomendadas y a observar las normas, procedimientos y disposiciones internas de EL EMPLEADOR.</p>
 
-<p><strong>EL EMPLEADOR:</strong> <strong>CENTRO TOXICOLÓGICO S.A.C.</strong>, con R.U.C. N.° 20506303746, con domicilio fiscal en Av. Angamos Este N.° 2670, Urb. La Calera, Lima – Surquillo, debidamente representada por su Gerente General el Dr. <strong>FERNÁNDEZ ANAYA LUIS ALBERTO</strong>, con D.N.I. N.° 10810341, a quien en adelante se le denominará <strong>"EL EMPLEADOR"</strong>.</p>
+<h3>II. SEGUNDO: OBJETO DEL CONTRATO Y OBLIGACIONES DEL TRABAJADOR</h3>
+<p>En virtud de la causa objetiva señalada en la Cláusula Primera y de conformidad con lo dispuesto en el artículo 63 del Texto Único Ordenado del Decreto Legislativo N.° 728 – Ley de Productividad y Competitividad Laboral, mediante el presente documento EL EMPLEADOR contrata los servicios de EL TRABAJADOR bajo la modalidad de Contrato de Trabajo de Naturaleza Temporal, en la sub modalidad de Servicio Específico, a fin de que éste desempeñe labores en el Laboratorio de CENTRO TOXICOLÓGICO S.A.C. – CETOX LAB.</p>
+<p>En ese sentido, EL TRABAJADOR se compromete a ejecutar, atender y coordinar las actividades propias <strong>${c.actividadArea}</strong> así como a brindar apoyo en los procesos transversales que le sean asignados, asumiendo la responsabilidad de la supervisión, control y adecuado desarrollo de todas las pruebas y ensayos que se realicen en dicha unidad.</p>
+<p>EL TRABAJADOR se obliga a desempeñar sus funciones de manera leal, diligente y conforme al principio de buena fe laboral, cumpliendo estrictamente con las normas internas, reglamentos, procedimientos técnicos y disposiciones administrativas establecidas por EL EMPLEADOR.</p>
+<p>Para efectos del presente contrato, se establece como lugar de ejecución de las actividades la sede principal de EL EMPLEADOR, ubicada en Av. Angamos Este N.° 2668-2670, distrito de Surquillo, provincia y departamento de Lima.</p>
+<p>Sin perjuicio de otras responsabilidades inherentes al cargo, constituyen obligaciones generales de EL TRABAJADOR las siguientes, de carácter enunciativo y no limitativo:</p>
+${funcionesLista}
+<p>Asimismo, EL TRABAJADOR se obliga a mantener absoluta confidencialidad y reserva respecto de toda información técnica, administrativa, comercial u operativa a la que tenga acceso con ocasión del desempeño de sus funciones, incluyendo documentos, sistemas, metodologías, resultados de análisis y cualquier información que sea propiedad de EL EMPLEADOR, independientemente de la forma en que haya tomado conocimiento de ella.</p>
+<p>La obligación de confidencialidad antes descrita se extiende más allá de la jornada ordinaria de trabajo y subsistirá incluso después de concluido el vínculo laboral, por tiempo indefinido, conforme a la normativa vigente y a los intereses legítimos de EL EMPLEADOR.</p>
 
-<p><strong>EL TRABAJADOR:</strong> <strong>${c.trabajadorNombre.toUpperCase()}</strong>, con D.N.I. N.° ${c.trabajadorDni}, domiciliado(a) en ${c.trabajadorDomicilio}, distrito de ${c.trabajadorDistrito}, de profesión <strong>${c.trabajadorProfesion}</strong>, a quien en adelante se le denominará <strong>"EL TRABAJADOR"</strong>.</p>
+<h3>III. TERCERO: DE LA JORNADA DE TRABAJO</h3>
+<p>EL TRABAJADOR cumplirá una jornada ordinaria de trabajo de cuarenta y ocho (48) horas semanales como máximo, de conformidad con lo establecido en el artículo 25 de la Constitución Política del Perú y la normativa laboral vigente.</p>
+<p>La jornada se desarrollará de lunes a viernes, en el horario de 08:45 a.m. a 05:30 p.m., incluyendo un tiempo de refrigerio de cuarenta y cinco (45) minutos, el cual no forma parte de la jornada de trabajo, conforme a ley.</p>
+<p>El horario podrá ser modificado por EL EMPLEADOR, por razones operativas o de servicio, respetando en todo momento los límites legales de la jornada máxima, el descanso semanal obligatorio y los derechos laborales del trabajador, lo cual será comunicado oportunamente.</p>
+<p>Las horas laboradas que excedan la jornada ordinaria serán consideradas horas extras, siempre que hayan sido previamente autorizadas, y serán compensadas conforme a la legislación laboral vigente, ya sea mediante pago o descanso compensatorio, según corresponda.</p>
 
-<h2>II. Cláusulas Contractuales</h2>
+<h3>IV. CUARTO: DE LA REMUNERACIÓN</h3>
+<p>EL TRABAJADOR percibirá como contraprestación por los servicios prestados una remuneración mensual bruta ascendente a <strong>${rem.completo}</strong>, la cual será abonada por EL EMPLEADOR el último día hábil de cada mes, mediante los medios de pago legalmente establecidos.</p>
+<p>Dicha remuneración se encuentra afecta a los descuentos de ley, incluyendo los correspondientes al sistema previsional (ONP o AFP, según afiliación del trabajador), así como a los impuestos y demás conceptos legalmente aplicables, conforme a la normativa laboral y tributaria vigente.</p>
+<p>Asimismo, EL TRABAJADOR tendrá derecho a todos los beneficios sociales establecidos por ley, de acuerdo con el régimen laboral general al cual se encuentra inscrito EL EMPLEADOR, los cuales declara conocer y aceptar expresamente.</p>
 
-<h3>Primero: Antecedentes y Causa Objetiva de Contratación</h3>
-<p>EL EMPLEADOR es una persona jurídica de derecho privado cuya actividad principal es la realización de ensayos y análisis técnicos de laboratorio, inscrita en el Régimen Laboral de la Actividad Privada, regulado por el TUO del D. Leg. N.° 728.</p>
-<p>EL TRABAJADOR es una persona natural, de profesión <strong>${c.trabajadorProfesion}</strong>, quien declara contar con la formación académica, conocimientos y experiencia necesarios para desempeñar las labores que motivan la presente contratación.</p>
-<p>EL EMPLEADOR ha suscrito el presente contrato con la finalidad de que EL TRABAJADOR realice actividades propias de <strong>${c.causaObjetiva}</strong> en CENTRO TOXICOLÓGICO S.A.C. – CETOX LAB, en atención a la necesidad de reforzar el personal para el adecuado cumplimiento de los servicios ofrecidos por la empresa.</p>
+<h3>V. QUINTO: DE LA DURACIÓN DEL CONTRATO Y CALIFICACIÓN DEL CARGO</h3>
+<p>El presente contrato tiene una duración determinada de <strong>${c.duracionTexto}</strong>, iniciándose el <strong>${c.fechaInicio}</strong> y concluyendo el <strong>${c.fechaFin}</strong>, fecha en la cual vencerá de pleno derecho e indefectiblemente, sin necesidad de comunicación previa alguna, salvo que las partes acuerden expresa y formalmente su prórroga o renovación, de conformidad con la normativa laboral vigente.</p>
+<p>Queda expresamente establecido que EL EMPLEADOR no se encuentra obligado a cursar aviso adicional alguno respecto del término del presente contrato, operando su extinción automática en la fecha de vencimiento indicada en el párrafo precedente.</p>
+<p>A la culminación del vínculo laboral, EL EMPLEADOR procederá a abonar a EL TRABAJADOR los beneficios sociales que pudieran corresponderle conforme a ley, dentro de los plazos y condiciones establecidos por la normativa aplicable.</p>
 
-<h3>Segundo: Objeto del Contrato y Obligaciones del Trabajador</h3>
-<p>EL TRABAJADOR se desempeñará como <strong>${c.cargo.toUpperCase()}</strong>, comprometiéndose a ejecutar las funciones que le sean asignadas, a cumplir estrictamente con las labores encomendadas y a observar las normas, procedimientos y disposiciones internas de EL EMPLEADOR.</p>
-<p>EL TRABAJADOR se obliga a mantener absoluta confidencialidad y reserva respecto de toda información técnica, administrativa, comercial u operativa a la que tenga acceso. La obligación de confidencialidad subsistirá incluso después de concluido el vínculo laboral.</p>
+<h3>VI. SEXTO: CONFIDENCIALIDAD Y RESERVA DE INFORMACIÓN</h3>
+<p>EL TRABAJADOR se obliga a guardar absoluta confidencialidad y reserva respecto de toda información, documentación, datos, procedimientos, métodos, resultados, informes, sistemas, protocolos, know-how, bases de datos, estrategias técnicas o comerciales, así como cualquier otra información a la que tenga acceso directa o indirectamente con ocasión de la ejecución del presente contrato, ya sea que dicha información sea de carácter técnico, científico, operativo, administrativo, comercial o estratégico, y pertenezca a EL EMPLEADOR, a sus clientes o a terceros vinculados.</p>
+<p>Esta obligación de confidencialidad se mantiene durante toda la vigencia de la relación laboral y subsistirá aun después de su extinción, cualquiera sea la causa de esta, sin limitación temporal.</p>
+<p>EL TRABAJADOR se compromete a no divulgar, reproducir, ceder, transferir, comunicar ni poner a disposición de terceros, por ningún medio, la información confidencial referida, salvo autorización expresa y por escrito de EL EMPLEADOR o por mandato legal o judicial.</p>
+<p>El incumplimiento de esta obligación será considerado falta grave, conforme a lo dispuesto en el artículo 25° del Texto Único Ordenado del Decreto Legislativo N.° 728, facultando a EL EMPLEADOR a resolver el vínculo laboral sin perjuicio de las acciones civiles y/o penales que pudieran corresponder por los daños y perjuicios ocasionados.</p>
 
-<h3>Tercero: De la Jornada de Trabajo</h3>
-<p>EL TRABAJADOR cumplirá una jornada ordinaria de lunes a viernes, en el horario de <strong>08:45 a.m. a 05:30 p.m.</strong>, incluyendo un tiempo de refrigerio de cuarenta y cinco (45) minutos, el cual no forma parte de la jornada de trabajo. El horario podrá ser modificado por EL EMPLEADOR por razones operativas, respetando los límites legales y comunicándolo oportunamente.</p>
+<h3>VII. SÉPTIMO: DEVOLUCIÓN DE INFORMACIÓN Y BIENES</h3>
+<p>Al término de la relación laboral, EL TRABAJADOR se obliga a devolver de manera inmediata y completa toda documentación, información, registros, equipos, materiales, dispositivos electrónicos, credenciales de acceso, archivos físicos o digitales y cualquier otro bien o soporte que le haya sido entregado o al que haya tenido acceso con ocasión del vínculo laboral, quedando prohibida la conservación de copias, extractos o reproducciones.</p>
 
-<h3>Cuarto: De la Remuneración</h3>
-<p>EL TRABAJADOR percibirá como contraprestación por los servicios prestados una remuneración mensual bruta ascendente a <strong>${rem.completo}</strong>, la cual será abonada el último día hábil de cada mes, sujeta a los descuentos de ley correspondientes al sistema previsional (ONP o AFP), EsSalud e impuestos aplicables.</p>
+<h3>VIII. OCTAVO: PROTECCIÓN DE DATOS PERSONALES</h3>
+<p>EL TRABAJADOR declara conocer que, en el marco de sus funciones, podría acceder a datos personales y/o sensibles, por lo que se obliga a cumplir estrictamente con lo dispuesto en la Ley N.° 29733 – Ley de Protección de Datos Personales, su reglamento y normas complementarias, utilizando dicha información únicamente para los fines autorizados y relacionados con la actividad laboral.</p>
 
-<h3>Quinto: De la Duración del Contrato</h3>
-<p>El presente contrato tiene una duración determinada de <strong>${c.duracionTexto}</strong>, iniciándose el <strong>${c.fechaInicio}</strong> y concluyendo el <strong>${c.fechaFin}</strong>, fecha en la cual vencerá de pleno derecho e indefectiblemente, sin necesidad de comunicación previa alguna, salvo que las partes acuerden expresamente su prórroga o renovación conforme a la normativa laboral vigente.</p>
+<h3>IX. NOVENO: SOLUCIÓN DE CONTROVERSIAS</h3>
+<p>Las partes acuerdan que toda controversia, discrepancia o conflicto derivado de la interpretación, ejecución, cumplimiento, resolución, nulidad o invalidez del presente contrato será sometida a la jurisdicción de los Juzgados y Tribunales Competentes del Cercado de Lima, renunciando expresamente a cualquier otro fuero que pudiera corresponderles.</p>
 
-<h3>Sexto: Confidencialidad y Reserva de Información</h3>
-<p>EL TRABAJADOR se obliga a guardar absoluta confidencialidad y reserva respecto de toda información, documentación, datos, procedimientos, métodos, resultados, informes, sistemas, protocolos, know-how y cualquier otra información a la que tenga acceso con ocasión de la ejecución del presente contrato. Esta obligación se mantiene durante toda la vigencia de la relación laboral y subsistirá aun después de su extinción. El incumplimiento será considerado falta grave conforme al artículo 25° del TUO del D. Leg. N.° 728.</p>
+<h3>X. DÉCIMO: LEGISLACIÓN APLICABLE</h3>
+<p>El presente contrato se rige por el Texto Único Ordenado del Decreto Legislativo N.° 728 – Ley de Productividad y Competitividad Laboral, su reglamento, normas complementarias y demás disposiciones laborales vigentes en la República del Perú.</p>
 
-<h3>Séptimo: Devolución de Información y Bienes</h3>
-<p>Al término de la relación laboral, EL TRABAJADOR se obliga a devolver de manera inmediata y completa toda documentación, equipos, materiales, dispositivos electrónicos, credenciales de acceso y archivos, quedando prohibida la conservación de copias o reproducciones.</p>
-
-<h3>Octavo: Protección de Datos Personales</h3>
-<p>EL TRABAJADOR declara conocer que, en el marco de sus funciones, podría acceder a datos personales, por lo que se obliga a cumplir estrictamente con la Ley N.° 29733 – Ley de Protección de Datos Personales, su reglamento y normas complementarias.</p>
-
-<h3>Noveno: Solución de Controversias</h3>
-<p>Las partes acuerdan que toda controversia derivada del presente contrato será sometida a la jurisdicción de los Juzgados y Tribunales Competentes del Cercado de Lima, renunciando expresamente a cualquier otro fuero.</p>
-
-<h3>Décimo: Legislación Aplicable</h3>
-<p>El presente contrato se rige por el Texto Único Ordenado del Decreto Legislativo N.° 728, su reglamento, normas complementarias y demás disposiciones laborales vigentes en la República del Perú.</p>
-
-<h3>Décimo Primero: Suscripción</h3>
-<p>En señal de conformidad, las partes suscriben el presente contrato en la ciudad de Lima, a los <strong>${c.diaFirma}</strong> días del mes de <strong>${c.mesFirma}</strong> del año <strong>${c.anioFirma}</strong>.</p>
+<h3>XI. DÉCIMO PRIMERO: SUSCRIPCIÓN</h3>
+<p>En señal de conformidad, las partes suscriben el presente contrato en tres (03) ejemplares de un mismo tenor y valor legal, en la ciudad de Lima, a los <strong>${c.diaFirma}</strong> día del mes de <strong>${c.mesFirma}</strong> del año <strong>${c.anioFirma}</strong>.</p>
 
 <div class="firma-block">
   <div class="firma-col">
     <div class="firma-linea"></div>
-    <p><strong>EL EMPLEADOR</strong><br/>
-    Centro Toxicológico S.A.C. – CETOX LAB<br/>
-    Dr. Luis Alberto Fernández Anaya<br/>
-    D.N.I. N.° 10810341<br/>
-    Gerente General</p>
+    <p><strong>EL EMPLEADOR</strong></p>
   </div>
   <div class="firma-col">
     <div class="firma-linea"></div>
-    <p><strong>EL TRABAJADOR</strong><br/>
-    ${c.trabajadorNombre.toUpperCase()}<br/>
-    D.N.I. N.° ${c.trabajadorDni}</p>
+    <p><strong>EL TRABAJADOR</strong></p>
   </div>
 </div>`
 

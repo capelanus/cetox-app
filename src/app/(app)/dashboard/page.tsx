@@ -80,14 +80,14 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     prisma.cotizacion.count({ where: { deletedAt: null, estado: { in: ['BORRADOR', 'EN_REVISION', 'ENVIADA'] } } }),
     prisma.sET.count({ where: { estado: { in: ['EMITIDA', 'EN_EJECUCION'] } } }),
-    prisma.oDA.count({ where: { estado: { in: ['EMITIDA', 'RECIBIDA', 'EN_EJECUCION'] } } }),
-    prisma.informe.count({ where: { estado: { in: ['BORRADOR', 'EN_REVISION_CALIDAD', 'EN_FIRMA_GERENCIA'] } } }),
+    prisma.oDA.count({ where: { estado: { in: ['EMITIDA', 'RECIBIDA', 'EN_EJECUCION'] }, set: { estado: { not: 'ANULADO' } } } }),
+    prisma.informe.count({ where: { estado: { in: ['BORRADOR', 'EN_REVISION_CALIDAD', 'EN_FIRMA_GERENCIA'] }, oda: { set: { estado: { not: 'ANULADO' } } } } }),
     prisma.cotizacion.count({ where: { deletedAt: null } }),
     prisma.sET.count({ where: { estado: { not: 'ANULADO' } } }),
     prisma.cotizacion.groupBy({ by: ['estado'], where: { deletedAt: null }, _count: { estado: true } }),
     prisma.sET.groupBy({ by: ['estado'], where: { estado: { not: 'ANULADO' } }, _count: { estado: true } }),
-    prisma.oDA.groupBy({ by: ['estado'], _count: { estado: true } }),
-    prisma.informe.groupBy({ by: ['estado'], _count: { estado: true } }),
+    prisma.oDA.groupBy({ by: ['estado'], where: { set: { estado: { not: 'ANULADO' } } }, _count: { estado: true } }),
+    prisma.informe.groupBy({ by: ['estado'], where: { oda: { set: { estado: { not: 'ANULADO' } } } }, _count: { estado: true } }),
     getResumenEquipos().catch(() => null),
     // Monthly data: last 6 months
     prisma.cotizacion.findMany({

@@ -57,7 +57,7 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
   const esAnulado = set.estado === 'ANULADO'
   const puedoGenerarODAs = hasRol(rol, 'ADMINISTRACION') && set.estado === 'EMITIDA' && set.odas.length === 0 && !!set.cotizacion
   const puedoEditar = hasRol(rol, 'ADMINISTRACION') && !esAnulado
-  const puedoAnular = hasRol(rol, 'ADMINISTRACION') && !esAnulado && set.odas.length === 0
+  const puedoAnular = hasRol(rol, 'ADMINISTRACION') && !esAnulado
   const puedoReestablecer = hasRol(rol, 'ADMINISTRACION') && esAnulado
   const generateAction = generarODAs.bind(null, id)
   const anularAction = anularSET.bind(null, id)

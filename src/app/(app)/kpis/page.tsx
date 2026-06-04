@@ -39,10 +39,10 @@ export default async function KpisPage() {
       where:   { estado: { not: 'ANULADO' }, fechaIngreso: { gte: inicio90d } },
       _count:  { id: true },
     }),
-    // Informes asignados por analista (últimos 90 días)
+    // Informes asignados por analista (últimos 90 días, excluyendo SETs anulados)
     prisma.informe.groupBy({
       by:      ['analistaId'],
-      where:   { createdAt: { gte: inicio90d } },
+      where:   { createdAt: { gte: inicio90d }, oda: { set: { estado: { not: 'ANULADO' } } } },
       _count:  { id: true },
     }),
   ])

@@ -9,9 +9,12 @@ export default async function InformesPage() {
   const rol = session.user.rol
   const esAnalista = rol === 'ANALISTA'
 
-  // Analistas solo ven sus propios informes
+  // Analistas solo ven sus propios informes. Siempre excluir informes de SETs anulados.
   const informes = await prisma.informe.findMany({
-    where: esAnalista ? { analistaId: session.user.id } : undefined,
+    where: {
+      ...(esAnalista ? { analistaId: session.user.id } : {}),
+      oda: { set: { estado: { not: 'ANULADO' } } },
+    },
     include: {
       oda: { include: { items: { include: { ensayo: true } }, set: { include: { cliente: true } } } },
       analista: true,

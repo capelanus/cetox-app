@@ -7,7 +7,9 @@ export default async function ODAPage() {
   const userArea = session?.user.area
   const rol = session?.user.rol
 
-  const where = rol === 'ANALISTA' && userArea ? { area: userArea } : {}
+  const baseWhere = rol === 'ANALISTA' && userArea ? { area: userArea } : {}
+  // Excluir ODAs cuyos SETs estén anulados
+  const where = { ...baseWhere, set: { estado: { not: 'ANULADO' } } }
 
   const odas = await prisma.oDA.findMany({
     where,

@@ -9,9 +9,14 @@ export default async function CargosPage() {
   const session = await requireNotAnalista()
   const sets = await prisma.sET.findMany({
     where: {
-      OR: [
-        { estado: { in: ['INFORME_EMITIDO', 'FINALIZADA', 'ENTREGADA'] } },
-        { odas: { some: { informe: { is: { estado: 'FIRMADO' } } } } },
+      AND: [
+        { estado: { not: 'ANULADO' } },
+        {
+          OR: [
+            { estado: { in: ['INFORME_EMITIDO', 'FINALIZADA', 'ENTREGADA'] } },
+            { odas: { some: { informe: { is: { estado: 'FIRMADO' } } } } },
+          ],
+        },
       ],
     },
     include: { cliente: true, cargoEntrega: true },

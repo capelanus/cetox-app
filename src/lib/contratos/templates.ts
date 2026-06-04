@@ -270,8 +270,21 @@ export function generarIndeterminado(c: CamposIndeterminado): string {
 
 // ── 2. CONTRATO A PLAZO INDETERMINADO – ALTA DIRECCIÓN ───────────────────────
 
+function buildFuncionesEspecificasParrafo(funciones?: string[]): string {
+  const items = (funciones ?? [])
+    .map((f) => f.trim())
+    .filter((f) => f.length > 0)
+  if (items.length === 0) return ''
+  const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const especificas = items
+    .map((item, i) => `${letras[i] ?? `${i + 1}`}). ${item}`)
+    .join(' ')
+  return ` Asimismo, EL TRABAJADOR(A) desempeñará las siguientes funciones específicas: ${especificas}`
+}
+
 export function generarIndeterminadoAltaDireccion(c: CamposIndeterminado): string {
   const rem = formatearSoles(c.remuneracionNum)
+  const funcionesParrafo = buildFuncionesEspecificasParrafo(c.funcionesEspecificas)
   const cuerpo = `
 <h1>Contrato de Trabajo a Plazo Indeterminado<br/><small style="font-size:10pt">(Alta Dirección)</small></h1>
 
@@ -306,7 +319,7 @@ export function generarIndeterminadoAltaDireccion(c: CamposIndeterminado): strin
 <p>EL TRABAJADOR(A) se encuentra sujeto al régimen laboral de la actividad privada, regulado por el TUO del Decreto Legislativo N.° 728. En tal condición, tiene derecho a: vacaciones de 30 días calendario por año, CTS conforme al D.S. N.° 001-97-TR, gratificaciones legales por Fiestas Patrias y Navidad (Ley N.° 27735), Seguro Social en Salud (EsSalud) y asignación familiar cuando corresponda (Ley N.° 25129).</p>
 
 <h3>Séptima: Obligaciones del Trabajador</h3>
-<p>EL TRABAJADOR(A) se obliga a: cumplir normas, políticas y procedimientos internos; guardar absoluta confidencialidad sobre toda información técnica, científica, operativa y administrativa a la que tenga acceso; y mantener una conducta ética y profesional conforme a los lineamientos de calidad y buenas prácticas del laboratorio.</p>
+<p>EL TRABAJADOR(A) se obliga a: cumplir normas, políticas y procedimientos internos; guardar absoluta confidencialidad sobre toda información técnica, científica, operativa y administrativa a la que tenga acceso; y mantener una conducta ética y profesional conforme a los lineamientos de calidad y buenas prácticas del laboratorio.${funcionesParrafo}</p>
 
 <h3>Octava: Confidencialidad y Responsabilidad Penal</h3>
 <p>EL TRABAJADOR(A) se obliga a mantener absoluta confidencialidad y secreto profesional respecto de toda información a la que tenga acceso, incluyendo métodos analíticos, resultados de ensayo, información de clientes y proveedores, registros del sistema de gestión de la calidad (ISO/IEC 17025) y todo el know-how de CETOX LAB. El incumplimiento constituye falta grave y puede configurar el delito de Revelación de Secretos (artículo 165° del Código Penal). La obligación de confidencialidad permanece vigente de manera indefinida, aun después de concluida la relación laboral.</p>

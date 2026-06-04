@@ -709,6 +709,10 @@ export function NuevoContratoForm({ tipo }: Props) {
             e.preventDefault()
             const fd = new FormData(e.currentTarget)
             const g = (k: string) => (fd.get(k) as string | null) ?? ''
+            const funcionesEspecificas = g('funcionesEspecificas')
+              .split('\n')
+              .map((l) => l.trim())
+              .filter((l) => l.length > 0)
             const campos = {
               trabajadorNombre:       g('trabajadorNombre'),
               trabajadorDni:          g('trabajadorDni'),
@@ -718,6 +722,7 @@ export function NuevoContratoForm({ tipo }: Props) {
               fechaIngresoServicios:  g('fechaIngresoServicios'),
               remuneracionNum:        parseFloat(g('remuneracionNum')) || 0,
               fechaAntiguedadTexto:   g('fechaAntiguedadTexto'),
+              funcionesEspecificas,
               diaFirma:               g('diaFirma'),
               mesFirma:               g('mesFirma'),
               anioFirma:              g('anioFirma'),
@@ -778,6 +783,19 @@ export function NuevoContratoForm({ tipo }: Props) {
                 <label className={labelCls}>Fecha de antigüedad (cláusula 11) *</label>
                 <input name="fechaAntiguedadTexto" required placeholder="DD/MM/YYYY" maxLength={10} className={inputCls} />
               </div>
+            </div>
+
+            <div>
+              <label className={labelCls}>Funciones específicas del cargo (cláusula 7)</label>
+              <textarea
+                name="funcionesEspecificas"
+                rows={6}
+                placeholder={'Una función por línea. Ej:\nDirigir la estrategia comercial y operativa\nRepresentar legalmente a la empresa\nSupervisar al equipo directivo'}
+                className={`${inputCls} resize-y`}
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Se añaden como A), B), C)… al final de la cláusula 7. Déjalo vacío para el texto genérico.
+              </p>
             </div>
           </Section>
 

@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { formatMoneda } from '@/lib/format'
 import { ContactoFields } from './contacto-fields'
 import { MuestraEditor } from './muestra-editor'
+import { ObservacionPicker } from './observacion-picker'
 
 interface NuevaCotizacionFormProps {
   clientes: Cliente[]
@@ -20,6 +21,11 @@ export function NuevaCotizacionForm({ clientes, ensayos }: NuevaCotizacionFormPr
   const [subtotal, setSubtotal] = useState(0)
   const [itemCount, setItemCount] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [observaciones, setObservaciones] = useState('')
+
+  function appendObservacion(texto: string) {
+    setObservaciones((prev) => (prev.trim() ? `${prev.trim()}\n\n${texto}` : texto))
+  }
 
   const igv = subtotal * 0.18
   const total = subtotal + igv
@@ -91,10 +97,13 @@ export function NuevaCotizacionForm({ clientes, ensayos }: NuevaCotizacionFormPr
 
       <div className="space-y-2">
         <Label>Observaciones</Label>
+        <ObservacionPicker onSelect={appendObservacion} />
         <textarea
           name="observaciones"
           placeholder="Observaciones adicionales..."
           rows={3}
+          value={observaciones}
+          onChange={(e) => setObservaciones(e.target.value)}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[80px]"
         />
       </div>

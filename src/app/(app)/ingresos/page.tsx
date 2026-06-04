@@ -5,6 +5,7 @@ import { IngresosView } from '@/components/ingresos-view'
 export default async function IngresosPage() {
   await requireNotAnalista()
   const sets = await prisma.sET.findMany({
+    where: { estado: { not: 'ANULADO' } },
     include: {
       cliente: true,
       cotizacion: {

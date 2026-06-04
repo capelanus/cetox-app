@@ -337,6 +337,55 @@ export async function cambiarEstadoSET(setId: string, estado: string) {
   revalidatePath('/set')
 }
 
+export async function anularSET(setId: string) {
+  await requireRol(['ADMINISTRACION'])
+
+  const set = await prisma.sET.findUniqueOrThrow({
+    where: { id: setId },
+    select: { estado: true, odas: { select: { id: true } } },
+  })
+
+  if (set.odas.length > 0) {
+    throw new Error('No se puede anular un SET que ya generó ODAs')
+  }
+  if (set.estado === 'ANULADO') {
+    throw new Error('El SET ya está anulado')
+  }
+
+  await prisma.sET.update({
+    where: { id: setId },
+    data: { estado: 'ANULADO' },
+  })
+
+  revalidatePath(`/set/${setId}`)
+  revalidatePath('/set')
+  revalidatePath('/finanzas')
+  revalidatePath('/kpis')
+}
+
+export async function reestablecerSET(setId: string) {
+  await requireRol(['ADMINISTRACION'])
+
+  const set = await prisma.sET.findUniqueOrThrow({
+    where: { id: setId },
+    select: { estado: true },
+  })
+
+  if (set.estado !== 'ANULADO') {
+    throw new Error('Solo se puede reestablecer un SET anulado')
+  }
+
+  await prisma.sET.update({
+    where: { id: setId },
+    data: { estado: 'EMITIDA' },
+  })
+
+  revalidatePath(`/set/${setId}`)
+  revalidatePath('/set')
+  revalidatePath('/finanzas')
+  revalidatePath('/kpis')
+}
+
 export async function actualizarSET(setId: string, formData: FormData) {
   await requireRol(['ADMINISTRACION'])
 

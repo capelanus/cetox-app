@@ -33,10 +33,10 @@ export default async function KpisPage() {
       where:   { deletedAt: null, fechaEmision: { gte: inicio90d } },
       _count:  { id: true },
     }),
-    // SETs creados por usuario (últimos 90 días)
+    // SETs creados por usuario (últimos 90 días, excluyendo anulados)
     prisma.sET.groupBy({
       by:      ['creadoPorId'],
-      where:   { fechaIngreso: { gte: inicio90d } },
+      where:   { estado: { not: 'ANULADO' }, fechaIngreso: { gte: inicio90d } },
       _count:  { id: true },
     }),
     // Informes asignados por analista (últimos 90 días)

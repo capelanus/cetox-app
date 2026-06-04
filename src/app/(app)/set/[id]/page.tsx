@@ -4,10 +4,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, CheckCircle2, Pencil } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Pencil, Ban, RotateCcw } from 'lucide-react'
 import { SetPdfButton } from '@/components/set-pdf-button'
 import { formatFecha, formatNumSET, formatNumODA, formatMoneda } from '@/lib/format'
-import { generarODAs } from '@/app/actions/set'
+import { generarODAs, anularSET, reestablecerSET } from '@/app/actions/set'
 import { revalidatePath } from 'next/cache'
 
 const ESTADO_ODA_LABELS: Record<string, string> = {
@@ -54,9 +54,14 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
   if (!set) notFound()
 
   const rol = session?.user.rol ?? ''
+  const esAnulado = set.estado === 'ANULADO'
   const puedoGenerarODAs = hasRol(rol, 'ADMINISTRACION') && set.estado === 'EMITIDA' && set.odas.length === 0 && !!set.cotizacion
-  const puedoEditar = hasRol(rol, 'ADMINISTRACION')
+  const puedoEditar = hasRol(rol, 'ADMINISTRACION') && !esAnulado
+  const puedoAnular = hasRol(rol, 'ADMINISTRACION') && !esAnulado && set.odas.length === 0
+  const puedoReestablecer = hasRol(rol, 'ADMINISTRACION') && esAnulado
   const generateAction = generarODAs.bind(null, id)
+  const anularAction = anularSET.bind(null, id)
+  const reestablecerAction = reestablecerSET.bind(null, id)
 
   const cot = set.cotizacion
   const esCero = !cot // SET sin cotización (gratuito)
@@ -76,7 +81,12 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
           <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />SET</Button>
         </Link>
         <h1 className="text-xl font-bold text-slate-900">{formatNumSET(set.numero, set.anio)}</h1>
-        <Badge className={set.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' : ''}>
+        <Badge
+          className={
+            esAnulado ? 'bg-red-100 text-red-700' :
+            set.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' : ''
+          }
+        >
           {set.estado.replace(/_/g, ' ')}
         </Badge>
         {esCero && set.motivoCero && (
@@ -94,6 +104,26 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
                 <Pencil className="h-3.5 w-3.5 mr-1.5" />Editar
               </Button>
             </Link>
+          )}
+          {puedoAnular && (
+            <form action={anularAction}>
+              <Button
+                type="submit" variant="outline" size="sm"
+                className="text-red-700 border-red-300 hover:bg-red-50"
+              >
+                <Ban className="h-3.5 w-3.5 mr-1.5" />Anular
+              </Button>
+            </form>
+          )}
+          {puedoReestablecer && (
+            <form action={reestablecerAction}>
+              <Button
+                type="submit" variant="outline" size="sm"
+                className="text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />Reestablecer
+              </Button>
+            </form>
           )}
           <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{set.codigoMuestra}</span>
         </div>

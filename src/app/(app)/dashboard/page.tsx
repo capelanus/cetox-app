@@ -83,9 +83,9 @@ export default async function DashboardPage() {
     prisma.oDA.count({ where: { estado: { in: ['EMITIDA', 'RECIBIDA', 'EN_EJECUCION'] } } }),
     prisma.informe.count({ where: { estado: { in: ['BORRADOR', 'EN_REVISION_CALIDAD', 'EN_FIRMA_GERENCIA'] } } }),
     prisma.cotizacion.count({ where: { deletedAt: null } }),
-    prisma.sET.count(),
+    prisma.sET.count({ where: { estado: { not: 'ANULADO' } } }),
     prisma.cotizacion.groupBy({ by: ['estado'], where: { deletedAt: null }, _count: { estado: true } }),
-    prisma.sET.groupBy({ by: ['estado'], _count: { estado: true } }),
+    prisma.sET.groupBy({ by: ['estado'], where: { estado: { not: 'ANULADO' } }, _count: { estado: true } }),
     prisma.oDA.groupBy({ by: ['estado'], _count: { estado: true } }),
     prisma.informe.groupBy({ by: ['estado'], _count: { estado: true } }),
     getResumenEquipos().catch(() => null),
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
       select: { fechaEmision: true },
     }),
     prisma.sET.findMany({
-      where: { fechaIngreso: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5, 1)) } },
+      where: { estado: { not: 'ANULADO' }, fechaIngreso: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5, 1)) } },
       select: { fechaIngreso: true },
     }),
   ])

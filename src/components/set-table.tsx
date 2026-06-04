@@ -10,6 +10,7 @@ const ESTADO_LABELS: Record<string, string> = {
   EN_EJECUCION: 'En ejecución',
   FINALIZADA: 'Finalizada',
   ENTREGADA: 'Entregada',
+  ANULADO: 'Anulado',
 }
 
 const MOTIVO_LABELS: Record<string, string> = {
@@ -57,7 +58,7 @@ export function SETTable({ sets }: Props) {
             <tr
               key={s.id}
               onClick={() => router.push(`/set/${s.id}`)}
-              className="hover:bg-slate-50 cursor-pointer transition-colors"
+              className={`hover:bg-slate-50 cursor-pointer transition-colors ${s.estado === 'ANULADO' ? 'opacity-50' : ''}`}
             >
               <td className="px-4 py-3">
                 <span className="font-mono text-xs font-medium">{formatNumSET(s.numero, s.anio)}</span>
@@ -77,7 +78,10 @@ export function SETTable({ sets }: Props) {
               <td className="px-4 py-3">{s.odas.length}</td>
               <td className="px-4 py-3 text-right">
                 <Badge
-                  className={s.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' : ''}
+                  className={
+                    s.estado === 'ANULADO' ? 'bg-red-100 text-red-700' :
+                    s.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' : ''
+                  }
                   variant={(['EMITIDA', 'VALIDADA_CLIENTE'].includes(s.estado) ? 'secondary' : 'outline') as 'default' | 'secondary' | 'outline'}
                 >
                   {ESTADO_LABELS[s.estado] ?? s.estado}

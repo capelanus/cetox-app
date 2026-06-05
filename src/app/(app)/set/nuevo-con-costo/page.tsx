@@ -8,9 +8,9 @@ import { formatNumCotizacion, formatFecha, formatMoneda } from '@/lib/format'
 export default async function NuevoSETConCostoPage() {
   await requireRol(['ADMINISTRACION'])
 
-  // Cotizaciones aceptadas — excluir las que ya tienen todos sus SETs generados
+  // Solo cotizaciones ABIERTAS aceptadas — son las únicas disponibles para SETs con costo
   const cotizaciones = await prisma.cotizacion.findMany({
-    where: { estado: 'ACEPTADA', deletedAt: null },
+    where: { tipo: 'ABIERTA', estado: 'ACEPTADA', deletedAt: null },
     include: {
       cliente: true,
       muestras: {
@@ -44,7 +44,7 @@ export default async function NuevoSETConCostoPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Nuevo SET con costo</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Selecciona la cotización aceptada para la que deseas generar el SET
+            Selecciona la cotización abierta para la que deseas generar el SET
           </p>
         </div>
       </div>
@@ -52,10 +52,10 @@ export default async function NuevoSETConCostoPage() {
       {disponibles.length === 0 ? (
         <div className="bg-white rounded-xl border shadow-sm p-10 text-center">
           <p className="text-slate-400 text-sm">
-            No hay cotizaciones aceptadas pendientes de SET.
+            No hay cotizaciones abiertas disponibles.
           </p>
-          <Link href="/cotizaciones" className="mt-3 inline-block text-blue-600 text-sm hover:underline">
-            Ver todas las cotizaciones
+          <Link href="/cotizaciones/nueva-abierta" className="mt-3 inline-block text-blue-600 text-sm hover:underline">
+            Crear cotización abierta
           </Link>
         </div>
       ) : (

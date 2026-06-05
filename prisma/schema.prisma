@@ -175,6 +175,7 @@ model Cotizacion {
   vigenciaHasta    DateTime
   moneda           String   @default("USD")
   modalidadPago    String   @default("ANTICIPO_50_50")
+  tipo             String   @default("NORMAL")  // NORMAL | ABIERTA
   clienteId        String
   cliente          Cliente  @relation(fields: [clienteId], references: [id])
   estado           String   @default("BORRADOR")

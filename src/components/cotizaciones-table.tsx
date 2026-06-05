@@ -45,6 +45,7 @@ interface Cotizacion {
   numero: number
   anio: number
   sufijo: string
+  tipo: string
   cliente: { razonSocial: string }
   creadoPor: { nombre: string }
   fechaEmision: Date | string
@@ -181,23 +182,28 @@ export function CotizacionesTable({ cotizaciones, ensayos }: Props) {
                   {formatMoneda(c.total, c.moneda as 'USD' | 'PEN')}
                 </td>
                 <td className="px-4 py-3">
-                  <Badge
-                    className={
-                      c.estado === 'ACEPTADA'
-                        ? 'bg-green-100 text-green-700'
-                        : c.estado === 'RECHAZADA'
-                          ? 'bg-red-100 text-red-700'
-                          : ''
-                    }
-                    variant={
-                      c.estado === 'RECHAZADA' ? 'destructive' :
-                      c.estado === 'EN_REVISION' ? 'outline' :
-                      c.estado === 'VENCIDA' ? 'secondary' : 'default'
-                    }
-                  >
-                    {ESTADO_LABELS[c.estado] ?? c.estado}
-                  </Badge>
-                  {ESTADO_DEPTO[c.estado] && (
+                  <div className="flex flex-wrap gap-1 items-center">
+                    <Badge
+                      className={
+                        c.estado === 'ACEPTADA'
+                          ? 'bg-green-100 text-green-700'
+                          : c.estado === 'RECHAZADA'
+                            ? 'bg-red-100 text-red-700'
+                            : ''
+                      }
+                      variant={
+                        c.estado === 'RECHAZADA' ? 'destructive' :
+                        c.estado === 'EN_REVISION' ? 'outline' :
+                        c.estado === 'VENCIDA' ? 'secondary' : 'default'
+                      }
+                    >
+                      {ESTADO_LABELS[c.estado] ?? c.estado}
+                    </Badge>
+                    {c.tipo === 'ABIERTA' && (
+                      <Badge className="bg-amber-100 text-amber-700">Abierta</Badge>
+                    )}
+                  </div>
+                  {ESTADO_DEPTO[c.estado] && c.tipo !== 'ABIERTA' && (
                     <p className="text-xs text-slate-400 mt-0.5">{ESTADO_DEPTO[c.estado]}</p>
                   )}
                 </td>

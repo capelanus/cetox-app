@@ -84,6 +84,9 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
         >
           {ESTADO_LABELS[cot.estado] ?? cot.estado}
         </Badge>
+        {cot.tipo === 'ABIERTA' && (
+          <Badge className="bg-amber-100 text-amber-700">Abierta</Badge>
+        )}
         {canEdit && (
           <div className="ml-auto">
             <CotizacionActionsMenu
@@ -95,8 +98,8 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      {/* Flujo de aprobación */}
-      {cot.estado !== 'RECHAZADA' && cot.estado !== 'VENCIDA' ? (
+      {/* Flujo de aprobación — solo para cotizaciones normales */}
+      {cot.tipo !== 'ABIERTA' && cot.estado !== 'RECHAZADA' && cot.estado !== 'VENCIDA' ? (
         <div className="bg-white rounded-xl border shadow-sm p-5">
           <h2 className="font-semibold text-slate-700 text-sm mb-4">Flujo de aprobación</h2>
           {(() => {
@@ -358,7 +361,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
               </Button>
             </a>
           )}
-          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.sets.length === 0 && (
+          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.sets.length === 0 && cot.tipo !== 'ABIERTA' && (
             <Link href={`/set/nuevo?cotizacionId=${cot.id}`}>
               <Button style={{ backgroundColor: '#13602C' }}>
                 {cot.muestras.length > 0

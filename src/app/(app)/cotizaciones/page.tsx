@@ -28,12 +28,20 @@ export default async function CotizacionesPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Cotizaciones</h1>
         {canCreate && (
-          <Link href="/cotizaciones/nueva">
-            <Button style={{ backgroundColor: '#13602C' }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva cotización
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/cotizaciones/nueva-abierta">
+              <Button variant="outline" className="border-amber-400 text-amber-700 hover:bg-amber-50">
+                <Plus className="h-4 w-4 mr-2" />
+                Cotización abierta
+              </Button>
+            </Link>
+            <Link href="/cotizaciones/nueva">
+              <Button style={{ backgroundColor: '#13602C' }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva cotización
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
       <CotizacionesTable cotizaciones={cotizaciones} ensayos={ensayos} />

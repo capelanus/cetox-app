@@ -14,9 +14,10 @@ import { ObservacionPicker } from './observacion-picker'
 interface NuevaCotizacionFormProps {
   clientes: Cliente[]
   ensayos: Ensayo[]
+  tipo?: 'NORMAL' | 'ABIERTA'
 }
 
-export function NuevaCotizacionForm({ clientes, ensayos }: NuevaCotizacionFormProps) {
+export function NuevaCotizacionForm({ clientes, ensayos, tipo = 'NORMAL' }: NuevaCotizacionFormProps) {
   const [moneda, setMoneda] = useState<'USD' | 'PEN'>('USD')
   const [subtotal, setSubtotal] = useState(0)
   const [itemCount, setItemCount] = useState(0)
@@ -46,6 +47,13 @@ export function NuevaCotizacionForm({ clientes, ensayos }: NuevaCotizacionFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl border shadow-sm">
+      <input type="hidden" name="tipo" value={tipo} />
+      {tipo === 'ABIERTA' && (
+        <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+          <span className="font-semibold">Cotización abierta</span>
+          <span className="text-amber-600">— se creará directamente en estado Aceptada y será disponible para SETs con costo.</span>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2 space-y-2">
           <Label>Cliente *</Label>

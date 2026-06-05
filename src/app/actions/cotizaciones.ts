@@ -94,12 +94,17 @@ export async function crearCotizacion(formData: FormData) {
   const total = subtotal + igv
 
   const clienteId = formData.get('clienteId') as string
+  const tipo = (formData.get('tipo') as string) || 'NORMAL'
+  // Cotizaciones abiertas se crean directamente en estado ACEPTADA
+  const estado = tipo === 'ABIERTA' ? 'ACEPTADA' : 'BORRADOR'
 
   const cot = await prisma.cotizacion.create({
     data: {
       numero,
       anio,
       sufijo: '',
+      tipo,
+      estado,
       moneda:        formData.get('moneda') as string,
       modalidadPago: (formData.get('modalidadPago') as string) || 'ANTICIPO_50_50',
       clienteId,

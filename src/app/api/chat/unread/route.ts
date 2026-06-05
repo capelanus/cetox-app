@@ -1,11 +1,16 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+const NO_CACHE = { 'Cache-Control': 'no-store, max-age=0' }
+
 // GET /api/chat/unread?<userId1>=ISO&<userId2>=ISO&...
 // Returns { [otroUsuarioId]: count } — only messages from the other user after the given timestamp
 export async function GET(request: Request) {
   const session = await auth()
-  if (!session?.user?.id) return Response.json({}, { status: 401 })
+  if (!session?.user?.id) return Response.json({}, { status: 401, headers: NO_CACHE })
 
   const userId = session.user.id
   const { searchParams } = new URL(request.url)
@@ -38,5 +43,5 @@ export async function GET(request: Request) {
     })
   )
 
-  return Response.json(counts)
+  return Response.json(counts, { headers: NO_CACHE })
 }

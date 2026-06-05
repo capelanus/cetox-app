@@ -224,7 +224,7 @@ export function ChatPanel({ userId }: Props) {
   // ── Load users list once on mount ─────────────────────────────────────────
 
   useEffect(() => {
-    fetch('/api/chat/usuarios')
+    fetch('/api/chat/usuarios', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : [])
       .then((data: Usuario[]) => setUsuarios(data))
       .catch(() => {})
@@ -252,7 +252,7 @@ export function ChatPanel({ userId }: Props) {
         const ts = currentLastRead[u.id] ?? new Date(0).toISOString()
         params.set(u.id, ts)
       }
-      const res  = await fetch(`/api/chat/unread?${params}`)
+      const res  = await fetch(`/api/chat/unread?${params}`, { cache: 'no-store' })
       if (!res.ok) return
       const data: Record<string, number> = await res.json()
       setUnreadCounts(prev => {
@@ -282,7 +282,7 @@ export function ChatPanel({ userId }: Props) {
     setCargando(true)
     lastTsRef.current = null
     try {
-      const res  = await fetch(`/api/chat/mensajes?usuario=${otroId}`)
+      const res  = await fetch(`/api/chat/mensajes?usuario=${otroId}`, { cache: 'no-store' })
       if (!res.ok) return
       const data: Mensaje[] = await res.json()
       setMensajes(data)
@@ -297,7 +297,7 @@ export function ChatPanel({ userId }: Props) {
   async function pollMensajes(otroId: string) {
     if (!lastTsRef.current) return
     try {
-      const res  = await fetch(`/api/chat/mensajes?usuario=${otroId}&desde=${encodeURIComponent(lastTsRef.current)}`)
+      const res  = await fetch(`/api/chat/mensajes?usuario=${otroId}&desde=${encodeURIComponent(lastTsRef.current)}`, { cache: 'no-store' })
       if (!res.ok) return
       const data: Mensaje[] = await res.json()
       if (!data.length) return

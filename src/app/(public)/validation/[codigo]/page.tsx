@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ShieldCheck, XCircle, Download } from 'lucide-react'
+import { ShieldCheck, XCircle, Download, Eye } from 'lucide-react'
 
 interface ValidationResult {
   valid: boolean
@@ -125,16 +125,28 @@ export default function ValidationPage({ params }: { params: Promise<{ codigo: s
                   <p>{result.informe.firmaGerencia}</p>
                 </div>
               </div>
-              <a
-                href={`/api/validation/${codigo}/pdf?clave=${encodeURIComponent(clave)}`}
-                download
-                className="block mt-2"
-              >
-                <Button className="w-full" style={{ backgroundColor: '#13602C' }}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Descargar certificado PDF
-                </Button>
-              </a>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <a
+                  href={`/api/validation/${codigo}/pdf?clave=${encodeURIComponent(clave)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button variant="outline" className="w-full">
+                    <Eye className="h-4 w-4 mr-2" />
+                    Visualizar
+                  </Button>
+                </a>
+                <a
+                  href={`/api/validation/${codigo}/pdf?clave=${encodeURIComponent(clave)}&download=1`}
+                  className="block"
+                >
+                  <Button className="w-full" style={{ backgroundColor: '#13602C' }}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Descargar
+                  </Button>
+                </a>
+              </div>
               <Button
                 variant="ghost"
                 className="w-full"

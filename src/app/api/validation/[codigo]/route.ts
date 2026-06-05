@@ -17,7 +17,6 @@ export async function GET(
     include: {
       informe: {
         include: {
-          analista: true,
           oda: { include: { items: { include: { ensayo: true } }, set: { include: { cliente: true } } } },
         },
       },
@@ -36,7 +35,6 @@ export async function GET(
       prefijo: cert.informe.prefijo,
       ensayo: cert.informe.oda.items.map((i) => i.ensayo.nombre).join(', '),
       cliente: cert.informe.oda.set.cliente.razonSocial,
-      analista: cert.informe.analista.nombre,
       firmaGerencia: cert.informe.firmaGerencia?.toISOString() ?? '',
       pdfUrl: cert.informe.archivoPdf ? `/${cert.informe.archivoPdf}` : null,
     },

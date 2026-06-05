@@ -15,7 +15,6 @@ interface ValidationResult {
     prefijo: string
     ensayo: string
     cliente: string
-    analista: string
     firmaGerencia: string
   }
 }
@@ -115,10 +114,6 @@ export default function ValidationPage({ params }: { params: Promise<{ codigo: s
                 <div>
                   <p className="text-slate-500">Cliente</p>
                   <p>{result.informe.cliente}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500">Analista</p>
-                  <p>{result.informe.analista}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-slate-500">Firmado</p>

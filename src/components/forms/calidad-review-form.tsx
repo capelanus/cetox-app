@@ -36,14 +36,14 @@ export function CalidadReviewForm({ firmarAction, devolverAction, observacionesI
             <input type="hidden" name="observacionesCalidad" value={obs} />
             <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white gap-2">
               <CheckCircle2 className="h-4 w-4" />
-              Aprobar y enviar a gerencia
+              Revisar y enviar a gerencia
             </Button>
           </form>
           <form action={devolverAction}>
             <input type="hidden" name="observacionesCalidad" value={obs} />
             <Button type="submit" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 gap-2">
               <XCircle className="h-4 w-4" />
-              No aprobar — devolver a administración
+              Devolver a administración
             </Button>
           </form>
         </div>

@@ -425,11 +425,11 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 space-y-4">
             <h2 className="font-semibold text-blue-700">Firma con QR</h2>
 
-            {/* Visor embebido del informe aprobado por calidad */}
+            {/* Visor embebido del informe revisado por calidad */}
             {informe.archivoPdf && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-600">Informe aprobado por Calidad</p>
+                  <p className="text-sm font-medium text-slate-600">Informe revisado por Calidad</p>
                   <a href={informe.archivoPdf} download>
                     <Button variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-1.5" />
@@ -441,7 +441,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
                   src={`https://docs.google.com/viewer?url=${encodeURIComponent(informe.archivoPdf)}&embedded=true`}
                   className="w-full rounded-lg border border-blue-200 bg-white"
                   style={{ height: '560px' }}
-                  title="Informe aprobado"
+                  title="Informe revisado"
                 />
               </div>
             )}

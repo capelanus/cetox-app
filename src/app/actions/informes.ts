@@ -54,7 +54,7 @@ export async function subirInformeCorregidoCalidad(informeId: string, formData: 
 }
 
 export async function subirDocumentoFirmado(informeId: string, formData: FormData) {
-  await requireRol(['GERENTE_TECNICO'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
   const file = formData.get('firmado') as File | null
   if (!file || file.size === 0) return
 
@@ -70,7 +70,7 @@ export async function subirDocumentoFirmado(informeId: string, formData: FormDat
 }
 
 export async function firmarGerenciaTecnica(informeId: string) {
-  await requireRol(['GERENTE_TECNICO'])
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'])
 
   const informe = await prisma.informe.findUniqueOrThrow({
     where: { id: informeId },

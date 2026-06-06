@@ -420,10 +420,10 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
           </div>
         )}
 
-        {/* Firma de gerencia — sección para Gerente Técnico */}
-        {esGerente && informe.estado === 'EN_FIRMA_GERENCIA' && (
+        {/* Firma con QR — Gerente Técnico o Director de Calidad */}
+        {(esGerente || esCalidad) && informe.estado === 'EN_FIRMA_GERENCIA' && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 space-y-4">
-            <h2 className="font-semibold text-blue-700">Firma de gerencia técnica</h2>
+            <h2 className="font-semibold text-blue-700">Firma con QR</h2>
 
             {/* Visor embebido del informe aprobado por calidad */}
             {informe.archivoPdf && (
@@ -551,7 +551,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
           {esCalidad && informe.estado === 'EN_REVISION_CALIDAD' && (
             <div className="w-full" />
           )}
-          {esGerente && informe.estado === 'EN_FIRMA_GERENCIA' && (
+          {(esGerente || esCalidad) && informe.estado === 'EN_FIRMA_GERENCIA' && (
             <div className="w-full" />
           )}
         </div>

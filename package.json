@@ -10,7 +10,7 @@
     "dev:fresh": "rm -rf .next && next dev",
     "build": "prisma generate && next build",
     "migrate": "prisma migrate deploy",
-    "start": "next start",
+    "start": "prisma migrate deploy && next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
   },

@@ -219,7 +219,7 @@ export default async function VacacionesPage() {
                         </button>
                       </a>
                       {(isYahaida || ROLES_HR.includes(myRol)) && (
-                        <SolicitudActions solicitudId={s.id} mode="comunicar" />
+                        <SolicitudActions solicitudId={s.id} mode="comunicar" diasOriginales={dias} />
                       )}
                     </div>
                   </div>

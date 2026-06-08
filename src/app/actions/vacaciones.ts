@@ -168,9 +168,14 @@ export async function aprobarSolicitudVacaciones(
 }
 
 // ── Marcar como comunicada (Yahaida) ─────────────────────────────────────────
+//
+// Acepta opcionalmente `diasFinales`: subset de los días originalmente
+// aprobados. Los días removidos (porque la persona vino a trabajar por
+// fuerza mayor) se reembolsan al balance del empleado.
 
 export async function marcarSolicitudComunicada(
   solicitudId: string,
+  diasFinales?: string[],
 ): Promise<{ ok: true } | { error: string }> {
   const session = await auth()
   if (!session?.user) return { error: 'No autenticado.' }
@@ -179,25 +184,61 @@ export async function marcarSolicitudComunicada(
   const isAdminFull = ['DIRECTOR_ADMINISTRACION', 'SUPER_ADMIN'].includes(session.user.rol)
   if (!isYahaida && !isAdminFull) return { error: 'Solo el área de comunicaciones puede marcar como comunicada.' }
 
-  const solicitud = await prisma.solicitudVacaciones.findUnique({ where: { id: solicitudId } })
+  const solicitud = await prisma.solicitudVacaciones.findUnique({
+    where: { id: solicitudId },
+    include: {
+      usuario: { select: { id: true, nombre: true, empleado: { include: { vacacion: true } } } },
+    },
+  })
   if (!solicitud) return { error: 'Solicitud no encontrada.' }
   if (solicitud.estado !== 'APROBADA') return { error: 'La solicitud aún no está aprobada.' }
 
-  await prisma.solicitudVacaciones.update({
-    where: { id: solicitudId },
-    data: {
-      estado: 'COMUNICADA',
-      fechaComunicacion: new Date(),
-      comunicadoPorId: session.user.id,
-    },
+  const diasOriginal: string[] = JSON.parse(solicitud.diasSolicitados)
+  const diasFinal = (diasFinales ?? diasOriginal).filter(d => diasOriginal.includes(d))
+  if (diasFinal.length === 0) {
+    return { error: 'Debe quedar al menos un día tomado. Si se cancela completamente, usa "rechazar" desde el jefe.' }
+  }
+  const diasReembolsar = diasOriginal.length - diasFinal.length
+
+  await prisma.$transaction(async (tx) => {
+    await tx.solicitudVacaciones.update({
+      where: { id: solicitudId },
+      data: {
+        estado:            'COMUNICADA',
+        fechaComunicacion: new Date(),
+        comunicadoPorId:   session.user.id,
+        diasSolicitados:   JSON.stringify(diasFinal.sort()),
+      },
+    })
+
+    // Reembolso al balance si se quitaron días
+    const empleado = solicitud.usuario.empleado
+    if (diasReembolsar > 0 && empleado?.vacacion) {
+      const v = empleado.vacacion
+      let update: { diasReglamentarios?: number; diasAtrasados?: number; adelantadasTomadas?: number } = {}
+      if (solicitud.tipoVacaciones === 'REGLAMENTARIA') {
+        update = { diasReglamentarios: v.diasReglamentarios + diasReembolsar }
+      } else if (solicitud.tipoVacaciones === 'ATRASADA') {
+        update = { diasAtrasados: v.diasAtrasados + diasReembolsar }
+      } else if (solicitud.tipoVacaciones === 'ADELANTADA') {
+        update = { adelantadasTomadas: Math.max(0, v.adelantadasTomadas - diasReembolsar) }
+      }
+      if (Object.keys(update).length > 0) {
+        await tx.vacacionBalance.update({ where: { empleadoId: empleado.id }, data: update })
+      }
+    }
   })
+
+  const mensaje = diasReembolsar > 0
+    ? `Quedaron ${diasFinal.length} día(s) comunicado(s). Se reembolsaron ${diasReembolsar} al balance.`
+    : 'Tu solicitud quedó comunicada al equipo.'
 
   await prisma.notificacion.create({
     data: {
       usuarioId: solicitud.usuarioId,
       tipo:      'VACACIONES_COMUNICADAS',
       titulo:    'Vacaciones comunicadas oficialmente',
-      mensaje:   `Tu solicitud quedó comunicada al equipo.`,
+      mensaje,
       enlace:    '/vacaciones',
     },
   })

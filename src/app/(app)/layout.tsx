@@ -8,21 +8,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const session = await auth()
   if (!session) redirect('/login')
 
-  // Fetch the 30 most recent notifications for this user
-  const notificaciones = await prisma.notificacion.findMany({
-    where: { usuarioId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 30,
-    select: {
-      id: true,
-      tipo: true,
-      titulo: true,
-      mensaje: true,
-      enlace: true,
-      leida: true,
-      createdAt: true,
-    },
-  })
+  // Fetch the 30 most recent notifications + approver matrix check (for sidebar gating)
+  const [notificaciones, vacApproverCount] = await Promise.all([
+    prisma.notificacion.findMany({
+      where: { usuarioId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      select: {
+        id: true,
+        tipo: true,
+        titulo: true,
+        mensaje: true,
+        enlace: true,
+        leida: true,
+        createdAt: true,
+      },
+    }),
+    prisma.usuarioAprobadorVacaciones.count({ where: { aprobadorId: session.user.id } }),
+  ])
+  const isVacApprover = vacApproverCount > 0
 
   const notificacionesSerialized = notificaciones.map((n) => ({
     ...n,
@@ -36,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       userRol={session.user.rol}
       userArea={session.user.area}
       userId={session.user.id}
+      isVacApprover={isVacApprover}
       notificaciones={notificacionesSerialized}
     >
       <PageTransition>{children}</PageTransition>

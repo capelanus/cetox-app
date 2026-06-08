@@ -59,12 +59,13 @@ interface NavSection {
 }
 
 interface SidebarProps {
-  userName:  string
-  userEmail: string
-  userRol:   string
-  userArea:  string | null
-  collapsed: boolean
-  onToggle:  () => void
+  userName:       string
+  userEmail:      string
+  userRol:        string
+  userArea:       string | null
+  isVacApprover?: boolean
+  collapsed:      boolean
+  onToggle:       () => void
 }
 
 // ── Nav item definitions ───────────────────────────────────────────────────────
@@ -279,7 +280,7 @@ const sectionesDirectorCalidad: NavSection[] = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover, collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
 
   // Build flat navItems for non-DC roles
@@ -303,6 +304,26 @@ export function Sidebar({ userName, userEmail, userRol, userArea, collapsed, onT
     navItems = allNavItems.filter(item => item.roles.includes('GERENTE_TECNICO'))
   } else {
     navItems = allNavItems.filter(item => item.roles.includes(userRol))
+  }
+
+  // Aprobador de vacaciones que no es HR: inyectar acceso a la bandeja
+  // de aprobación. Si ya está visible por su rol (HR), no duplicamos.
+  if (isVacApprover) {
+    const aprobItem: NavItem = {
+      href:  '/rrhh/vacaciones',
+      label: 'Aprobar Vacaciones',
+      icon:  PalmtreeIcon,
+      roles: [userRol],
+    }
+    const alreadyHas = (sections ?? [{ items: navItems } as NavSection])
+      .some(s => s.items.some(i => i.href === '/rrhh/vacaciones'))
+    if (!alreadyHas) {
+      if (sections) {
+        sections = [...sections, { label: 'Mi equipo', items: [aprobItem] }]
+      } else {
+        navItems = [...navItems, aprobItem]
+      }
+    }
   }
 
   // All items in a flat list (for active-state logic)

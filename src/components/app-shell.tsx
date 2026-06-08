@@ -13,6 +13,7 @@ interface AppShellProps {
   userRol:        string
   userArea:       string | null
   userId:         string
+  isVacApprover:  boolean
   notificaciones: NotificacionData[]
 }
 
@@ -23,6 +24,7 @@ export function AppShell({
   userRol,
   userArea,
   userId,
+  isVacApprover,
   notificaciones,
 }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false)
@@ -36,6 +38,7 @@ export function AppShell({
         userEmail={userEmail}
         userRol={userRol}
         userArea={userArea}
+        isVacApprover={isVacApprover}
       />
 
       {/* ── Main area ───────────────────────────────────────── */}

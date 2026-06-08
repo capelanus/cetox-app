@@ -1,7 +1,6 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { requireRol } from '@/lib/roles'
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 
@@ -14,18 +13,17 @@ export interface CrearSolicitudInput {
   cargo:           string
   departamento:    string
   jefeInmediato:   string
-  diasSolicitados: string[]   // ISO date strings "YYYY-MM-DD"
+  diasSolicitados: string[]
   tipoVacaciones:  TipoVacaciones
   tipoLicencia:    TipoLicencia
   personaDelegada: string
   observaciones:   string
 }
 
-// ── Roles excluidos de solicitar vacaciones ────────────────────────────────────
-
 const ROLES_EXCLUIDOS = ['GERENTE_GENERAL', 'DIRECTOR_ADMINISTRACION']
+const EMAIL_COMUNICACIONES = 'y.valeriano@cetox.com.pe'
 
-// ── Crear solicitud ────────────────────────────────────────────────────────────
+// ── Crear solicitud ──────────────────────────────────────────────────────────
 
 export async function crearSolicitudVacaciones(
   input: CrearSolicitudInput,
@@ -54,49 +52,195 @@ export async function crearSolicitudVacaciones(
     },
   })
 
+  // Notificar a los aprobadores asignados
+  const aprobadores = await prisma.usuarioAprobadorVacaciones.findMany({
+    where: { solicitanteId: session.user.id },
+    select: { aprobadorId: true },
+  })
+  if (aprobadores.length > 0) {
+    await prisma.notificacion.createMany({
+      data: aprobadores.map(a => ({
+        usuarioId: a.aprobadorId,
+        tipo:      'VACACIONES_PENDIENTE',
+        titulo:    'Nueva solicitud de vacaciones',
+        mensaje:   `${session.user.name ?? 'Un empleado'} solicita ${input.diasSolicitados.length} día(s).`,
+        enlace:    '/rrhh/vacaciones',
+      })),
+    })
+  }
+
   revalidatePath('/vacaciones')
   revalidatePath('/rrhh/vacaciones')
   return { id: solicitud.id }
 }
 
-// ── Autorizar (RRHH) ───────────────────────────────────────────────────────────
-
-export async function autorizarSolicitudVacaciones(
-  solicitudId: string,
-): Promise<void> {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'])
-  await prisma.solicitudVacaciones.update({
-    where: { id: solicitudId },
-    data:  { estado: 'AUTORIZADA', fechaAutorizacion: new Date() },
-  })
-  revalidatePath('/rrhh/vacaciones')
-  revalidatePath('/vacaciones')
-}
-
-// ── Aprobar (RRHH director) ───────────────────────────────────────────────────
+// ── Aprobar (jefe asignado en matriz) ────────────────────────────────────────
 
 export async function aprobarSolicitudVacaciones(
   solicitudId: string,
-): Promise<void> {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'])
-  await prisma.solicitudVacaciones.update({
+): Promise<{ ok: true } | { error: string }> {
+  const session = await auth()
+  if (!session?.user) return { error: 'No autenticado.' }
+
+  const solicitud = await prisma.solicitudVacaciones.findUnique({
     where: { id: solicitudId },
-    data:  { estado: 'APROBADA', fechaAprobacion: new Date() },
+    include: {
+      usuario: {
+        select: {
+          id: true,
+          nombre: true,
+          empleado: { include: { vacacion: true } },
+        },
+      },
+    },
   })
+  if (!solicitud) return { error: 'Solicitud no encontrada.' }
+  if (solicitud.estado !== 'PENDIENTE')
+    return { error: `La solicitud ya está ${solicitud.estado.toLowerCase()}.` }
+
+  // Validar que current user esté en la matriz de aprobadores
+  const par = await prisma.usuarioAprobadorVacaciones.findUnique({
+    where: { solicitanteId_aprobadorId: { solicitanteId: solicitud.usuarioId, aprobadorId: session.user.id } },
+  })
+  const isSuperAdmin = session.user.rol === 'SUPER_ADMIN'
+  if (!par && !isSuperAdmin) return { error: 'No estás autorizado a aprobar esta solicitud.' }
+
+  const diasAprobados = JSON.parse(solicitud.diasSolicitados).length as number
+  const empleado = solicitud.usuario.empleado
+
+  await prisma.$transaction(async (tx) => {
+    await tx.solicitudVacaciones.update({
+      where: { id: solicitudId },
+      data:  {
+        estado: 'APROBADA',
+        fechaAprobacion: new Date(),
+        aprobadoPorId: session.user.id,
+      },
+    })
+
+    if (empleado?.vacacion) {
+      const v = empleado.vacacion
+      let update: { diasReglamentarios?: number; diasAtrasados?: number; adelantadasTomadas?: number } = {}
+      if (solicitud.tipoVacaciones === 'REGLAMENTARIA') {
+        update = { diasReglamentarios: Math.max(0, v.diasReglamentarios - diasAprobados) }
+      } else if (solicitud.tipoVacaciones === 'ATRASADA') {
+        update = { diasAtrasados: Math.max(0, v.diasAtrasados - diasAprobados) }
+      } else if (solicitud.tipoVacaciones === 'ADELANTADA') {
+        update = { adelantadasTomadas: v.adelantadasTomadas + diasAprobados }
+      }
+      if (Object.keys(update).length > 0) {
+        await tx.vacacionBalance.update({ where: { empleadoId: empleado.id }, data: update })
+      }
+    }
+  })
+
+  // Notificar a Yahaida (encargada de comunicaciones)
+  const comunicaciones = await prisma.usuario.findFirst({
+    where: { email: EMAIL_COMUNICACIONES, activo: true },
+    select: { id: true },
+  })
+  if (comunicaciones) {
+    await prisma.notificacion.create({
+      data: {
+        usuarioId: comunicaciones.id,
+        tipo:      'VACACIONES_APROBADAS',
+        titulo:    'Vacaciones aprobadas — pendiente comunicar',
+        mensaje:   `${solicitud.usuario.nombre} (${diasAprobados} día(s))`,
+        enlace:    '/rrhh/vacaciones',
+      },
+    })
+  }
+
+  // Notificar al solicitante
+  await prisma.notificacion.create({
+    data: {
+      usuarioId: solicitud.usuarioId,
+      tipo:      'VACACIONES_APROBADAS',
+      titulo:    'Tu solicitud de vacaciones fue aprobada',
+      mensaje:   `${diasAprobados} día(s) — pendiente comunicación oficial.`,
+      enlace:    '/vacaciones',
+    },
+  })
+
   revalidatePath('/rrhh/vacaciones')
   revalidatePath('/vacaciones')
+  return { ok: true }
 }
 
-// ── Rechazar ───────────────────────────────────────────────────────────────────
+// ── Marcar como comunicada (Yahaida) ─────────────────────────────────────────
+
+export async function marcarSolicitudComunicada(
+  solicitudId: string,
+): Promise<{ ok: true } | { error: string }> {
+  const session = await auth()
+  if (!session?.user) return { error: 'No autenticado.' }
+
+  const isYahaida   = session.user.email === EMAIL_COMUNICACIONES
+  const isAdminFull = ['DIRECTOR_ADMINISTRACION', 'SUPER_ADMIN'].includes(session.user.rol)
+  if (!isYahaida && !isAdminFull) return { error: 'Solo el área de comunicaciones puede marcar como comunicada.' }
+
+  const solicitud = await prisma.solicitudVacaciones.findUnique({ where: { id: solicitudId } })
+  if (!solicitud) return { error: 'Solicitud no encontrada.' }
+  if (solicitud.estado !== 'APROBADA') return { error: 'La solicitud aún no está aprobada.' }
+
+  await prisma.solicitudVacaciones.update({
+    where: { id: solicitudId },
+    data: {
+      estado: 'COMUNICADA',
+      fechaComunicacion: new Date(),
+      comunicadoPorId: session.user.id,
+    },
+  })
+
+  await prisma.notificacion.create({
+    data: {
+      usuarioId: solicitud.usuarioId,
+      tipo:      'VACACIONES_COMUNICADAS',
+      titulo:    'Vacaciones comunicadas oficialmente',
+      mensaje:   `Tu solicitud quedó comunicada al equipo.`,
+      enlace:    '/vacaciones',
+    },
+  })
+
+  revalidatePath('/rrhh/vacaciones')
+  revalidatePath('/vacaciones')
+  return { ok: true }
+}
+
+// ── Rechazar (jefe asignado en matriz) ───────────────────────────────────────
 
 export async function rechazarSolicitudVacaciones(
   solicitudId: string,
-): Promise<void> {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'])
+): Promise<{ ok: true } | { error: string }> {
+  const session = await auth()
+  if (!session?.user) return { error: 'No autenticado.' }
+
+  const solicitud = await prisma.solicitudVacaciones.findUnique({ where: { id: solicitudId } })
+  if (!solicitud) return { error: 'Solicitud no encontrada.' }
+  if (solicitud.estado !== 'PENDIENTE') return { error: 'La solicitud ya fue procesada.' }
+
+  const par = await prisma.usuarioAprobadorVacaciones.findUnique({
+    where: { solicitanteId_aprobadorId: { solicitanteId: solicitud.usuarioId, aprobadorId: session.user.id } },
+  })
+  const isSuperAdmin = session.user.rol === 'SUPER_ADMIN'
+  if (!par && !isSuperAdmin) return { error: 'No estás autorizado a rechazar esta solicitud.' }
+
   await prisma.solicitudVacaciones.update({
     where: { id: solicitudId },
     data:  { estado: 'RECHAZADA' },
   })
+
+  await prisma.notificacion.create({
+    data: {
+      usuarioId: solicitud.usuarioId,
+      tipo:      'VACACIONES_RECHAZADAS',
+      titulo:    'Tu solicitud de vacaciones fue rechazada',
+      mensaje:   `Revisa con tu jefe inmediato.`,
+      enlace:    '/vacaciones',
+    },
+  })
+
   revalidatePath('/rrhh/vacaciones')
   revalidatePath('/vacaciones')
+  return { ok: true }
 }

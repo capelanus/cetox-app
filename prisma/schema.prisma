@@ -43,6 +43,26 @@ model Usuario {
   peticionesAprobadas       PeticionEfectivo[]    @relation("PeticionAprobadaPor")
   facturasCliente           FacturaCliente[]      @relation("FacturaClientePor")
   solicitudesVacaciones     SolicitudVacaciones[] @relation("SolicitudVacPor")
+  solicitudesVacAprobadas   SolicitudVacaciones[] @relation("SolicitudVacAprobadaPor")
+  solicitudesVacComunicadas SolicitudVacaciones[] @relation("SolicitudVacComunicadaPor")
+  aprobadoresVacaciones     UsuarioAprobadorVacaciones[] @relation("VacSolicitante")
+  aprobacionesVacACargo     UsuarioAprobadorVacaciones[] @relation("VacAprobador")
+  empleado                  Empleado?
+}
+
+/// Matriz N:M de aprobadores de vacaciones.
+/// Un solicitante puede tener varios aprobadores (cualquiera de ellos
+/// puede aprobar). Un aprobador puede tener varios solicitantes a cargo.
+model UsuarioAprobadorVacaciones {
+  id            String  @id @default(cuid())
+  solicitanteId String
+  aprobadorId   String
+  solicitante   Usuario @relation("VacSolicitante", fields: [solicitanteId], references: [id], onDelete: Cascade)
+  aprobador     Usuario @relation("VacAprobador",   fields: [aprobadorId],   references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@unique([solicitanteId, aprobadorId])
+  @@index([aprobadorId])
 }
 
 model ConversacionDM {
@@ -642,6 +662,10 @@ model Empleado {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  // 1:1 con Usuario para poder afectar VacacionBalance al aprobarse vacaciones.
+  usuarioId    String?   @unique
+  usuario      Usuario?  @relation(fields: [usuarioId], references: [id])
+
   vacacion    VacacionBalance?
   documentos  DocumentoEmpleado[]
 }
@@ -787,16 +811,22 @@ model SolicitudVacaciones {
   usuario           Usuario  @relation("SolicitudVacPor", fields: [usuarioId], references: [id])
   cargo             String   // cargo al momento de la solicitud
   departamento      String   // área / departamento
-  jefeInmediato     String   // nombre del jefe inmediato superior
+  jefeInmediato     String   // nombre del jefe inmediato superior (denormalizado)
   diasSolicitados   String   // JSON: ["2026-04-24", "2026-04-27", ...]
   tipoVacaciones    String   // REGLAMENTARIA | ATRASADA | ADELANTADA
   tipoLicencia      String   // CON_GOCE | SIN_GOCE | MOTIVOS_PERSONALES | OTROS
   personaDelegada   String?
   observaciones     String?
-  estado            String   @default("PENDIENTE") // PENDIENTE | AUTORIZADA | APROBADA | RECHAZADA
+  // PENDIENTE → APROBADA (jefe) → COMUNICADA (Yahaida) ; o RECHAZADA en cualquier paso
+  estado            String   @default("PENDIENTE")
   fechaSolicitud    DateTime @default(now())
   fechaAutorizacion DateTime?
   fechaAprobacion   DateTime?
+  fechaComunicacion DateTime?
+  aprobadoPorId     String?
+  aprobadoPor       Usuario? @relation("SolicitudVacAprobadaPor",   fields: [aprobadoPorId],   references: [id])
+  comunicadoPorId   String?
+  comunicadoPor     Usuario? @relation("SolicitudVacComunicadaPor", fields: [comunicadoPorId], references: [id])
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

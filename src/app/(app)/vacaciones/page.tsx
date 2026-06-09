@@ -47,15 +47,14 @@ export default async function MisVacacionesPage() {
   if (!session?.user) redirect('/login')
   if (ROLES_EXCLUIDOS.includes(session.user.rol)) redirect('/dashboard')
 
-  // Jefes posibles (roles con autoridad)
-  const jefes = await prisma.usuario.findMany({
-    where: {
-      activo: true,
-      rol: { in: ['DIRECTOR_ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'GERENTE_GENERAL', 'ADMINISTRACION'] },
-    },
-    select: { id: true, nombre: true, rol: true },
-    orderBy: { nombre: 'asc' },
+  // Solo los jefes que tienen autoridad para aprobar las vacaciones de este usuario
+  // según la matriz UsuarioAprobadorVacaciones.
+  const aprobadoresRel = await prisma.usuarioAprobadorVacaciones.findMany({
+    where:   { solicitanteId: session.user.id },
+    include: { aprobador: { select: { id: true, nombre: true, rol: true } } },
+    orderBy: { aprobador: { nombre: 'asc' } },
   })
+  const jefes = aprobadoresRel.map(r => r.aprobador)
 
   // Mis solicitudes previas
   const solicitudes = await prisma.solicitudVacaciones.findMany({

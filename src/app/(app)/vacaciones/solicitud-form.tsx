@@ -134,30 +134,41 @@ export function SolicitudVacacionesForm({ nombre, cargoDefault, deptDefault, jef
             />
           </div>
 
-          {/* Jefe Inmediato */}
+          {/* Jefe Inmediato — solo los aprobadores asignados en la matriz */}
           <div>
             <label className="block text-xs font-semibold mb-1" style={{ color: '#64748b' }}>
-              Jefe inmediato superior <span className="text-red-400">*</span>
+              Jefe que aprueba <span className="text-red-400">*</span>
             </label>
-            {jefes.length > 0 ? (
+            {jefes.length === 0 ? (
+              <div
+                className="rounded-lg border px-3 py-2 text-xs"
+                style={{ backgroundColor: '#fef3c7', borderColor: '#fde68a', color: '#92400e' }}
+              >
+                No tienes aprobadores asignados. Contacta a RRHH para configurar tu matriz de aprobación.
+              </div>
+            ) : jefes.length === 1 ? (
+              <input
+                value={jefes[0].nombre}
+                disabled
+                className="cetox-input text-sm bg-slate-50 text-slate-600"
+              />
+            ) : (
               <select
                 value={jefe}
                 onChange={e => setJefe(e.target.value)}
                 className="cetox-input text-sm"
                 required
               >
+                <option value="">Selecciona uno de tus aprobadores…</option>
                 {jefes.map(j => (
                   <option key={j.id} value={j.nombre}>{j.nombre}</option>
                 ))}
               </select>
-            ) : (
-              <input
-                value={jefe}
-                onChange={e => setJefe(e.target.value)}
-                className="cetox-input text-sm"
-                placeholder="Nombre del jefe"
-                required
-              />
+            )}
+            {jefes.length > 1 && (
+              <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>
+                Cualquiera de tus aprobadores podrá procesar la solicitud — selecciona el principal para el registro.
+              </p>
             )}
           </div>
         </div>
@@ -276,7 +287,7 @@ export function SolicitudVacacionesForm({ nombre, cargoDefault, deptDefault, jef
       {/* Submit */}
       <button
         type="submit"
-        disabled={pending || dias.length === 0}
+        disabled={pending || dias.length === 0 || jefes.length === 0 || !jefe}
         className="cetox-btn-primary w-full py-3 flex items-center justify-center gap-2 text-sm"
       >
         {pending

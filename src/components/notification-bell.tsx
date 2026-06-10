@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useTransition } from 'react'
 import {
   Bell, FileCheck, CheckCircle2, FileText, ClipboardList,
-  Package, BellOff, Check, Banknote,
+  BellOff, Banknote,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { marcarLeida, marcarTodasLeidas } from '@/app/actions/notificaciones'
@@ -57,7 +57,7 @@ function timeAgo(dateStr: string): string {
 export function NotificationBell({ notificaciones }: Props) {
   const [open,        setOpen]        = useState(false)
   const [localNotifs, setLocalNotifs] = useState(notificaciones)
-  const [isPending,   startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const router = useRouter()
   const ref    = useRef<HTMLDivElement>(null)
 
@@ -74,15 +74,21 @@ export function NotificationBell({ notificaciones }: Props) {
 
   const unread = localNotifs.filter((n) => !n.leida).length
 
+  // Auto-marcar como leídas al cerrar el dropdown si hay no leídas.
+  // Cubre todos los caminos de cierre (outside click, click en notif, click en campana).
+  const wasOpenRef = useRef(open)
+  useEffect(() => {
+    if (wasOpenRef.current && !open && unread > 0) {
+      setLocalNotifs((prev) => prev.map((n) => ({ ...n, leida: true })))
+      startTransition(async () => { await marcarTodasLeidas() })
+    }
+    wasOpenRef.current = open
+  }, [open, unread, startTransition])
+
   function handleClick(notif: NotificacionData) {
     setLocalNotifs((prev) => prev.map((n) => n.id === notif.id ? { ...n, leida: true } : n))
     startTransition(async () => { await marcarLeida(notif.id) })
     if (notif.enlace) { setOpen(false); router.push(notif.enlace) }
-  }
-
-  function handleMarcarTodas() {
-    setLocalNotifs((prev) => prev.map((n) => ({ ...n, leida: true })))
-    startTransition(async () => { await marcarTodasLeidas() })
   }
 
   return (
@@ -184,17 +190,6 @@ export function NotificationBell({ notificaciones }: Props) {
                 </span>
               )}
             </div>
-            {unread > 0 && (
-              <button
-                onClick={handleMarcarTodas}
-                disabled={isPending}
-                className="flex items-center gap-1 text-[11px] font-medium transition-opacity disabled:opacity-40"
-                style={{ color: '#4AC3B2' }}
-              >
-                <Check className="h-3 w-3" />
-                Marcar leídas
-              </button>
-            )}
           </div>
 
           {/* List */}

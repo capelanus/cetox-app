@@ -1,6 +1,6 @@
 import { requireRol } from '@/lib/roles'
 import Link from 'next/link'
-import { FileText, ArrowLeft, ChevronRight, Clock, Users2, Briefcase } from 'lucide-react'
+import { FileText, ArrowLeft, ChevronRight, Clock, Users2, Briefcase, Award } from 'lucide-react'
 
 // ── Contract type card ────────────────────────────────────────────────────────
 
@@ -161,6 +161,63 @@ export default async function ContratosPage() {
             <TipoCard key={t.tipo} {...t} />
           ))}
         </div>
+      </div>
+
+      {/* ── Certificado de reconocimiento (sección destacada) ── */}
+      <div className="mt-8">
+        <p
+          className="text-[10px] font-semibold tracking-widest uppercase mb-3 px-1"
+          style={{ color: '#13602C', fontFamily: 'var(--font-montserrat)' }}
+        >
+          Reconocimientos
+        </p>
+        <Link
+          href="/rrhh/contratos/certificado"
+          className="relative block rounded-2xl overflow-hidden p-6 group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
+          style={{
+            background: 'linear-gradient(135deg, #004d1c 0%, #13602C 55%, #0a3d1a 100%)',
+          }}
+        >
+          {/* Pattern overlay */}
+          <div className="absolute inset-0 opacity-[0.08] pointer-events-none">
+            <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="cert-hex" x="0" y="0" width="60" height="52" patternUnits="userSpaceOnUse">
+                  <polygon points="30,2 58,17 58,47 30,62 2,47 2,17" fill="none" stroke="#4AC3B2" strokeWidth="1" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#cert-hex)" />
+            </svg>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-5">
+            <div
+              className="flex items-center justify-center w-16 h-16 rounded-2xl flex-shrink-0"
+              style={{ background: 'rgba(74,195,178,0.18)', border: '1px solid rgba(74,195,178,0.35)' }}
+            >
+              <Award className="w-8 h-8" style={{ color: '#4AC3B2' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-[10px] font-semibold tracking-widest uppercase mb-1"
+                style={{ color: 'rgba(74,195,178,0.9)' }}
+              >
+                Certificado oficial CETOX
+              </p>
+              <h3
+                className="text-white font-bold text-lg leading-snug"
+                style={{ fontFamily: 'var(--font-oswald)', letterSpacing: '0.03em' }}
+              >
+                Emitir certificado de reconocimiento
+              </h3>
+              <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                Diploma para cursos, capacitaciones, ponencias y reconocimientos especiales.
+                Plantilla institucional con datos personalizados.
+              </p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" />
+          </div>
+        </Link>
       </div>
 
       {/* ── Info note ── */}

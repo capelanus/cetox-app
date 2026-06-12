@@ -8,26 +8,33 @@ export async function POST(req: NextRequest) {
   await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'])
 
   const body = await req.json() as {
-    nombre?: string
+    nombre?:             string
     tipoReconocimiento?: string
-    motivo?: string
-    lugar?: string
-    fecha?: string
+    motivo?:             string
+    lugar?:              string
+    dias?:               unknown
+    expositor?:          string
   }
 
   const nombre = (body.nombre ?? '').trim()
   const motivo = (body.motivo ?? '').trim()
-  const lugar  = (body.lugar ?? '').trim()
-  const fecha  = (body.fecha ?? '').trim()
+  const lugar  = (body.lugar  ?? '').trim()
   const tipo   = body.tipoReconocimiento as TipoReconocimiento
+  const dias   = Array.isArray(body.dias)
+    ? (body.dias as unknown[]).filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d))
+    : []
+  const expositor = (body.expositor ?? '').trim()
 
-  if (!nombre) return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 })
-  if (!motivo) return NextResponse.json({ error: 'Motivo requerido' }, { status: 400 })
-  if (!lugar)  return NextResponse.json({ error: 'Lugar requerido' },  { status: 400 })
-  if (!fecha)  return NextResponse.json({ error: 'Fecha requerida' },  { status: 400 })
-  if (!TIPOS.includes(tipo)) return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
+  if (!nombre)              return NextResponse.json({ error: 'Nombre requerido' },     { status: 400 })
+  if (!motivo)              return NextResponse.json({ error: 'Motivo requerido' },     { status: 400 })
+  if (!lugar)               return NextResponse.json({ error: 'Lugar requerido' },      { status: 400 })
+  if (dias.length === 0)    return NextResponse.json({ error: 'Selecciona al menos un día' }, { status: 400 })
+  if (!TIPOS.includes(tipo)) return NextResponse.json({ error: 'Tipo inválido' },       { status: 400 })
 
-  const pdfBytes = await generarCertificadoPdf({ nombre, tipoReconocimiento: tipo, motivo, lugar, fecha })
+  const pdfBytes = await generarCertificadoPdf({
+    nombre, tipoReconocimiento: tipo, motivo, lugar, dias,
+    expositor: expositor || undefined,
+  })
 
   const slug = nombre
     .normalize('NFD').replace(/[̀-ͯ]/g, '')

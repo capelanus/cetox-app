@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Award, Download, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { CalendarioMultiSelect } from '@/app/(app)/vacaciones/calendario'
 
 type Tipo = 'participación' | 'desempeño' | 'logro'
 
@@ -12,20 +13,49 @@ const TIPOS: { value: Tipo; label: string }[] = [
   { value: 'logro',         label: 'Logro' },
 ]
 
-function todayISOEs(): string {
-  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
-  const d = new Date()
-  return `${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+
+function formatDayPreview(dias: string[]): string {
+  if (dias.length === 0) return ''
+  const sorted = [...dias].sort()
+  const parts = sorted.map(s => {
+    const [y, m, d] = s.split('-').map(Number)
+    return { y, m: m - 1, d }
+  })
+  if (parts.length === 1) {
+    const f = parts[0]
+    return `el día ${f.d} de ${MESES[f.m]} de ${f.y}`
+  }
+  // Agrupar por (y,m)
+  const grupos = new Map<string, number[]>()
+  for (const f of parts) {
+    const k = `${f.y}-${f.m}`
+    if (!grupos.has(k)) grupos.set(k, [])
+    grupos.get(k)!.push(f.d)
+  }
+  const tramos: string[] = []
+  for (const [k, dds] of grupos) {
+    const [y, m] = k.split('-').map(Number)
+    const list = dds.length === 1 ? `${dds[0]}` :
+                 dds.length === 2 ? `${dds[0]} y ${dds[1]}` :
+                 `${dds.slice(0,-1).join(', ')} y ${dds[dds.length-1]}`
+    tramos.push(`${list} de ${MESES[m]} de ${y}`)
+  }
+  const phrase = tramos.length === 1 ? tramos[0] :
+                 tramos.length === 2 ? `${tramos[0]} y ${tramos[1]}` :
+                 `${tramos.slice(0,-1).join(', ')} y ${tramos[tramos.length-1]}`
+  return `los días ${phrase}`
 }
 
 export function CertificadoForm() {
-  const [busy, setBusy]       = useState(false)
-  const [nombre, setNombre]   = useState('')
-  const [tipo, setTipo]       = useState<Tipo>('participación')
-  const [motivo, setMotivo]   = useState('')
-  const [lugar, setLugar]     = useState('CETOX LAB — Lima, Perú')
-  const [fecha, setFecha]     = useState(todayISOEs())
-  const [error, setError]     = useState('')
+  const [busy, setBusy]           = useState(false)
+  const [nombre, setNombre]       = useState('')
+  const [tipo, setTipo]           = useState<Tipo>('participación')
+  const [motivo, setMotivo]       = useState('')
+  const [lugar, setLugar]         = useState('CETOX LAB — Lima, Perú')
+  const [dias, setDias]           = useState<string[]>([])
+  const [expositor, setExpositor] = useState('')
+  const [error, setError]         = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,7 +65,7 @@ export function CertificadoForm() {
       const res = await fetch('/api/certificados/generar', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ nombre, tipoReconocimiento: tipo, motivo, lugar, fecha }),
+        body:    JSON.stringify({ nombre, tipoReconocimiento: tipo, motivo, lugar, dias, expositor }),
       })
       if (!res.ok) {
         const j = await res.json().catch(() => ({ error: 'Error generando el PDF' }))
@@ -59,7 +89,7 @@ export function CertificadoForm() {
     }
   }
 
-  const canSubmit = nombre.trim() && motivo.trim() && lugar.trim() && fecha.trim()
+  const canSubmit = nombre.trim() && motivo.trim() && lugar.trim() && dias.length > 0
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -120,31 +150,48 @@ export function CertificadoForm() {
         </p>
       </div>
 
-      {/* Lugar y fecha */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
-            Lugar <span className="text-red-400">*</span>
-          </label>
-          <input
-            value={lugar}
-            onChange={e => setLugar(e.target.value)}
-            className="cetox-input text-sm"
-            required
-          />
+      {/* Lugar */}
+      <div>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
+          Lugar <span className="text-red-400">*</span>
+        </label>
+        <input
+          value={lugar}
+          onChange={e => setLugar(e.target.value)}
+          className="cetox-input text-sm"
+          required
+        />
+      </div>
+
+      {/* Calendario de días */}
+      <div>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
+          Día(s) del evento <span className="text-red-400">*</span>
+        </label>
+        <div className="rounded-xl border p-3" style={{ borderColor: 'rgba(0,0,0,0.08)' }}>
+          <CalendarioMultiSelect selected={dias} onChange={setDias} />
         </div>
-        <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
-            Fecha <span className="text-red-400">*</span>
-          </label>
-          <input
-            value={fecha}
-            onChange={e => setFecha(e.target.value)}
-            className="cetox-input text-sm"
-            placeholder="15 de marzo de 2026"
-            required
-          />
-        </div>
+        {dias.length > 0 && (
+          <p className="text-[11px] mt-1.5" style={{ color: '#13602C' }}>
+            <strong>{dias.length} día{dias.length > 1 ? 's' : ''}:</strong> {formatDayPreview(dias)}
+          </p>
+        )}
+      </div>
+
+      {/* Expositor */}
+      <div>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
+          Nombre del expositor
+        </label>
+        <input
+          value={expositor}
+          onChange={e => setExpositor(e.target.value)}
+          className="cetox-input text-sm"
+          placeholder="Ej. Dr. Juan Antonio Pérez Salazar"
+        />
+        <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>
+          Aparecerá encima de la etiqueta &ldquo;Expositor&rdquo; en el certificado. Opcional.
+        </p>
       </div>
 
       {error && (

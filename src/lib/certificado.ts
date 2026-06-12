@@ -11,6 +11,7 @@ export interface CertificadoData {
   motivo:             string                  // "el Curso de Buenas Prácticas..."
   lugar:              string                  // "Lima, Perú"
   dias:               string[]                // ["2026-03-15", "2026-03-16", ...]  ISO YYYY-MM-DD
+  horas?:             number                  // 8, 16, etc. (opcional)
   expositor?:         string                  // "Dr. Juan Pérez" (opcional)
 }
 
@@ -119,9 +120,12 @@ export async function generarCertificadoPdf(data: CertificadoData): Promise<Uint
 
   // 2) Párrafos del motivo — Medium 12pt verde #004d1c, multi-línea centrada
   const { prefijo, frase } = formatearDias(data.dias)
+  const sufijoHoras = data.horas && data.horas > 0
+    ? `, con una duración de ${data.horas} ${data.horas === 1 ? 'hora académica' : 'horas académicas'}`
+    : ''
   const parrafo1 = (
     `Por su ${data.tipoReconocimiento} en ${data.motivo}, ` +
-    `realizado en ${data.lugar} el ${prefijo} ${frase}.`
+    `realizado en ${data.lugar} el ${prefijo} ${frase}${sufijoHoras}.`
   )
   const parrafo2 = (
     `Con este reconocimiento, CETOX LAB reafirma su compromiso con la ` +

@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     motivo?:             string
     lugar?:              string
     dias?:               unknown
+    horas?:              unknown
     expositor?:          string
   }
 
@@ -24,6 +25,12 @@ export async function POST(req: NextRequest) {
     ? (body.dias as unknown[]).filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d))
     : []
   const expositor = (body.expositor ?? '').trim()
+  const horasRaw  = typeof body.horas === 'number' ? body.horas
+                   : typeof body.horas === 'string' ? Number(body.horas)
+                   : undefined
+  const horas = Number.isFinite(horasRaw) && (horasRaw as number) > 0
+    ? Math.round(horasRaw as number)
+    : undefined
 
   if (!nombre)              return NextResponse.json({ error: 'Nombre requerido' },     { status: 400 })
   if (!motivo)              return NextResponse.json({ error: 'Motivo requerido' },     { status: 400 })
@@ -33,6 +40,7 @@ export async function POST(req: NextRequest) {
 
   const pdfBytes = await generarCertificadoPdf({
     nombre, tipoReconocimiento: tipo, motivo, lugar, dias,
+    horas,
     expositor: expositor || undefined,
   })
 

@@ -54,6 +54,7 @@ export function CertificadoForm() {
   const [motivo, setMotivo]       = useState('')
   const [lugar, setLugar]         = useState('CETOX LAB — Lima, Perú')
   const [dias, setDias]           = useState<string[]>([])
+  const [horas, setHoras]         = useState('')
   const [expositor, setExpositor] = useState('')
   const [error, setError]         = useState('')
 
@@ -62,10 +63,15 @@ export function CertificadoForm() {
     setError('')
     setBusy(true)
     try {
+      const horasNum = Number(horas)
       const res = await fetch('/api/certificados/generar', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ nombre, tipoReconocimiento: tipo, motivo, lugar, dias, expositor }),
+        body:    JSON.stringify({
+          nombre, tipoReconocimiento: tipo, motivo, lugar, dias,
+          horas: Number.isFinite(horasNum) && horasNum > 0 ? horasNum : undefined,
+          expositor,
+        }),
       })
       if (!res.ok) {
         const j = await res.json().catch(() => ({ error: 'Error generando el PDF' }))
@@ -178,20 +184,39 @@ export function CertificadoForm() {
         )}
       </div>
 
-      {/* Expositor */}
-      <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
-          Nombre del expositor
-        </label>
-        <input
-          value={expositor}
-          onChange={e => setExpositor(e.target.value)}
-          className="cetox-input text-sm"
-          placeholder="Ej. Dr. Juan Antonio Pérez Salazar"
-        />
-        <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>
-          Aparecerá encima de la etiqueta &ldquo;Expositor&rdquo; en el certificado. Opcional.
-        </p>
+      {/* Horas + Expositor */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
+            Horas académicas
+          </label>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={horas}
+            onChange={e => setHoras(e.target.value)}
+            className="cetox-input text-sm"
+            placeholder="Ej. 8"
+          />
+          <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>
+            Opcional. Se añade al texto si la indicas.
+          </p>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748b' }}>
+            Nombre del expositor
+          </label>
+          <input
+            value={expositor}
+            onChange={e => setExpositor(e.target.value)}
+            className="cetox-input text-sm"
+            placeholder="Ej. Dr. Juan Pérez"
+          />
+          <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>
+            Aparecerá encima de la etiqueta &ldquo;Expositor&rdquo;. Opcional.
+          </p>
+        </div>
       </div>
 
       {error && (

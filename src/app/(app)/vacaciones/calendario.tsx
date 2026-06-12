@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 
 interface Props {
-  selected: string[]           // ISO "YYYY-MM-DD"
-  onChange: (dates: string[]) => void
+  selected:   string[]           // ISO "YYYY-MM-DD"
+  onChange:   (dates: string[]) => void
+  /** Permitir seleccionar fechas anteriores a hoy. Default false. */
+  allowPast?: boolean
 }
 
 const DIAS  = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do']
@@ -23,7 +25,7 @@ function parseISO(iso: string) {
   return { year: y, month: m - 1, day: d }
 }
 
-export function CalendarioMultiSelect({ selected, onChange }: Props) {
+export function CalendarioMultiSelect({ selected, onChange, allowPast = false }: Props) {
   const today   = new Date()
   const [year,  setYear]  = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -46,6 +48,8 @@ export function CalendarioMultiSelect({ selected, onChange }: Props) {
     if (month === 11) { setMonth(0); setYear(y => y + 1) }
     else setMonth(m => m + 1)
   }
+  function prevYear() { setYear(y => y - 1) }
+  function nextYear() { setYear(y => y + 1) }
 
   // Build grid
   const firstDay = new Date(year, month, 1).getDay() // 0=Sun
@@ -69,25 +73,49 @@ export function CalendarioMultiSelect({ selected, onChange }: Props) {
     <div className="space-y-3">
       {/* Month nav */}
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-          style={{ color: '#64748b' }}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={prevYear}
+            className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            style={{ color: '#64748b' }}
+            title="Año anterior"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={prevMonth}
+            className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            style={{ color: '#64748b' }}
+            title="Mes anterior"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        </div>
         <span className="font-semibold text-sm" style={{ color: '#1e293b' }}>
           {MESES[month]} {year}
         </span>
-        <button
-          type="button"
-          onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-          style={{ color: '#64748b' }}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={nextMonth}
+            className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            style={{ color: '#64748b' }}
+            title="Mes siguiente"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={nextYear}
+            className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            style={{ color: '#64748b' }}
+            title="Año siguiente"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Day labels */}
@@ -108,23 +136,24 @@ export function CalendarioMultiSelect({ selected, onChange }: Props) {
           const isSel    = selectedSet.has(iso)
           const isToday  = iso === todayISO
           const isPast   = iso < todayISO
+          const disabled = !allowPast && isPast
 
           return (
             <button
               key={idx}
               type="button"
-              onClick={() => !isPast && toggleDate(iso)}
-              disabled={isPast}
+              onClick={() => !disabled && toggleDate(iso)}
+              disabled={disabled}
               className="relative flex items-center justify-center rounded-lg text-sm font-medium transition-all"
               style={{
                 height: 36,
                 backgroundColor: isSel ? '#13602C' : isToday ? 'rgba(74,195,178,0.12)' : 'transparent',
-                color: isSel ? 'white' : isPast ? '#cbd5e1' : isToday ? '#13602C' : '#334155',
+                color: isSel ? 'white' : disabled ? '#cbd5e1' : isPast ? '#94a3b8' : isToday ? '#13602C' : '#334155',
                 fontWeight: isSel || isToday ? 700 : 400,
-                cursor: isPast ? 'not-allowed' : 'pointer',
+                cursor: disabled ? 'not-allowed' : 'pointer',
                 border: isToday && !isSel ? '1.5px solid #4AC3B2' : '1.5px solid transparent',
               }}
-              title={isPast ? 'Fecha pasada' : iso}
+              title={disabled ? 'Fecha pasada' : iso}
             >
               {day}
               {isSel && (

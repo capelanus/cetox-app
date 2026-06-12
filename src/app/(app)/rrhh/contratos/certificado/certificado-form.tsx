@@ -175,7 +175,7 @@ export function CertificadoForm() {
           Día(s) del evento <span className="text-red-400">*</span>
         </label>
         <div className="rounded-xl border p-3" style={{ borderColor: 'rgba(0,0,0,0.08)' }}>
-          <CalendarioMultiSelect selected={dias} onChange={setDias} />
+          <CalendarioMultiSelect selected={dias} onChange={setDias} allowPast />
         </div>
         {dias.length > 0 && (
           <p className="text-[11px] mt-1.5" style={{ color: '#13602C' }}>

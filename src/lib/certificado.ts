@@ -24,8 +24,8 @@ const COLOR_BLACK         = rgb(0, 0, 0)
 const COLOR_GREEN         = rgb(0x00 / 255, 0x4d / 255, 0x1c / 255)  // #004d1c (descripción)
 const COLOR_GREEN_EXP     = rgb(0x00 / 255, 0x4c / 255, 0x1d / 255)  // #004c1d (nombre del expositor)
 
-const Y_NOMBRE          = 280
-const Y_PARRAFO1_TOP    = 230   // primer renglón del texto principal
+const Y_NOMBRE          = 305
+const Y_PARRAFO1_TOP    = 255   // primer renglón del texto principal
 const PARAFO_GAP        = 12    // espacio extra entre párrafos
 const Y_EXPOSITOR       = 124   // nombre del expositor, encima del label "Expositor" (mismo nivel que "Dr. Luis Fernandez Anaya" a la izquierda)
 const X_EXPOSITOR_CTR   = 588   // centro X del label "Expositor" (medido)
@@ -121,12 +121,13 @@ export async function generarCertificadoPdf(data: CertificadoData): Promise<Uint
 
   // 2) Párrafos del motivo — Medium 12pt verde #004d1c, multi-línea centrada
   const { prefijo, frase } = formatearDias(data.dias)
+  const articuloDia = prefijo === 'día' ? 'el día' : 'los días'
   const sufijoHoras = data.horas && data.horas > 0
     ? `, con una duración de ${data.horas} ${data.horas === 1 ? 'hora académica' : 'horas académicas'}`
     : ''
   const parrafo1 = (
     `Por su ${data.tipoReconocimiento} en ${data.motivo}, ` +
-    `realizado en ${data.lugar} el ${prefijo} ${frase}${sufijoHoras}.`
+    `realizado en ${data.lugar} ${articuloDia} ${frase}${sufijoHoras}.`
   )
   const parrafo2 = (
     `Con este reconocimiento, CETOX LAB reafirma su compromiso con la ` +

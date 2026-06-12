@@ -20,17 +20,18 @@ const TEMPLATE_PATH  = path.join(process.cwd(), 'public', 'templates', 'certific
 const FONT_BOLD_PATH = path.join(process.cwd(), 'public', 'fonts', 'Montserrat-ExtraBold.ttf')
 const FONT_MED_PATH  = path.join(process.cwd(), 'public', 'fonts', 'Montserrat-Medium.ttf')
 
-const COLOR_BLACK = rgb(0, 0, 0)
-const COLOR_GREEN = rgb(0x00 / 255, 0x4d / 255, 0x1c / 255)  // #004d1c
+const COLOR_BLACK         = rgb(0, 0, 0)
+const COLOR_GREEN         = rgb(0x00 / 255, 0x4d / 255, 0x1c / 255)  // #004d1c (descripción)
+const COLOR_GREEN_EXP     = rgb(0x00 / 255, 0x4c / 255, 0x1d / 255)  // #004c1d (nombre del expositor)
 
 const Y_NOMBRE          = 280
 const Y_PARRAFO1_TOP    = 230   // primer renglón del texto principal
 const PARAFO_GAP        = 12    // espacio extra entre párrafos
-const Y_EXPOSITOR       = 102   // nombre del expositor (debajo de la etiqueta "Expositor")
+const Y_EXPOSITOR       = 124   // nombre del expositor, encima del label "Expositor" (mismo nivel que "Dr. Luis Fernandez Anaya" a la izquierda)
 const X_EXPOSITOR_CTR   = 588   // centro X del label "Expositor" (medido)
 const SIZE_NOMBRE       = 24
 const SIZE_TEXTO        = 12
-const SIZE_EXPOSITOR    = 11
+const SIZE_EXPOSITOR    = 13
 const LINE_HEIGHT       = 17
 const TEXTO_MAX_WIDTH   = 600
 
@@ -146,12 +147,12 @@ export async function generarCertificadoPdf(data: CertificadoData): Promise<Uint
     y -= LINE_HEIGHT
   }
 
-  // 3) Nombre del expositor (opcional) — ExtraBold 11pt verde,
-  // sobre la etiqueta "Expositor" del lado derecho
+  // 3) Nombre del expositor (opcional) — Medium 13pt verde #004c1d,
+  // encima de la etiqueta "Expositor" del lado derecho
   if (data.expositor && data.expositor.trim()) {
     drawCentered(
       page, data.expositor.trim(),
-      Y_EXPOSITOR, fontBold, SIZE_EXPOSITOR, COLOR_GREEN, X_EXPOSITOR_CTR,
+      Y_EXPOSITOR, fontMed, SIZE_EXPOSITOR, COLOR_GREEN_EXP, X_EXPOSITOR_CTR,
     )
   }
 

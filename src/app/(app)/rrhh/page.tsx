@@ -116,6 +116,7 @@ export default async function RRHHPage() {
       descripcion: 'Control de horario, registro de tardanzas, horas extras, faltas y justificaciones.',
       color:       '#f59e0b',
       bg:          'rgba(245,158,11,0.1)',
+      href:        '/rrhh/asistencia',
     },
     {
       icon:        PalmtreeIcon,

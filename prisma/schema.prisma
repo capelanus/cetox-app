@@ -668,6 +668,20 @@ model Empleado {
 
   vacacion    VacacionBalance?
   documentos  DocumentoEmpleado[]
+  asistencias Asistencia[]
+}
+
+model Asistencia {
+  id         String    @id @default(cuid())
+  empleadoId String?
+  empleado   Empleado? @relation(fields: [empleadoId], references: [id])
+  zkUserId   String
+  zkNombre   String
+  timestamp  DateTime
+  tipo       Int       // 0=entrada 1=salida 4=extra-entrada 5=extra-salida
+  createdAt  DateTime  @default(now())
+
+  @@unique([zkUserId, timestamp])
 }
 
 model DocumentoEmpleado {

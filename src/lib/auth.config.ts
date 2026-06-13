@@ -11,7 +11,8 @@ export const authConfig: NextAuthConfig = {
         pathname.startsWith('/login') ||
         pathname.startsWith('/validation') ||
         pathname.startsWith('/api/auth') ||
-        pathname.startsWith('/api/validation')
+        pathname.startsWith('/api/validation') ||
+        pathname.startsWith('/api/asistencia/sync')
 
       if (isPublic) return true
       if (!isLoggedIn) return false

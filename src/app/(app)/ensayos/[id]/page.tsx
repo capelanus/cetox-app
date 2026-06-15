@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react'
 import { EnsayoForm } from '@/components/forms/ensayo-form'
 
 export default async function EditarEnsayoPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRol(['DIRECTOR_CALIDAD'])
+  await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
   const { id } = await params
   const ensayo = await prisma.ensayo.findUnique({ where: { id } })
   if (!ensayo) notFound()

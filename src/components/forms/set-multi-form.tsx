@@ -34,23 +34,38 @@ const SEGURIDAD_OPTIONS = ['Precinto seguridad plástico', 'Tapa cerrada', 'Cerr
 
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
 
-function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
+function MuestraForm({
+  muestra,
+  index,
+  selected,
+  onToggleSelected,
+}: {
+  muestra: Muestra
+  index: number
+  selected: boolean
+  onToggleSelected: (v: boolean) => void
+}) {
   const prefix = `${index}_`
-  const [open, setOpen] = useState(index === 0)
+  const [open, setOpen] = useState(index === 0 && selected)
   const [ingresoMuestra, setIngresoMuestra] = useState('')
   const [condAmb, setCondAmb] = useState('')
   const [tipoEnvase, setTipoEnvase] = useState('')
   const areas = [...new Set(muestra.items.map((i) => i.ensayo.area))].sort()
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+    <div className={`border rounded-xl overflow-hidden bg-white transition-opacity ${selected ? 'border-gray-200' : 'border-gray-200 opacity-60'}`}>
       {/* Header colapsable */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
+      <div className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors">
+        <label className="flex items-center gap-3 flex-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => {
+              onToggleSelected(e.target.checked)
+              if (e.target.checked) setOpen(true)
+            }}
+            className="w-4 h-4 accent-[#13602C] flex-shrink-0"
+          />
           <div className="w-7 h-7 rounded-full bg-[#13602C] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
             {index + 1}
           </div>
@@ -62,11 +77,19 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
               {muestra.items.length} ensayo{muestra.items.length !== 1 ? 's' : ''}: {muestra.items.map(i => i.ensayo.nombre).join(', ')}
             </p>
           </div>
-        </div>
-        {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-      </button>
+        </label>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          disabled={!selected}
+          className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label={open ? 'Cerrar' : 'Abrir'}
+        >
+          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+      </div>
 
-      {open && (
+      {open && selected && (
         <div className="border-t border-gray-100 p-5 space-y-5">
           {/* Ensayos (solo lectura) */}
           <div className="bg-slate-50 rounded-lg p-3">
@@ -273,12 +296,20 @@ function MuestraForm({ muestra, index }: { muestra: Muestra; index: number }) {
 
 export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCotizacion, moneda }: Props) {
   const [loading, setLoading] = useState(false)
+  const [selected, setSelected] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(muestras.map((m) => [m.id, true])),
+  )
   const today = new Date().toISOString().split('T')[0]
+
+  const selectedIds = muestras.map((m) => m.id).filter((id) => selected[id])
+  const selectedCount = selectedIds.length
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (selectedCount === 0) return
     setLoading(true)
     const formData = new FormData(e.currentTarget)
+    formData.set('selectedMuestraIds', JSON.stringify(selectedIds))
     try {
       await crearSETsFromMuestras(formData)
     } catch (e) {
@@ -291,7 +322,10 @@ export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCot
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Hidden fields */}
       <input type="hidden" name="cotizacionId" value={cotizacionId} />
+      {/* muestraIds = lista completa ordenada (para mapear prefijo {i}_ a id);
+          selectedMuestraIds = subset que el usuario quiere generar ahora */}
       <input type="hidden" name="muestraIds" value={JSON.stringify(muestras.map((m) => m.id))} />
+      <input type="hidden" name="selectedMuestraIds" value={JSON.stringify(selectedIds)} />
 
       {/* Info del cliente */}
       <div className="bg-white rounded-xl border shadow-sm p-5">
@@ -317,20 +351,58 @@ export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCot
       </div>
 
       {/* Resumen */}
-      <div className="flex items-center gap-2 px-1">
-        <Package className="w-4 h-4 text-[#13602C]" />
-        <p className="text-sm font-semibold text-slate-700">
-          Se generarán <span className="text-[#13602C]">{muestras.length} SETs</span> — uno por muestra
-        </p>
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <Package className="w-4 h-4 text-[#13602C]" />
+          <p className="text-sm font-semibold text-slate-700">
+            Se generarán <span className="text-[#13602C]">{selectedCount} SET{selectedCount !== 1 ? 's' : ''}</span>
+            {selectedCount < muestras.length && (
+              <span className="text-slate-500 font-normal"> — {muestras.length - selectedCount} muestra{(muestras.length - selectedCount) !== 1 ? 's' : ''} quedará{(muestras.length - selectedCount) !== 1 ? 'n' : ''} pendiente{(muestras.length - selectedCount) !== 1 ? 's' : ''}</span>
+            )}
+          </p>
+        </div>
+        {muestras.length > 1 && (
+          <div className="flex items-center gap-3 text-xs">
+            <button
+              type="button"
+              className="text-slate-500 hover:text-slate-700 underline"
+              onClick={() => setSelected(Object.fromEntries(muestras.map((m) => [m.id, true])))}
+            >
+              Todas
+            </button>
+            <button
+              type="button"
+              className="text-slate-500 hover:text-slate-700 underline"
+              onClick={() => setSelected(Object.fromEntries(muestras.map((m) => [m.id, false])))}
+            >
+              Ninguna
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Un formulario por muestra */}
       {muestras.map((muestra, i) => (
-        <MuestraForm key={muestra.id} muestra={muestra} index={i} />
+        <MuestraForm
+          key={muestra.id}
+          muestra={muestra}
+          index={i}
+          selected={!!selected[muestra.id]}
+          onToggleSelected={(v) => setSelected((prev) => ({ ...prev, [muestra.id]: v }))}
+        />
       ))}
 
-      <Button type="submit" style={{ backgroundColor: '#13602C' }} disabled={loading} className="w-full">
-        {loading ? 'Generando SETs...' : `Generar ${muestras.length} SET${muestras.length !== 1 ? 's' : ''}`}
+      <Button
+        type="submit"
+        style={{ backgroundColor: '#13602C' }}
+        disabled={loading || selectedCount === 0}
+        className="w-full"
+      >
+        {loading
+          ? 'Generando SETs...'
+          : selectedCount === 0
+            ? 'Selecciona al menos una muestra'
+            : `Generar ${selectedCount} SET${selectedCount !== 1 ? 's' : ''}`}
       </Button>
     </form>
   )

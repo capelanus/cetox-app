@@ -37,7 +37,10 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
       creadoPor: true,
       items: { include: { ensayo: true } },
       muestras: {
-        include: { items: { include: { ensayo: true } } },
+        include: {
+          items: { include: { ensayo: true } },
+          sets: { select: { id: true } },
+        },
         orderBy: { orden: 'asc' },
       },
       sets:           { select: { id: true, numero: true, anio: true } },
@@ -361,15 +364,23 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
               </Button>
             </a>
           )}
-          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.sets.length === 0 && cot.tipo !== 'ABIERTA' && (
-            <Link href={`/set/nuevo?cotizacionId=${cot.id}`}>
-              <Button style={{ backgroundColor: '#13602C' }}>
-                {cot.muestras.length > 0
-                  ? `Generar ${cot.muestras.length} SET${cot.muestras.length !== 1 ? 's' : ''}`
-                  : 'Generar SET'}
-              </Button>
-            </Link>
-          )}
+          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.tipo !== 'ABIERTA' && (() => {
+            const muestrasPendientes = cot.muestras.filter((m) => m.sets.length === 0).length
+            const sinMuestras = cot.muestras.length === 0
+            const puedeGenerar = sinMuestras ? cot.sets.length === 0 : muestrasPendientes > 0
+            if (!puedeGenerar) return null
+            return (
+              <Link href={`/set/nuevo?cotizacionId=${cot.id}`}>
+                <Button style={{ backgroundColor: '#13602C' }}>
+                  {sinMuestras
+                    ? 'Generar SET'
+                    : muestrasPendientes < cot.muestras.length
+                      ? `Generar SET (${muestrasPendientes} pendiente${muestrasPendientes !== 1 ? 's' : ''})`
+                      : `Generar ${muestrasPendientes} SET${muestrasPendientes !== 1 ? 's' : ''}`}
+                </Button>
+              </Link>
+            )
+          })()}
           {/* ── Facturación ── */}
           {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'COORDINADOR_CALIDAD') && (
             cot.facturasCliente.length > 0 ? (

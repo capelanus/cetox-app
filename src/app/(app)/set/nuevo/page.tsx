@@ -1,6 +1,6 @@
 import { requireRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -26,6 +26,7 @@ export default async function NuevoSETPage({
       muestras: {
         include: {
           items: { include: { ensayo: true } },
+          sets: { select: { id: true } },
         },
         orderBy: { orden: 'asc' },
       },
@@ -34,7 +35,13 @@ export default async function NuevoSETPage({
   if (!cot || cot.estado !== 'ACEPTADA') notFound()
 
   const numCotizacion = formatNumCotizacion(cot.numero, cot.anio, cot.sufijo)
+  const muestrasPendientes = cot.muestras.filter((m) => m.sets.length === 0)
   const tieneMuestras = cot.muestras.length > 0
+
+  // Si la cotización tiene muestras y todas ya tienen SET creado → no hay nada que generar
+  if (tieneMuestras && muestrasPendientes.length === 0) {
+    redirect(`/cotizaciones/${cotizacionId}`)
+  }
 
   // Áreas involucradas en la cotización (para cotizaciones sin muestras)
   const areasFlat = [...new Set(cot.items.map((i) => i.ensayo.area))].sort()
@@ -47,11 +54,15 @@ export default async function NuevoSETPage({
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            {tieneMuestras ? `Generar ${cot.muestras.length} SET${cot.muestras.length !== 1 ? 's' : ''}` : 'Nuevo SET'}
+            {tieneMuestras
+              ? `Generar SET${muestrasPendientes.length !== 1 ? 's' : ''}`
+              : 'Nuevo SET'}
           </h1>
           {tieneMuestras && (
             <p className="text-sm text-slate-500 mt-0.5">
-              La cotización tiene {cot.muestras.length} muestras — se creará un SET por cada una
+              {muestrasPendientes.length < cot.muestras.length
+                ? `${muestrasPendientes.length} de ${cot.muestras.length} muestra${cot.muestras.length !== 1 ? 's' : ''} pendiente${muestrasPendientes.length !== 1 ? 's' : ''} — marca las que vas a generar ahora`
+                : `La cotización tiene ${cot.muestras.length} muestras — puedes generar todas o solo algunas`}
             </p>
           )}
         </div>
@@ -60,7 +71,7 @@ export default async function NuevoSETPage({
       {tieneMuestras ? (
         <SetMultiForm
           cotizacionId={cotizacionId}
-          muestras={cot.muestras}
+          muestras={muestrasPendientes}
           numCotizacion={numCotizacion}
           moneda={cot.moneda}
           cliente={{

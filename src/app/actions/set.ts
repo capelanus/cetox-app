@@ -179,7 +179,23 @@ export async function crearSETsFromMuestras(formData: FormData) {
   const session = await requireRol(['ADMINISTRACION'])
   const cotizacionId = formData.get('cotizacionId') as string
   const muestraIdsJson = formData.get('muestraIds') as string
+  // muestraIds = lista completa ordenada renderizada (mapea prefijo {i}_ → id)
   const muestraIds: string[] = JSON.parse(muestraIdsJson)
+  // selectedMuestraIds = subset que el usuario quiere generar ahora; si no viene, todas.
+  const selectedJson = formData.get('selectedMuestraIds') as string | null
+  const selectedSet: Set<string> = selectedJson
+    ? new Set(JSON.parse(selectedJson) as string[])
+    : new Set(muestraIds)
+  if (selectedSet.size === 0) throw new Error('Debes seleccionar al menos una muestra')
+
+  // Verificar que las muestras seleccionadas aún no tengan SET (evitar carrera o doble click)
+  const yaConSET = await prisma.sET.findMany({
+    where: { muestraId: { in: Array.from(selectedSet) } },
+    select: { muestraId: true },
+  })
+  if (yaConSET.length > 0) {
+    throw new Error('Una o más muestras seleccionadas ya tienen un SET creado. Recarga la página.')
+  }
 
   const cot = await prisma.cotizacion.findUniqueOrThrow({
     where: { id: cotizacionId },
@@ -202,6 +218,7 @@ export async function crearSETsFromMuestras(formData: FormData) {
 
   for (let i = 0; i < muestraIds.length; i++) {
     const muestraId = muestraIds[i]
+    if (!selectedSet.has(muestraId)) continue
     const numero = await siguienteCorrelativo('set', anio)
     const codigoMuestra = `MU-${anio}-${String(numero).padStart(4, '0')}`
 

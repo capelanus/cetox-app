@@ -5,22 +5,28 @@ import { ESTADO_FACTURA_LABELS } from '@/lib/constants'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { obtenerAlertasVencimiento } from '@/lib/alertas'
+import { AlertasVencimientoBanner } from '@/components/alertas-vencimiento'
 
 export default async function FacturasPage() {
   const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
   const rol = session.user.rol
 
-  const facturas = await prisma.factura.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      ordenCompra: { include: { proveedor: true } },
-      registradoPor: true,
-      provision: true,
-    },
-  })
+  const [facturas, alertas] = await Promise.all([
+    prisma.factura.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        ordenCompra: { include: { proveedor: true } },
+        registradoPor: true,
+        provision: true,
+      },
+    }),
+    obtenerAlertasVencimiento(),
+  ])
 
   return (
     <div className="p-6 space-y-6">
+      <AlertasVencimientoBanner alertas={alertas} tipo="FACTURA_PROVEEDOR" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#13602C]" style={{ fontFamily: 'Oswald, sans-serif' }}>Facturas</h1>

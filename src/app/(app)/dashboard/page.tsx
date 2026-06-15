@@ -17,6 +17,8 @@ import { DashboardPipeline } from '@/components/dashboard-pipeline'
 import type { StageCount } from '@/components/dashboard-pipeline'
 import { getResumenEquipos } from '@/app/actions/equipos'
 import { DashboardCharts } from '@/components/dashboard-charts'
+import { obtenerResumenAlertas, sincronizarNotificacionesAlertas } from '@/lib/alertas'
+import { AlertasVencimientoCard } from '@/components/alertas-vencimiento'
 
 /* ─── KPI Card ───────────────────────────────────────────────────────────── */
 
@@ -63,6 +65,18 @@ function KpiCard({ title, value, subtitle, icon, color, bg }: KpiCardProps) {
 export default async function DashboardPage() {
   const session = await requireNotAnalista()
 
+  // Sincroniza notificaciones de alertas (idempotente por día) en paralelo
+  // y obtiene el resumen. Best-effort: si falla no rompe el dashboard.
+  const alertasPromise = (async () => {
+    try {
+      await sincronizarNotificacionesAlertas()
+      return await obtenerResumenAlertas()
+    } catch (e) {
+      console.error('[dashboard] error sincronizando alertas:', e)
+      return null
+    }
+  })()
+
   const [
     cotPendientes,
     setsEnCurso,
@@ -77,6 +91,7 @@ export default async function DashboardPage() {
     resumenEquipos,
     cotRecientes,
     setsRecientes,
+    resumenAlertas,
   ] = await Promise.all([
     prisma.cotizacion.count({ where: { deletedAt: null, estado: { in: ['BORRADOR', 'EN_REVISION', 'ENVIADA'] } } }),
     prisma.sET.count({ where: { estado: { in: ['EMITIDA', 'EN_EJECUCION'] } } }),
@@ -98,6 +113,7 @@ export default async function DashboardPage() {
       where: { estado: { not: 'ANULADO' }, fechaIngreso: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5, 1)) } },
       select: { fechaIngreso: true },
     }),
+    alertasPromise,
   ])
 
   const normalize = (rows: { estado: string; _count: { estado: number } }[]): StageCount[] =>
@@ -168,6 +184,13 @@ export default async function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* ── Alertas de vencimiento ── */}
+      {resumenAlertas && resumenAlertas.total > 0 && (
+        <div className="mb-6">
+          <AlertasVencimientoCard resumen={resumenAlertas} />
+        </div>
+      )}
 
       {/* ── Separador técnico ── */}
       <div className="flex items-center gap-3 mb-6">

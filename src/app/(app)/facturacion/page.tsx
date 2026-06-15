@@ -6,6 +6,8 @@ import {
   Download, Eye, TrendingUp,
 } from 'lucide-react'
 import { formatFecha, formatMoneda, formatNumFacturaCliente, formatNumCotizacion } from '@/lib/format'
+import { obtenerAlertasVencimiento } from '@/lib/alertas'
+import { AlertasVencimientoBanner } from '@/components/alertas-vencimiento'
 
 // ── Estado badges ─────────────────────────────────────────────────────────────
 
@@ -51,8 +53,14 @@ export default async function FacturacionPage() {
   const countPendiente = facturas.filter(f => f.estado === 'PENDIENTE').length
   const countPagada    = facturas.filter(f => f.estado === 'PAGADA').length
 
+  // Alertas de vencimiento
+  const alertas = await obtenerAlertasVencimiento()
+
   return (
     <div>
+      {/* ── Alertas de vencimiento ── */}
+      <AlertasVencimientoBanner alertas={alertas} tipo="FACTURA_CLIENTE" />
+
       {/* ── Header ── */}
       <div className="cetox-page-header">
         <div>

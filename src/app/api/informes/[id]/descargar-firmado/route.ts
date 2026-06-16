@@ -17,6 +17,7 @@ export async function GET(
 ) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  if (session.user.rol === 'ANALISTA') return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const { id } = await params
 

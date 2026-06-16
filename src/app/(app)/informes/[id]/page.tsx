@@ -33,7 +33,7 @@ export default async function InformeDetailPage({ params }: { params: Promise<{ 
   const { id } = await params
 
   // Analistas solo pueden ver sus propios informes
-  let session = await auth()
+  const session = await auth()
   if (!session) redirect('/login')
   const rol = session.user.rol ?? ''
 
@@ -303,7 +303,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
                         </div>
                         {isPdf && (
                           <iframe
-                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`}
+                            src={`${url}#toolbar=0`}
                             className="w-full bg-white"
                             style={{ height: '480px' }}
                             title={filename}
@@ -319,8 +319,8 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
         })()}
 
 
-        {/* Certificado QR */}
-        {informe.certificadoQR && (
+        {/* Certificado QR — oculto para analistas: no deben ver ni descargar el PDF firmado */}
+        {informe.certificadoQR && !esAnalista && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-3">
               <QrCode className="h-5 w-5 text-green-700" />
@@ -366,7 +366,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
                   </a>
                 </div>
                 <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(informe.archivoPdf)}&embedded=true`}
+                  src={`/api/informes/${id}/ver-informe#toolbar=0`}
                   className="w-full rounded-lg border border-amber-200 bg-white"
                   style={{ height: '560px' }}
                   title="Informe de ensayo"
@@ -438,7 +438,7 @@ const enviarRevisionAction = enviarARevision.bind(null, id)
                   </a>
                 </div>
                 <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(informe.archivoPdf)}&embedded=true`}
+                  src={`/api/informes/${id}/ver-informe#toolbar=0`}
                   className="w-full rounded-lg border border-blue-200 bg-white"
                   style={{ height: '560px' }}
                   title="Informe revisado"

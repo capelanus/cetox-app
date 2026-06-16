@@ -29,6 +29,10 @@ export async function GET(
     headers: {
       'Content-Type': contentType,
       'Content-Disposition': 'inline',
+      // Sobreescribe X-Frame-Options:DENY y la CSP estricta del Vercel Blob
+      // que impiden renderizar el PDF dentro de un <iframe> same-origin.
+      'X-Frame-Options': 'SAMEORIGIN',
+      'Content-Security-Policy': "frame-ancestors 'self'",
     },
   })
 }

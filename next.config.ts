@@ -46,6 +46,14 @@ const nextConfig: NextConfig = {
         source: '/api/:path*',
         headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }],
       },
+      // Permite embeber el proxy de PDF en un <iframe> same-origin
+      {
+        source: '/api/informes/:id/ver-informe',
+        headers: [
+          { key: 'X-Frame-Options',         value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy',  value: "frame-ancestors 'self'" },
+        ],
+      },
     ]
   },
 }

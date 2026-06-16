@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, PackageCheck, Receipt } from 'lucide-react'
+import { ArrowLeft, PackageCheck, Receipt, Pencil } from 'lucide-react'
 import { formatNumOrdenCompra, formatNumRecepcion, formatFecha } from '@/lib/format'
 import { ESTADO_OC_LABELS } from '@/lib/constants'
 import { actualizarEstadoOC } from '@/app/actions/ordenes-compra'
@@ -17,7 +17,8 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
     include: {
       proveedor: true,
       requerimiento: true,
-      cotizacionProveedor: true,
+      cotizacionesProveedor: { include: { cotizacionProveedor: true } },
+      historial: { include: { usuario: true }, orderBy: { createdAt: 'desc' } },
       items: { orderBy: { orden: 'asc' } },
       emitidoPor: true,
       recepciones: {
@@ -46,7 +47,7 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
           </h1>
           <p className="text-sm text-gray-500">{oc.proveedor.razonSocial}</p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
           <span className={`text-sm px-3 py-1 rounded-full font-medium ${
             oc.estado === 'CERRADA' ? 'bg-green-100 text-green-700' :
             oc.estado === 'EN_TRANSITO' ? 'bg-blue-100 text-blue-700' :
@@ -56,6 +57,13 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
           }`}>
             {ESTADO_OC_LABELS[oc.estado] || oc.estado}
           </span>
+          {!['CERRADA', 'CANCELADA'].includes(oc.estado) && (
+            <Link href={`/operaciones/ordenes-compra/${id}/editar`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="w-4 h-4 mr-1" />Editar
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -225,6 +233,23 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
         </div>
       )}
 
+      {/* Cotizaciones vinculadas */}
+      {oc.cotizacionesProveedor.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="font-semibold text-gray-700 mb-3">Cotizaciones de proveedor vinculadas</h2>
+          <div className="space-y-1">
+            {oc.cotizacionesProveedor.map(({ cotizacionProveedor: cot }) => (
+              <div key={cot.id} className="flex items-center gap-3 text-sm">
+                <span className="font-mono text-[#13602C]">
+                  COTP-{String(cot.numero).padStart(4, '0')}-{cot.anio}
+                </span>
+                <span className="text-gray-500">{cot.moneda} {cot.total.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Facturas */}
       {oc.facturas.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -259,6 +284,24 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
           </table>
         </div>
       )}
+      {/* Historial de modificaciones */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="font-semibold text-gray-700 mb-3">Historial de modificaciones</h2>
+        {oc.historial.length === 0
+          ? <p className="text-sm text-gray-400">Sin modificaciones registradas</p>
+          : (
+            <div className="space-y-2">
+              {oc.historial.map(h => (
+                <div key={h.id} className="flex items-start gap-3 text-sm">
+                  <span className="text-gray-400 whitespace-nowrap">{formatFecha(h.createdAt)}</span>
+                  <span className="text-gray-700">{h.descripcion}</span>
+                  <span className="ml-auto text-gray-400 whitespace-nowrap">{h.usuario.nombre}</span>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </div>
     </div>
   )
 }

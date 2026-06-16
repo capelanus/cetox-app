@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { ajustarStock } from '@/app/actions/inventario'
 import { ArrowDown, ArrowUp, Settings2 } from 'lucide-react'
 
+const AREAS = ['Biología', 'Microbiología', 'Química', 'Administración', 'Calidad', 'Gerencia', 'Logística']
+
 interface Props {
   itemId: string
   stockActual: number
@@ -58,40 +60,64 @@ export default function AjustarStockForm({ itemId, stockActual, unidad }: Props)
           ))}
         </div>
 
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {tipo === 'AJUSTE' ? 'Nuevo stock' : 'Cantidad'}
             </label>
-            <input
-              name="cantidad"
-              type="number"
-              min={0.01}
-              step={0.01}
-              value={cantidad}
-              onChange={e => setCantidad(e.target.value)}
-              required
-              placeholder="0"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                name="cantidad"
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={cantidad}
+                onChange={e => setCantidad(e.target.value)}
+                required
+                placeholder="0"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
+              />
+              {cantidad && (
+                <span className="text-sm text-gray-500 whitespace-nowrap">
+                  → <strong className={tipo === 'SALIDA' && preview() === 0 ? 'text-red-500' : 'text-[#13602C]'}>
+                    {preview() % 1 === 0 ? preview() : preview().toFixed(2)} {unidad}
+                  </strong>
+                </span>
+              )}
+            </div>
           </div>
-          <div className="pb-0.5 text-sm text-gray-500 min-w-max">
-            {cantidad && (
-              <span>
-                → <strong className={tipo === 'SALIDA' && preview() === 0 ? 'text-red-500' : 'text-[#13602C]'}>
-                  {preview() % 1 === 0 ? preview() : preview().toFixed(2)} {unidad}
-                </strong>
-              </span>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={sending || !cantidad}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-[#13602C] text-white hover:bg-[#0e4a21] disabled:opacity-50 transition-colors"
-          >
-            {sending ? 'Guardando...' : 'Aplicar'}
-          </button>
+
+          {tipo === 'SALIDA' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Área destino</label>
+              <select
+                name="areaDestino"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
+              >
+                <option value="">Sin especificar</option>
+                {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+          )}
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Descripción / referencia</label>
+          <input
+            name="descripcion"
+            type="text"
+            placeholder="Ej: Compra factura 001-123, entrega a laboratorio..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={sending || !cantidad}
+          className="w-full py-2 rounded-lg text-sm font-medium bg-[#13602C] text-white hover:bg-[#0e4a21] disabled:opacity-50 transition-colors"
+        >
+          {sending ? 'Guardando...' : 'Aplicar movimiento'}
+        </button>
       </form>
     </div>
   )

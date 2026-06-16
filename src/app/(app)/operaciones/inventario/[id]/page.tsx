@@ -11,7 +11,16 @@ export default async function InventarioItemPage({ params }: { params: Promise<{
   await requireOperaciones()
   const { id } = await params
 
-  const item = await prisma.inventarioItem.findUnique({ where: { id } })
+  const item = await prisma.inventarioItem.findUnique({
+    where: { id },
+    include: {
+      movimientos: {
+        include: { usuario: true },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      },
+    },
+  })
   if (!item) notFound()
 
   const stockBajo = item.stockMinimo !== null && item.stock <= item.stockMinimo
@@ -83,6 +92,55 @@ export default async function InventarioItemPage({ params }: { params: Promise<{
         notas:       item.notas ?? '',
         activo:      item.activo,
       }} />
+
+      {/* Historial de movimientos */}
+      {item.movimientos.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="font-semibold text-gray-700 mb-4">Historial de movimientos</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">Fecha</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">Tipo</th>
+                  <th className="text-right px-3 py-2 font-medium text-gray-600">Cantidad</th>
+                  <th className="text-right px-3 py-2 font-medium text-gray-600">Stock</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">Área</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">Descripción</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">Usuario</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {item.movimientos.map((mov) => (
+                  <tr key={mov.id} className="hover:bg-gray-50">
+                    <td className="px-3 py-2 text-gray-500 whitespace-nowrap">
+                      {mov.createdAt.toLocaleDateString('es-PE')}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        mov.tipo === 'ENTRADA' ? 'bg-green-100 text-green-700' :
+                        mov.tipo === 'SALIDA'  ? 'bg-red-100 text-red-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {mov.tipo === 'ENTRADA' ? 'Entrada' : mov.tipo === 'SALIDA' ? 'Salida' : 'Ajuste'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono">
+                      {mov.tipo === 'SALIDA' ? '-' : '+'}{mov.cantidad} {item.unidad}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono text-gray-600">
+                      {mov.stockNuevo} {item.unidad}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">{mov.areaDestino ?? '—'}</td>
+                    <td className="px-3 py-2 text-gray-500 max-w-[180px] truncate">{mov.descripcion ?? '—'}</td>
+                    <td className="px-3 py-2 text-gray-500">{mov.usuario.nombre}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

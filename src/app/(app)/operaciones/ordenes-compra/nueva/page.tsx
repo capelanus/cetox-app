@@ -47,7 +47,7 @@ export default function NuevaOrdenCompraPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [cotizaciones, setCotizaciones] = useState<CotizacionProveedor[]>([])
   const [selectedReq, setSelectedReq] = useState<string>(reqParam || '')
-  const [selectedCot, setSelectedCot] = useState<string>(cotParam || '')
+  const [selectedCots, setSelectedCots] = useState<string[]>(cotParam ? [cotParam] : [])
   const [selectedProv, setSelectedProv] = useState<string>('')
   const [items, setItems] = useState<LineItem[]>([{ descripcion: '', cantidad: 1, cantidadCot: 0, unidad: 'Unidad', precioUnitario: 0, incluido: true }])
   const [fromCot, setFromCot] = useState(false)
@@ -82,6 +82,7 @@ export default function NuevaOrdenCompraPage() {
           }
         }
       }
+      // If no cotParam but some cotizaciones exist, keep selectedCots from param
     }).catch(() => setLoading(false))
   }, [cotParam])
 
@@ -97,12 +98,18 @@ export default function NuevaOrdenCompraPage() {
   const igv = subtotal * 0.18
   const total = subtotal + igv
 
+  const toggleCot = (cotId: string, checked: boolean) => {
+    setSelectedCots(prev => checked ? [...prev, cotId] : prev.filter(c => c !== cotId))
+  }
+
   async function handleSubmit(formData: FormData) {
     const submitItems = items
       .filter(item => item.incluido)
       .map(({ descripcion, cantidad, unidad, precioUnitario }) => ({ descripcion, cantidad, unidad, precioUnitario }))
     formData.set('items', JSON.stringify(submitItems))
     if (selectedProv) formData.set('proveedorId', selectedProv)
+    // append multiple cotizacion IDs
+    selectedCots.forEach(cid => formData.append('cotizacionProveedorId', cid))
     await crearOrdenCompra(formData)
   }
 
@@ -139,20 +146,24 @@ export default function NuevaOrdenCompraPage() {
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cotización de proveedor (opcional)</label>
-              <select
-                name="cotizacionProveedorId"
-                value={selectedCot}
-                onChange={e => setSelectedCot(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
-              >
-                <option value="">Sin cotización asociada</option>
-                {cotizaciones.filter(c => !selectedReq || c.id === cotParam).map(cot => (
-                  <option key={cot.id} value={cot.id}>
-                    COTP-{String(cot.numero).padStart(4, '0')}-{cot.anio} — {cot.moneda} {cot.total.toFixed(2)}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cotizaciones de proveedor (opcional, puedes seleccionar varias)</label>
+              {cotizaciones.length === 0
+                ? <p className="text-sm text-gray-400">No hay cotizaciones disponibles</p>
+                : (
+                  <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                    {cotizaciones.map(cot => (
+                      <label key={cot.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 rounded px-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedCots.includes(cot.id)}
+                          onChange={e => toggleCot(cot.id, e.target.checked)}
+                          className="w-4 h-4 accent-[#13602C]"
+                        />
+                        <span>COTP-{String(cot.numero).padStart(4, '0')}-{cot.anio} — {cot.moneda} {cot.total.toFixed(2)}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor *</label>

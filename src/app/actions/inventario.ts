@@ -51,16 +51,19 @@ export async function actualizarInventarioItem(id: string, formData: FormData) {
 }
 
 export async function ajustarStock(id: string, formData: FormData) {
-  await requireOperaciones()
+  const session = await requireOperaciones()
 
-  const tipo     = formData.get('tipo') as 'ENTRADA' | 'SALIDA' | 'AJUSTE'
-  const cantidad = parseFloat(formData.get('cantidad') as string)
+  const tipo        = formData.get('tipo') as 'ENTRADA' | 'SALIDA' | 'AJUSTE'
+  const cantidad    = parseFloat(formData.get('cantidad') as string)
+  const areaDestino = (formData.get('areaDestino') as string) || null
+  const descripcion = (formData.get('descripcion') as string) || null
 
   if (!cantidad || cantidad <= 0) throw new Error('Cantidad inválida')
 
   const item = await prisma.inventarioItem.findUnique({ where: { id } })
   if (!item) throw new Error('Ítem no encontrado')
 
+  const stockAnterior = item.stock
   let nuevoStock: number
   if (tipo === 'ENTRADA') {
     nuevoStock = item.stock + cantidad
@@ -70,10 +73,21 @@ export async function ajustarStock(id: string, formData: FormData) {
     nuevoStock = cantidad // AJUSTE = set directo
   }
 
-  await prisma.inventarioItem.update({
-    where: { id },
-    data: { stock: nuevoStock },
-  })
+  await prisma.$transaction([
+    prisma.inventarioItem.update({ where: { id }, data: { stock: nuevoStock } }),
+    prisma.inventarioMovimiento.create({
+      data: {
+        inventarioItemId: id,
+        tipo,
+        cantidad,
+        stockAnterior,
+        stockNuevo: nuevoStock,
+        areaDestino,
+        descripcion,
+        usuarioId: session.user.id,
+      },
+    }),
+  ])
 
   revalidatePath('/operaciones/inventario')
   revalidatePath(`/operaciones/inventario/${id}`)

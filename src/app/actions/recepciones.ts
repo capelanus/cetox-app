@@ -13,6 +13,7 @@ export async function crearRecepcion(formData: FormData) {
 
   const ordenCompraId = formData.get('ordenCompraId') as string
   const observaciones = formData.get('observaciones') as string
+  const areaDestino   = (formData.get('areaDestino') as string) || null
   const itemsJson = formData.get('items') as string
   const items: { descripcion: string; cantidadEsperada: number; cantidadRecibida: number; unidad: string; conforme: boolean; observacion?: string }[] = JSON.parse(itemsJson || '[]')
 
@@ -27,6 +28,7 @@ export async function crearRecepcion(formData: FormData) {
       recibidoPorId: session.user.id,
       estado,
       observaciones: observaciones || null,
+      areaDestino,
       items: { create: items },
     },
   })

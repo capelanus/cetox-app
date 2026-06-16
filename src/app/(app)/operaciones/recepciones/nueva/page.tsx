@@ -114,6 +114,19 @@ export default function NuevaRecepcionPage() {
               </select>
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Área destino *</label>
+              <select name="areaDestino" required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]">
+                <option value="">Seleccionar área...</option>
+                <option value="Biología">Biología</option>
+                <option value="Microbiología">Microbiología</option>
+                <option value="Química">Química</option>
+                <option value="Administración">Administración</option>
+                <option value="Calidad">Calidad</option>
+                <option value="Gerencia">Gerencia</option>
+                <option value="Logística">Logística</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones generales</label>
               <textarea name="observaciones" rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]" />
             </div>

@@ -48,6 +48,8 @@ model Usuario {
   aprobadoresVacaciones     UsuarioAprobadorVacaciones[] @relation("VacSolicitante")
   aprobacionesVacACargo     UsuarioAprobadorVacaciones[] @relation("VacAprobador")
   empleado                  Empleado?
+  historialOC               OrdenCompraHistorial[]       @relation("OCHistorialUsuario")
+  movimientosInventario     InventarioMovimiento[]       @relation("InventarioMovimientoUsuario")
 }
 
 /// Matriz N:M de aprobadores de vacaciones.
@@ -462,7 +464,7 @@ model CotizacionProveedor {
   createdAt        DateTime      @default(now())
 
   items         CotizacionProveedorItem[]
-  ordenesCompra OrdenCompra[]
+  ordenesCompra OrdenCompraCotizacion[]
 
   @@unique([numero, anio])
 }
@@ -485,8 +487,6 @@ model OrdenCompra {
   anio                       Int
   requerimientoId            String
   requerimiento              Requerimiento        @relation(fields: [requerimientoId], references: [id])
-  cotizacionProveedorId      String?
-  cotizacionProveedor        CotizacionProveedor? @relation(fields: [cotizacionProveedorId], references: [id])
   proveedorId                String
   proveedor                  Proveedor            @relation(fields: [proveedorId], references: [id])
   moneda                     String               @default("PEN")
@@ -505,11 +505,32 @@ model OrdenCompra {
   createdAt                  DateTime             @default(now())
   updatedAt                  DateTime             @updatedAt
 
-  items       OrdenCompraItem[]
-  recepciones Recepcion[]
-  facturas    Factura[]
+  items                 OrdenCompraItem[]
+  recepciones           Recepcion[]
+  facturas              Factura[]
+  cotizacionesProveedor OrdenCompraCotizacion[]
+  historial             OrdenCompraHistorial[]
 
   @@unique([numero, anio])
+}
+
+model OrdenCompraCotizacion {
+  ordenCompraId         String
+  ordenCompra           OrdenCompra         @relation(fields: [ordenCompraId], references: [id], onDelete: Cascade)
+  cotizacionProveedorId String
+  cotizacionProveedor   CotizacionProveedor @relation(fields: [cotizacionProveedorId], references: [id])
+
+  @@id([ordenCompraId, cotizacionProveedorId])
+}
+
+model OrdenCompraHistorial {
+  id            String      @id @default(cuid())
+  ordenCompraId String
+  ordenCompra   OrdenCompra @relation(fields: [ordenCompraId], references: [id], onDelete: Cascade)
+  usuarioId     String
+  usuario       Usuario     @relation("OCHistorialUsuario", fields: [usuarioId], references: [id])
+  descripcion   String
+  createdAt     DateTime    @default(now())
 }
 
 model OrdenCompraItem {
@@ -536,6 +557,7 @@ model Recepcion {
   recibidoPor          Usuario     @relation("RecepcionPor", fields: [recibidoPorId], references: [id])
   estado               String      @default("PENDIENTE")
   observaciones        String?
+  areaDestino          String?
   entregadoAlAreaFecha DateTime?
   entregadoAlAreaPor   String?
   conformeArea         Boolean?
@@ -753,6 +775,23 @@ model InventarioItem {
   notas       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  movimientos InventarioMovimiento[]
+}
+
+model InventarioMovimiento {
+  id               String         @id @default(cuid())
+  inventarioItemId String
+  inventarioItem   InventarioItem @relation(fields: [inventarioItemId], references: [id], onDelete: Cascade)
+  tipo             String         // ENTRADA | SALIDA | AJUSTE
+  cantidad         Float
+  stockAnterior    Float
+  stockNuevo       Float
+  areaDestino      String?
+  descripcion      String?
+  usuarioId        String
+  usuario          Usuario        @relation("InventarioMovimientoUsuario", fields: [usuarioId], references: [id])
+  createdAt        DateTime       @default(now())
 }
 
 // ── Factura al Cliente (generada desde Cotización) ───────────────────────────

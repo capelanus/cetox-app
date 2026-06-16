@@ -5,6 +5,7 @@ import { ESTADO_OC_LABELS } from '@/lib/constants'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import OCListClient from './oc-list-client'
 
 export default async function OrdenesCompraPage() {
   await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
@@ -14,8 +15,20 @@ export default async function OrdenesCompraPage() {
       proveedor: true,
       requerimiento: true,
       emitidoPor: true,
+      items: true,
     },
   })
+
+  const rows = ocs.map(oc => ({
+    id: oc.id,
+    numero: formatNumOrdenCompra(oc.numero, oc.anio),
+    proveedor: oc.proveedor.razonSocial,
+    requerimiento: oc.requerimiento.descripcion,
+    total: `${oc.moneda} ${oc.total.toFixed(2)}`,
+    estado: oc.estado,
+    fecha: formatFecha(oc.createdAt),
+    productos: oc.items.map(i => i.descripcion).join(' '),
+  }))
 
   return (
     <div className="p-6 space-y-6">
@@ -30,51 +43,7 @@ export default async function OrdenesCompraPage() {
           </Button>
         </Link>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Número</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Proveedor</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Requerimiento</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600">Total</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Estado</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Fecha</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {ocs.map(oc => (
-              <tr key={oc.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <Link href={`/operaciones/ordenes-compra/${oc.id}`} className="font-mono text-[#13602C] font-medium hover:underline">
-                    {formatNumOrdenCompra(oc.numero, oc.anio)}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-gray-700">{oc.proveedor.razonSocial}</td>
-                <td className="px-4 py-3 text-gray-500 max-w-[160px] truncate">{oc.requerimiento.descripcion}</td>
-                <td className="px-4 py-3 text-right font-mono text-gray-700">{oc.moneda} {oc.total.toFixed(2)}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    oc.estado === 'CERRADA' ? 'bg-green-100 text-green-700' :
-                    oc.estado === 'EN_TRANSITO' ? 'bg-blue-100 text-blue-700' :
-                    oc.estado === 'RECIBIDA' ? 'bg-purple-100 text-purple-700' :
-                    oc.estado === 'CANCELADA' ? 'bg-red-100 text-red-700' :
-                    'bg-amber-100 text-amber-700'
-                  }`}>
-                    {ESTADO_OC_LABELS[oc.estado] || oc.estado}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-gray-500">{formatFecha(oc.createdAt)}</td>
-              </tr>
-            ))}
-            {ocs.length === 0 && (
-              <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-400">No hay órdenes de compra</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <OCListClient rows={rows} estadoLabels={ESTADO_OC_LABELS} />
     </div>
   )
 }

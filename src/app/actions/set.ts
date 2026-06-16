@@ -68,7 +68,7 @@ export async function crearSET(formData: FormData) {
   redirect(`/set/${set.id}`)
 }
 
-export async function generarODAs(setId: string) {
+export async function generarODAs(setId: string, formData: FormData) {
   await requireRol(['ADMINISTRACION'])
 
   const set = await prisma.sET.findUniqueOrThrow({
@@ -87,18 +87,23 @@ export async function generarODAs(setId: string) {
   const cot = set.cotizacion
   if (!cot) throw new Error('Este SET no tiene cotización asociada.')
 
-  // Si el SET tiene muestraId, usar solo los ensayos de esa muestra
-  // Si no, usar todos los items de la cotización (cotizaciones sin muestras)
   let sourceItems
   if (set.muestraId) {
     const muestra = cot.muestras.find((m) => m.id === set.muestraId)
     sourceItems = muestra?.items ?? []
   } else if (cot.muestras.length > 0) {
-    // Compatibilidad: SET sin muestraId pero cotización con muestras → todos los items
     sourceItems = cot.muestras.flatMap((m) => m.items)
   } else {
     sourceItems = cot.items
   }
+
+  // Filtrar por los items seleccionados en el formulario
+  const selectedIds = formData.getAll('itemId') as string[]
+  if (selectedIds.length > 0) {
+    const selectedSet = new Set(selectedIds)
+    sourceItems = sourceItems.filter((it) => selectedSet.has(it.id))
+  }
+  if (sourceItems.length === 0) throw new Error('Selecciona al menos un ensayo para generar ODAs.')
 
   for (const item of sourceItems) {
     const numero = await siguienteCorrelativo('oda', anio)

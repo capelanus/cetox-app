@@ -67,8 +67,11 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
   const esCero = !cot // SET sin cotización (gratuito)
   const moneda = (cot?.moneda ?? 'USD') as 'USD' | 'PEN'
 
-  // Build display rows for ensayos: match ODA (if exists) by position with cotizacion items
-  const cotItems = cot?.items ?? []
+  // Items relevantes: si el SET está vinculado a una muestra, usar solo sus items;
+  // si no, usar los items directos de la cotización (sin muestraId)
+  const cotItems = set.muestraId
+    ? (cot?.muestras.find((m) => m.id === set.muestraId)?.items ?? [])
+    : (cot?.items.filter((it) => !it.muestraId) ?? [])
   const precioNeto = cot?.subtotal ?? 0
   const igv = cot?.igv ?? 0
   const total = cot?.total ?? 0
@@ -209,13 +212,6 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
             {set.odas.length > 0 && (
               <SetPdfButton href={`/api/set/${id}/generar-pdf`} />
             )}
-            {puedoGenerarODAs && (
-              <form action={generateAction}>
-                <Button type="submit" size="sm" style={{ backgroundColor: '#13602C' }}>
-                  Generar ODAs
-                </Button>
-              </form>
-            )}
             {set.odas.length > 0 && !puedoGenerarODAs && (
               <span className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-3 py-1">
                 <CheckCircle2 className="h-3.5 w-3.5" />
@@ -301,13 +297,14 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
             </div>
           </>
         ) : (
-          // Sin ODAs: mostrar items de la cotización con costos (solo si hay cotización)
           cotItems.length > 0 ? (
-            <>
+            <form action={generateAction} className="space-y-4">
+              <p className="text-xs text-slate-500">Selecciona los ensayos para los que deseas generar ODAs:</p>
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50">
                     <tr>
+                      {puedoGenerarODAs && <th className="w-8 px-3 py-2" />}
                       <th className="text-left px-3 py-2 font-medium text-slate-600">Ensayo</th>
                       <th className="text-left px-3 py-2 font-medium text-slate-600">Área</th>
                       <th className="text-left px-3 py-2 font-medium text-slate-600">Plazo</th>
@@ -316,7 +313,18 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
                   </thead>
                   <tbody className="divide-y">
                     {cotItems.map((it) => (
-                      <tr key={it.id}>
+                      <tr key={it.id} className={puedoGenerarODAs ? 'hover:bg-slate-50' : ''}>
+                        {puedoGenerarODAs && (
+                          <td className="px-3 py-2">
+                            <input
+                              type="checkbox"
+                              name="itemId"
+                              value={it.id}
+                              defaultChecked
+                              className="w-4 h-4 accent-[#13602C]"
+                            />
+                          </td>
+                        )}
                         <td className="px-3 py-2">{it.ensayo.nombre}</td>
                         <td className="px-3 py-2 text-slate-500">{AREA_LABELS[it.ensayo.area] ?? it.ensayo.area}</td>
                         <td className="px-3 py-2">{it.tiempoEntregaDias} días</td>
@@ -326,7 +334,7 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
                   </tbody>
                 </table>
               </div>
-              <div className="mt-4 border-t pt-4 space-y-1 text-sm">
+              <div className="border-t pt-4 space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Precio neto</span>
                   <span>{formatMoneda(precioNeto, moneda)}</span>
@@ -340,7 +348,12 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
                   <span>{formatMoneda(total, moneda)}</span>
                 </div>
               </div>
-            </>
+              {puedoGenerarODAs && (
+                <Button type="submit" style={{ backgroundColor: '#13602C' }}>
+                  Generar ODAs seleccionadas
+                </Button>
+              )}
+            </form>
           ) : (
             <p className="text-sm text-slate-400 py-2">No hay ensayos registrados aún.</p>
           )

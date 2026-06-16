@@ -25,6 +25,7 @@ interface Props {
   contacto: { contactoNombre: string | null; contactoEmail: string | null; contactoTelefono: string | null }
   numCotizacion: string
   moneda: string
+  observacionesCotizacion?: string | null
 }
 
 const TIPO_ENVASE_OPTIONS = ['Envase original', 'Envase simple', 'Trasvasado', 'Ampolla', 'Bidón', 'Bolsa', 'Botella', 'Caja', 'Frasco', 'Galonera', 'Otro']
@@ -39,11 +40,13 @@ function MuestraForm({
   index,
   selected,
   onToggleSelected,
+  observacionesCotizacion,
 }: {
   muestra: Muestra
   index: number
   selected: boolean
   onToggleSelected: (v: boolean) => void
+  observacionesCotizacion?: string | null
 }) {
   const prefix = `${index}_`
   const [open, setOpen] = useState(index === 0 && selected)
@@ -279,9 +282,15 @@ function MuestraForm({
                 </select>
               </div>
               <div className="col-span-2 space-y-1.5">
-                <Label className="text-xs">Observaciones</Label>
+                <Label className="text-xs">
+                  Observaciones
+                  {observacionesCotizacion && (
+                    <span className="ml-1 font-normal text-slate-400">(pre-cargado desde cotización)</span>
+                  )}
+                </Label>
                 <textarea
                   name={`${prefix}observaciones`}
+                  defaultValue={observacionesCotizacion ?? ''}
                   rows={2}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[56px]"
                 />
@@ -294,7 +303,7 @@ function MuestraForm({
   )
 }
 
-export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCotizacion, moneda }: Props) {
+export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCotizacion, moneda, observacionesCotizacion }: Props) {
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Record<string, boolean>>(
     () => Object.fromEntries(muestras.map((m) => [m.id, true])),
@@ -389,6 +398,7 @@ export function SetMultiForm({ cotizacionId, muestras, cliente, contacto, numCot
           index={i}
           selected={!!selected[muestra.id]}
           onToggleSelected={(v) => setSelected((prev) => ({ ...prev, [muestra.id]: v }))}
+          observacionesCotizacion={observacionesCotizacion}
         />
       ))}
 

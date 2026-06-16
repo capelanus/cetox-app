@@ -26,6 +26,7 @@ interface Props {
   numCotizacion: string
   /** Áreas de laboratorio involucradas en esta cotización, p. ej. ['Q','B'] */
   areas?: string[]
+  observacionesCotizacion?: string | null
 }
 
 const TIPO_ENVASE_OPTIONS = ['Envase original', 'Envase simple', 'Trasvasado', 'Ampolla', 'Bidón', 'Bolsa', 'Botella', 'Caja', 'Frasco', 'Galonera', 'Otro']
@@ -66,7 +67,7 @@ function OtroSelect({
   )
 }
 
-export function SetForm({ cotizacionId, cliente, contacto, numCotizacion, areas = [] }: Props) {
+export function SetForm({ cotizacionId, cliente, contacto, numCotizacion, areas = [], observacionesCotizacion }: Props) {
   const [ingresoMuestra, setIngresoMuestra] = useState('')
   const [condAmb, setCondAmb] = useState('')
   const [tipoEnvase, setTipoEnvase] = useState('')
@@ -304,9 +305,15 @@ export function SetForm({ cotizacionId, cliente, contacto, numCotizacion, areas 
             otroPlaceholder="Especificar medida de seguridad"
           />
           <div className="col-span-2 space-y-2">
-            <Label>Observaciones</Label>
+            <Label>
+              Observaciones
+              {observacionesCotizacion && (
+                <span className="ml-1 font-normal text-slate-400 text-xs">(pre-cargado desde cotización)</span>
+              )}
+            </Label>
             <textarea
               name="observaciones"
+              defaultValue={observacionesCotizacion ?? ''}
               rows={3}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[80px]"
             />

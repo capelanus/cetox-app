@@ -74,6 +74,7 @@ export default async function NuevoSETPage({
           muestras={muestrasPendientes}
           numCotizacion={numCotizacion}
           moneda={cot.moneda}
+          observacionesCotizacion={cot.observaciones}
           cliente={{
             razonSocial: cot.cliente.razonSocial,
             ruc: cot.cliente.ruc,
@@ -90,6 +91,7 @@ export default async function NuevoSETPage({
           cotizacionId={cotizacionId}
           numCotizacion={numCotizacion}
           areas={areasFlat}
+          observacionesCotizacion={cot.observaciones}
           cliente={{
             razonSocial: cot.cliente.razonSocial,
             ruc: cot.cliente.ruc,

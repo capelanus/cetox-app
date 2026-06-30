@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Plus, Trash2, Paperclip, CheckCircle } from 'lucide-react'
@@ -29,11 +29,11 @@ interface LineItem {
 
 export default function NuevaCotizacionProveedorPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const reqParam = searchParams.get('req')
 
-  const [requerimientos, setRequerimientos] = useState<Requerimiento[]>([])
+  const [requerimiento, setRequerimiento] = useState<Requerimiento | null>(null)
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
-  const [selectedReq, setSelectedReq] = useState<string>(reqParam || '')
   const [items, setItems] = useState<LineItem[]>([{ descripcion: '', cantidad: 1, unidad: 'Unidad', precioUnitario: 0 }])
   const [loading, setLoading] = useState(true)
   const [archivoUrl, setArchivoUrl] = useState<string>('')
@@ -42,21 +42,22 @@ export default function NuevaCotizacionProveedorPage() {
   const archivoUrlRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    if (!reqParam) {
+      router.replace('/operaciones/requerimientos')
+      return
+    }
     Promise.all([
       fetch('/api/operaciones/requerimientos').then(r => r.json()),
       fetch('/api/operaciones/proveedores').then(r => r.json()),
-    ]).then(([reqs, provs]) => {
-      setRequerimientos(reqs)
+    ]).then(([reqs, provs]: [Requerimiento[], Proveedor[]]) => {
+      const req = reqs.find(r => r.id === reqParam)
+      if (!req) {
+        router.replace('/operaciones/requerimientos')
+        return
+      }
+      setRequerimiento(req)
       setProveedores(provs)
-      setLoading(false)
-    }).catch(() => setLoading(false))
-  }, [])
-
-  // Pre-fill items from requerimiento
-  useEffect(() => {
-    if (selectedReq) {
-      const req = requerimientos.find(r => r.id === selectedReq)
-      if (req?.items?.length) {
+      if (req.items?.length) {
         setItems(req.items.map(item => ({
           descripcion: item.descripcion,
           cantidad: item.cantidad,
@@ -64,8 +65,9 @@ export default function NuevaCotizacionProveedorPage() {
           precioUnitario: 0,
         })))
       }
-    }
-  }, [selectedReq, requerimientos])
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [reqParam, router])
 
   const addItem = () => setItems(prev => [...prev, { descripcion: '', cantidad: 1, unidad: 'Unidad', precioUnitario: 0 }])
   const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i))
@@ -104,12 +106,15 @@ export default function NuevaCotizacionProveedorPage() {
   }
 
   if (loading) return <div className="p-6 text-gray-500">Cargando...</div>
+  if (!requerimiento) return null
+
+  const backHref = `/operaciones/requerimientos/${requerimiento.id}`
 
   return (
     <div className="p-6 max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/operaciones/cotizaciones-proveedor">
-          <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" />Volver</Button>
+        <Link href={backHref}>
+          <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" />Volver al requerimiento</Button>
         </Link>
         <h1 className="text-2xl font-bold text-[#13602C]" style={{ fontFamily: 'Oswald, sans-serif' }}>Nueva Cotización de Proveedor</h1>
       </div>
@@ -118,23 +123,15 @@ export default function NuevaCotizacionProveedorPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-semibold text-gray-700">Información general</h2>
           <div className="grid grid-cols-2 gap-4">
+            {/* Requerimiento locked — always from URL param */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Requerimiento *</label>
-              <select
-                name="requerimientoId"
-                required
-                value={selectedReq}
-                onChange={e => setSelectedReq(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
-              >
-                <option value="">Seleccionar requerimiento...</option>
-                {requerimientos.map(req => (
-                  <option key={req.id} value={req.id}>
-                    REQ-{String(req.numero).padStart(4, '0')}-{req.anio} — {req.descripcion}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Requerimiento</label>
+              <div className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-700">
+                REQ-{String(requerimiento.numero).padStart(4, '0')}-{requerimiento.anio} — {requerimiento.descripcion}
+              </div>
+              <input type="hidden" name="requerimientoId" value={requerimiento.id} />
             </div>
+
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor *</label>
               <select name="proveedorId" required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]">
@@ -188,7 +185,6 @@ export default function NuevaCotizacionProveedorPage() {
                   {archivoNombre} — subido correctamente
                 </p>
               )}
-              {/* Hidden input to carry URL in FormData */}
               <input ref={archivoUrlRef} type="hidden" name="archivoUrl" value={archivoUrl} />
             </div>
           </div>
@@ -281,7 +277,7 @@ export default function NuevaCotizacionProveedorPage() {
 
         <div className="flex gap-3">
           <Button type="submit" className="bg-[#13602C] hover:bg-[#0e4a21] text-white">Registrar cotización</Button>
-          <Link href="/operaciones/cotizaciones-proveedor">
+          <Link href={backHref}>
             <Button type="button" variant="outline">Cancelar</Button>
           </Link>
         </div>

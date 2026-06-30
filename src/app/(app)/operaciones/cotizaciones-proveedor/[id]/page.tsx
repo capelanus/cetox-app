@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, ShoppingCart, Paperclip } from 'lucide-react'
 import { formatNumCotizacionProveedor, formatFecha } from '@/lib/format'
 import { ESTADO_COT_PROVEEDOR_LABELS } from '@/lib/constants'
-import { enviarCotizacionACalidad } from '@/app/actions/cotizaciones-proveedor'
 import AprobacionControls from '../aprobacion-client'
 
 export default async function CotizacionProveedorDetallePage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,8 +24,6 @@ export default async function CotizacionProveedorDetallePage({ params }: { param
     },
   })
   if (!cot) notFound()
-
-  const enviar = enviarCotizacionACalidad.bind(null, id)
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
@@ -173,16 +170,7 @@ export default async function CotizacionProveedorDetallePage({ params }: { param
 
       {/* Actions */}
       <div className="flex gap-3 flex-wrap">
-        {/* Enviar a Calidad (operaciones) */}
-        {hasRol(rol, 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA') && cot.estado === 'BORRADOR' && (
-          <form action={enviar}>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
-              Enviar a Calidad para aprobación
-            </Button>
-          </form>
-        )}
-
-        {/* Approve/Reject (director calidad) */}
+        {/* Approve/Reject (director calidad) — inline desde el detalle */}
         {hasRol(rol, 'DIRECTOR_CALIDAD') && cot.estado === 'ENVIADA_CALIDAD' && (
           <AprobacionControls cotId={id} />
         )}
@@ -195,6 +183,11 @@ export default async function CotizacionProveedorDetallePage({ params }: { param
             </Button>
           </Link>
         )}
+
+        {/* Link back to requerimiento */}
+        <Link href={`/operaciones/requerimientos/${cot.requerimientoId}`}>
+          <Button variant="outline">Ver requerimiento completo</Button>
+        </Link>
       </div>
     </div>
   )

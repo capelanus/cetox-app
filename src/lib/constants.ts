@@ -48,6 +48,7 @@ export const ESTADO_REQUERIMIENTO_LABELS: Record<string, string> = {
   BORRADOR: 'Borrador',
   ENVIADO: 'Enviado',
   EN_COTIZACION: 'En cotización',
+  ENVIADO_CALIDAD: 'Enviado a Calidad',
   COTIZACION_APROBADA: 'Cotización aprobada',
   OC_EMITIDA: 'OC emitida',
   EN_TRANSITO: 'En tránsito',

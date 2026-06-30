@@ -1,16 +1,22 @@
-import { requireRol } from '@/lib/roles'
+import { requireRol, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Plus } from 'lucide-react'
-import { formatNumRequerimiento, formatFecha } from '@/lib/format'
-import { AREA_SOLICITANTE_LABELS, ESTADO_REQUERIMIENTO_LABELS } from '@/lib/constants'
+import { ArrowLeft, Plus, Send } from 'lucide-react'
+import { formatNumRequerimiento, formatNumCotizacionProveedor, formatFecha } from '@/lib/format'
+import { AREA_SOLICITANTE_LABELS, ESTADO_REQUERIMIENTO_LABELS, ESTADO_COT_PROVEEDOR_LABELS } from '@/lib/constants'
 import { enviarRequerimiento } from '@/app/actions/requerimientos'
+import { enviarRequerimientoACalidad } from '@/app/actions/cotizaciones-proveedor'
+import AprobacionControls from '@/app/(app)/operaciones/cotizaciones-proveedor/aprobacion-client'
 
 export default async function RequerimientoDetallePage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
   const { id } = await params
+  const rol = session.user.rol
+  const esCalidad = hasRol(rol, 'DIRECTOR_CALIDAD')
+  const esOperaciones = hasRol(rol, 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA')
+
   const req = await prisma.requerimiento.findUnique({
     where: { id },
     include: {
@@ -18,7 +24,7 @@ export default async function RequerimientoDetallePage({ params }: { params: Pro
       creadoPor: true,
       cotizacionesProveedor: {
         include: { proveedor: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' },
       },
       ordenesCompra: {
         include: { proveedor: true },
@@ -29,12 +35,27 @@ export default async function RequerimientoDetallePage({ params }: { params: Pro
   if (!req) notFound()
 
   const enviar = enviarRequerimiento.bind(null, id)
-  const puedeEnviar = req.estado === 'BORRADOR'
+  const enviarACalidad = enviarRequerimientoACalidad.bind(null, id)
+
+  const puedeEnviar = req.estado === 'BORRADOR' && esOperaciones
+  const puedeEnviarACalidad =
+    ['ENVIADO', 'EN_COTIZACION'].includes(req.estado) &&
+    req.cotizacionesProveedor.length > 0 &&
+    esOperaciones
+  const puedeAgregarCotizacion =
+    ['ENVIADO', 'EN_COTIZACION'].includes(req.estado) && esOperaciones
+
+  const estadoBadgeClass =
+    req.estado === 'CERRADO' || req.estado === 'COTIZACION_APROBADA'
+      ? 'bg-green-100 text-green-700'
+      : req.estado === 'ENVIADO_CALIDAD'
+      ? 'bg-blue-100 text-blue-700'
+      : 'bg-amber-100 text-amber-700'
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/operaciones/requerimientos">
+      <div className="flex items-center gap-3 flex-wrap">
+        <Link href={esCalidad ? '/operaciones/cotizaciones-proveedor' : '/operaciones/requerimientos'}>
           <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" />Volver</Button>
         </Link>
         <div>
@@ -43,14 +64,22 @@ export default async function RequerimientoDetallePage({ params }: { params: Pro
           </h1>
           <p className="text-sm text-gray-500">{req.descripcion}</p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className={`text-sm px-3 py-1 rounded-full font-medium ${req.estado === 'CERRADO' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <span className={`text-sm px-3 py-1 rounded-full font-medium ${estadoBadgeClass}`}>
             {ESTADO_REQUERIMIENTO_LABELS[req.estado] || req.estado}
           </span>
           {puedeEnviar && (
             <form action={enviar}>
               <Button type="submit" size="sm" className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
                 Enviar para cotizar
+              </Button>
+            </form>
+          )}
+          {puedeEnviarACalidad && (
+            <form action={enviarACalidad}>
+              <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Send className="w-3.5 h-3.5 mr-1.5" />
+                Enviar a Calidad
               </Button>
             </form>
           )}
@@ -124,20 +153,70 @@ export default async function RequerimientoDetallePage({ params }: { params: Pro
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
           <span className="font-semibold text-gray-700">Cotizaciones de Proveedor</span>
-          {req.estado !== 'BORRADOR' && req.estado !== 'CERRADO' && req.estado !== 'CANCELADO' && (
+          {puedeAgregarCotizacion && (
             <Link href={`/operaciones/cotizaciones-proveedor/nueva?req=${req.id}`}>
               <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-1" />Agregar cotización</Button>
             </Link>
           )}
         </div>
+
         {req.cotizacionesProveedor.length === 0 ? (
           <div className="text-center py-6 text-gray-400 text-sm">Sin cotizaciones de proveedor</div>
+        ) : esCalidad ? (
+          /* ── Vista Calidad: tarjetas con controles de aprobación ── */
+          <div className="divide-y divide-gray-100">
+            {req.cotizacionesProveedor.map((cot, i) => (
+              <div key={cot.id} className="p-5 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs text-gray-400 font-mono">{formatNumCotizacionProveedor(cot.numero, cot.anio)}</p>
+                    <p className="font-semibold text-gray-800">{cot.proveedor.razonSocial}</p>
+                    {cot.plazoEntregaDias && (
+                      <p className="text-xs text-gray-500 mt-0.5">Plazo: {cot.plazoEntregaDias} días</p>
+                    )}
+                    {cot.condicionesPago && (
+                      <p className="text-xs text-gray-500">Pago: {cot.condicionesPago}</p>
+                    )}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xl font-bold text-[#13602C]">{cot.moneda} {cot.total.toFixed(2)}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      cot.estado === 'APROBADA'        ? 'bg-green-100 text-green-700' :
+                      cot.estado === 'RECHAZADA'       ? 'bg-red-100 text-red-700' :
+                      cot.estado === 'ENVIADA_CALIDAD' ? 'bg-amber-100 text-amber-700' :
+                                                         'bg-gray-100 text-gray-600'
+                    }`}>
+                      {ESTADO_COT_PROVEEDOR_LABELS[cot.estado] ?? cot.estado}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  {cot.estado === 'ENVIADA_CALIDAD' ? (
+                    <AprobacionControls cotId={cot.id} />
+                  ) : cot.estado === 'APROBADA' ? (
+                    <p className="text-sm text-green-600 font-medium">✓ Aprobada</p>
+                  ) : cot.estado === 'RECHAZADA' ? (
+                    <p className="text-sm text-red-600">✗ Rechazada{cot.motivoRechazo ? ` — ${cot.motivoRechazo}` : ''}</p>
+                  ) : null}
+                  <Link
+                    href={`/operaciones/cotizaciones-proveedor/${cot.id}`}
+                    className="text-sm text-[#13602C] hover:underline whitespace-nowrap flex-shrink-0 ml-auto"
+                  >
+                    Ver detalle →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
+          /* ── Vista Operaciones: tabla simple ── */
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="text-left px-4 py-2 font-medium text-gray-600">Proveedor</th>
                 <th className="text-left px-4 py-2 font-medium text-gray-600">Total</th>
+                <th className="text-left px-4 py-2 font-medium text-gray-600">Plazo</th>
                 <th className="text-left px-4 py-2 font-medium text-gray-600">Estado</th>
               </tr>
             </thead>
@@ -145,14 +224,21 @@ export default async function RequerimientoDetallePage({ params }: { params: Pro
               {req.cotizacionesProveedor.map(cot => (
                 <tr key={cot.id} className="hover:bg-gray-50">
                   <td className="px-4 py-2">
-                    <Link href={`/operaciones/cotizaciones-proveedor/${cot.id}`} className="text-[#13602C] hover:underline">
+                    <Link href={`/operaciones/cotizaciones-proveedor/${cot.id}`} className="text-[#13602C] hover:underline font-medium">
                       {cot.proveedor.razonSocial}
                     </Link>
+                    <p className="text-xs text-gray-400 font-mono">{formatNumCotizacionProveedor(cot.numero, cot.anio)}</p>
                   </td>
                   <td className="px-4 py-2 font-mono">{cot.moneda} {cot.total.toFixed(2)}</td>
+                  <td className="px-4 py-2 text-gray-500">{cot.plazoEntregaDias ? `${cot.plazoEntregaDias} días` : '—'}</td>
                   <td className="px-4 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${cot.estado === 'APROBADA' ? 'bg-green-100 text-green-700' : cot.estado === 'RECHAZADA' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {cot.estado}
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      cot.estado === 'APROBADA'        ? 'bg-green-100 text-green-700' :
+                      cot.estado === 'RECHAZADA'       ? 'bg-red-100 text-red-700' :
+                      cot.estado === 'ENVIADA_CALIDAD' ? 'bg-blue-100 text-blue-700' :
+                                                         'bg-amber-100 text-amber-700'
+                    }`}>
+                      {ESTADO_COT_PROVEEDOR_LABELS[cot.estado] ?? cot.estado}
                     </span>
                   </td>
                 </tr>

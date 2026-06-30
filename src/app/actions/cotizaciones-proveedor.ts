@@ -22,6 +22,15 @@ export async function crearCotizacionProveedor(formData: FormData) {
   const itemsJson = formData.get('items') as string
   const items: { descripcion: string; cantidad: number; unidad: string; precioUnitario: number }[] = JSON.parse(itemsJson || '[]')
 
+  // Block adding cotizaciones after requerimiento was sent to calidad
+  const reqEstado = await prisma.requerimiento.findUnique({
+    where: { id: requerimientoId },
+    select: { estado: true },
+  })
+  if (!reqEstado || !['ENVIADO', 'EN_COTIZACION'].includes(reqEstado.estado)) {
+    throw new Error('No se pueden agregar cotizaciones: el requerimiento ya fue enviado a Calidad')
+  }
+
   const itemsWithSubtotal = items.map((item, i) => ({
     descripcion: item.descripcion,
     cantidad: item.cantidad,
@@ -135,7 +144,62 @@ export async function rechazarCotizacionProveedor(id: string, formData: FormData
       fechaAprobacion: new Date(),
     },
   })
-  await prisma.requerimiento.update({ where: { id: cot.requerimientoId }, data: { estado: 'EN_COTIZACION' } })
+  // If all cotizaciones for this requerimiento are now rejected, allow operaciones to add new ones
+  const restantes = await prisma.cotizacionProveedor.count({
+    where: { requerimientoId: cot.requerimientoId, estado: { not: 'RECHAZADA' } },
+  })
+  if (restantes === 0) {
+    await prisma.requerimiento.update({ where: { id: cot.requerimientoId }, data: { estado: 'EN_COTIZACION' } })
+  }
   revalidatePath('/operaciones/cotizaciones-proveedor')
   revalidatePath(`/operaciones/cotizaciones-proveedor/${id}`)
+  revalidatePath(`/operaciones/requerimientos/${cot.requerimientoId}`)
+}
+
+export async function enviarRequerimientoACalidad(requerimientoId: string) {
+  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+
+  const req = await prisma.requerimiento.findUnique({
+    where: { id: requerimientoId },
+    include: {
+      cotizacionesProveedor: {
+        select: { id: true, numero: true, anio: true },
+      },
+    },
+  })
+  if (!req) throw new Error('Requerimiento no encontrado')
+  if (req.cotizacionesProveedor.length === 0) throw new Error('No hay cotizaciones para enviar')
+
+  // Send all BORRADOR cotizaciones to calidad
+  await prisma.cotizacionProveedor.updateMany({
+    where: { requerimientoId, estado: 'BORRADOR' },
+    data: { estado: 'ENVIADA_CALIDAD' },
+  })
+
+  await prisma.requerimiento.update({
+    where: { id: requerimientoId },
+    data: { estado: 'ENVIADO_CALIDAD' },
+  })
+
+  // Notify DIRECTOR_CALIDAD
+  const directores = await prisma.usuario.findMany({
+    where: { rol: 'DIRECTOR_CALIDAD', activo: true },
+    select: { id: true },
+  })
+  if (directores.length > 0) {
+    const numCots = req.cotizacionesProveedor.length
+    await prisma.notificacion.createMany({
+      data: directores.map(u => ({
+        usuarioId: u.id,
+        tipo: 'REQUERIMIENTO_ENVIADO_CALIDAD',
+        titulo: 'Requerimiento con cotizaciones pendiente de aprobación',
+        mensaje: `REQ-${String(req.numero).padStart(4, '0')}-${req.anio} — "${req.descripcion}" enviado con ${numCots} cotización${numCots !== 1 ? 'es' : ''} para su revisión.`,
+        enlace: `/operaciones/requerimientos/${requerimientoId}`,
+      })),
+    })
+  }
+
+  revalidatePath('/operaciones/requerimientos')
+  revalidatePath(`/operaciones/requerimientos/${requerimientoId}`)
+  revalidatePath('/operaciones/cotizaciones-proveedor')
 }

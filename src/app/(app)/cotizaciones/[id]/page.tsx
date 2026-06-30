@@ -14,7 +14,8 @@ const ESTADO_LABELS: Record<string, string> = {
   BORRADOR: 'Borrador',
   EN_REVISION: 'En revisión',
   ENVIADA: 'Enviada',
-  ACEPTADA: 'Aceptada',
+  REVISADO: 'Revisado',
+  APROBADA: 'Aprobada',
   RECHAZADA: 'Rechazada',
   VENCIDA: 'Vencida',
 }
@@ -59,7 +60,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
   }
   async function aceptar() {
     'use server'
-    await cambiarEstadoCotizacion(id, 'ACEPTADA')
+    await cambiarEstadoCotizacion(id, 'REVISADO')
     redirect(`/cotizaciones/${id}`)
   }
   async function rechazar() {
@@ -78,11 +79,13 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
         </h1>
         <Badge
           className={
-            cot.estado === 'ACEPTADA'
+            cot.estado === 'REVISADO'
               ? 'bg-green-100 text-green-700'
-              : cot.estado === 'RECHAZADA'
-                ? 'bg-red-100 text-red-700'
-                : ''
+              : cot.estado === 'APROBADA'
+                ? 'bg-emerald-100 text-emerald-800'
+                : cot.estado === 'RECHAZADA'
+                  ? 'bg-red-100 text-red-700'
+                  : ''
           }
         >
           {ESTADO_LABELS[cot.estado] ?? cot.estado}
@@ -101,15 +104,16 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      {/* Flujo de aprobación — solo para cotizaciones normales */}
-      {cot.tipo !== 'ABIERTA' && cot.estado !== 'RECHAZADA' && cot.estado !== 'VENCIDA' ? (
+      {/* Flujo de aprobación */}
+      {cot.estado !== 'RECHAZADA' && cot.estado !== 'VENCIDA' ? (
         <div className="bg-white rounded-xl border shadow-sm p-5">
           <h2 className="font-semibold text-slate-700 text-sm mb-4">Flujo de aprobación</h2>
           {(() => {
             const pasos = [
               { label: 'Borrador', depto: 'Administración', dot: 'bg-slate-500', color: 'text-slate-600', done: true },
-              { label: 'Revisión', depto: 'Director de Calidad', dot: 'bg-amber-500', color: 'text-amber-700', done: ['EN_REVISION', 'ACEPTADA'].includes(cot.estado), activo: cot.estado === 'EN_REVISION' },
-              { label: 'Aceptada', depto: 'Administración', dot: 'bg-green-500', color: 'text-green-700', done: cot.estado === 'ACEPTADA', activo: cot.estado === 'ACEPTADA' },
+              { label: 'Revisión', depto: 'Director de Calidad', dot: 'bg-amber-500', color: 'text-amber-700', done: ['EN_REVISION', 'REVISADO', 'APROBADA'].includes(cot.estado), activo: cot.estado === 'EN_REVISION' },
+              { label: 'Revisado', depto: 'Director de Calidad', dot: 'bg-green-500', color: 'text-green-700', done: ['REVISADO', 'APROBADA'].includes(cot.estado), activo: cot.estado === 'REVISADO' },
+              { label: 'Aprobada', depto: 'Administración', dot: 'bg-emerald-600', color: 'text-emerald-700', done: cot.estado === 'APROBADA', activo: cot.estado === 'APROBADA' },
             ]
             return (
               <div className="flex items-start">
@@ -356,7 +360,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
               </form>
             </>
           )}
-          {cot.estado === 'ACEPTADA' && (
+          {['REVISADO', 'APROBADA'].includes(cot.estado) && (
             <a href={`/api/cotizaciones/${id}/generar-pdf`} download>
               <Button variant="outline">
                 <Download className="h-4 w-4 mr-2" />
@@ -364,7 +368,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
               </Button>
             </a>
           )}
-          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION') && cot.tipo !== 'ABIERTA' && (() => {
+          {['REVISADO', 'APROBADA'].includes(cot.estado) && hasRol(rol, 'ADMINISTRACION') && cot.tipo !== 'ABIERTA' && (() => {
             const muestrasPendientes = cot.muestras.filter((m) => m.sets.length === 0).length
             const sinMuestras = cot.muestras.length === 0
             const puedeGenerar = sinMuestras ? cot.sets.length === 0 : muestrasPendientes > 0
@@ -382,7 +386,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             )
           })()}
           {/* ── Facturación ── */}
-          {cot.estado === 'ACEPTADA' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'COORDINADOR_CALIDAD') && (
+          {['REVISADO', 'APROBADA'].includes(cot.estado) && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'COORDINADOR_CALIDAD') && (
             cot.facturasCliente.length > 0 ? (
               <Link href={`/facturacion/${cot.facturasCliente[0].id}`}>
                 <Button variant="outline" style={{ borderColor: '#4AC3B2', color: '#13602C' }}>

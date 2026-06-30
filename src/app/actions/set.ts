@@ -16,8 +16,8 @@ export async function crearSET(formData: FormData) {
     select: { clienteId: true, estado: true },
   })
 
-  if (cot.estado !== 'ACEPTADA') {
-    throw new Error('La cotización debe estar aceptada para crear el SET')
+  if (!['REVISADO', 'APROBADA'].includes(cot.estado)) {
+    throw new Error('La cotización debe estar revisada/aprobada para crear el SET')
   }
 
   const anio = new Date().getFullYear()
@@ -64,7 +64,10 @@ export async function crearSET(formData: FormData) {
     },
   })
 
+  await prisma.cotizacion.update({ where: { id: cotizacionId }, data: { estado: 'APROBADA' } })
+
   revalidatePath('/set')
+  revalidatePath('/cotizaciones')
   redirect(`/set/${set.id}`)
 }
 
@@ -206,7 +209,7 @@ export async function crearSETsFromMuestras(formData: FormData) {
     where: { id: cotizacionId },
     select: { clienteId: true, estado: true },
   })
-  if (cot.estado !== 'ACEPTADA') throw new Error('La cotización debe estar aceptada')
+  if (!['REVISADO', 'APROBADA'].includes(cot.estado)) throw new Error('La cotización debe estar revisada/aprobada')
 
   // Cargar indicaciones guardadas en cada muestra para pre-llenar el SET
   const muestrasDB = await prisma.cotizacionMuestra.findMany({
@@ -251,7 +254,10 @@ export async function crearSETsFromMuestras(formData: FormData) {
     setIds.push(set.id)
   }
 
+  await prisma.cotizacion.update({ where: { id: cotizacionId }, data: { estado: 'APROBADA' } })
+
   revalidatePath('/set')
+  revalidatePath('/cotizaciones')
   revalidatePath(`/cotizaciones/${cotizacionId}`)
   // Redirigir al primer SET si solo hay uno, a la lista si son varios
   redirect(setIds.length === 1 ? `/set/${setIds[0]}` : '/set')

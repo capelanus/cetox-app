@@ -11,7 +11,8 @@ const ESTADO_LABELS: Record<string, string> = {
   BORRADOR: 'Borrador',
   EN_REVISION: 'En revisión',
   ENVIADA: 'Enviada',
-  ACEPTADA: 'Aceptada',
+  REVISADO: 'Revisado',
+  APROBADA: 'Aprobada',
   RECHAZADA: 'Rechazada',
   VENCIDA: 'Vencida',
 }
@@ -19,7 +20,8 @@ const ESTADO_LABELS: Record<string, string> = {
 const ESTADO_DEPTO: Record<string, string> = {
   BORRADOR: 'Administración',
   EN_REVISION: 'Director de Calidad',
-  ACEPTADA: 'Administración',
+  REVISADO: 'Director de Calidad',
+  APROBADA: 'Administración',
 }
 
 interface Ensayo {
@@ -185,11 +187,13 @@ export function CotizacionesTable({ cotizaciones, ensayos }: Props) {
                   <div className="flex flex-wrap gap-1 items-center">
                     <Badge
                       className={
-                        c.estado === 'ACEPTADA'
+                        c.estado === 'REVISADO'
                           ? 'bg-green-100 text-green-700'
-                          : c.estado === 'RECHAZADA'
-                            ? 'bg-red-100 text-red-700'
-                            : ''
+                          : c.estado === 'APROBADA'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : c.estado === 'RECHAZADA'
+                              ? 'bg-red-100 text-red-700'
+                              : ''
                       }
                       variant={
                         c.estado === 'RECHAZADA' ? 'destructive' :

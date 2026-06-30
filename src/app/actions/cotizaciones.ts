@@ -95,8 +95,7 @@ export async function crearCotizacion(formData: FormData) {
 
   const clienteId = formData.get('clienteId') as string
   const tipo = (formData.get('tipo') as string) || 'NORMAL'
-  // Cotizaciones abiertas se crean directamente en estado ACEPTADA
-  const estado = tipo === 'ABIERTA' ? 'ACEPTADA' : 'BORRADOR'
+  const estado = 'BORRADOR'
 
   const cot = await prisma.cotizacion.create({
     data: {
@@ -180,12 +179,12 @@ export async function editarCotizacion(id: string, formData: FormData) {
 
 export async function cambiarEstadoCotizacion(
   id: string,
-  estado: 'EN_REVISION' | 'ENVIADA' | 'ACEPTADA' | 'RECHAZADA'
+  estado: 'EN_REVISION' | 'ENVIADA' | 'REVISADO' | 'RECHAZADA'
 ) {
   const roles: Record<string, ('GERENTE_TECNICO' | 'DIRECTOR_CALIDAD' | 'ADMINISTRACION' | 'ANALISTA')[]> = {
     EN_REVISION: ['ADMINISTRACION', 'DIRECTOR_CALIDAD'],
     ENVIADA: ['DIRECTOR_CALIDAD'],
-    ACEPTADA: ['DIRECTOR_CALIDAD'],
+    REVISADO: ['DIRECTOR_CALIDAD'],
     RECHAZADA: ['DIRECTOR_CALIDAD'],
   }
   await requireRol(roles[estado])

@@ -16,6 +16,7 @@ const ESTADO_LABELS: Record<string, string> = {
   EN_EJECUCION: 'En ejecución',
   CON_RESULTADO: 'Con resultado',
   INFORME_EMITIDO: 'Informe emitido',
+  ANULADO: 'Anulado',
 }
 
 export default async function ODADetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -68,7 +69,10 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
         </Link>
         <h1 className="text-xl font-bold text-slate-900">{formatNumODA(oda.numero, oda.anio)}</h1>
         <Badge variant="outline">{AREA_LABELS[oda.area] ?? oda.area}</Badge>
-        <Badge className={oda.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' : ''}>
+        <Badge className={
+          oda.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' :
+          oda.estado === 'ANULADO' ? 'bg-red-100 text-red-700' : ''
+        }>
           {ESTADO_LABELS[oda.estado] ?? oda.estado}
         </Badge>
       </div>

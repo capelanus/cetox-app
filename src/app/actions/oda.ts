@@ -229,21 +229,13 @@ export async function eliminarODA(odaId: string) {
     const estadosProtegidos = ['EMITIDO', 'FIRMADO', 'ENTREGADO']
     if (estadosProtegidos.includes(oda.informe.estado)) {
       throw new Error(
-        `No se puede eliminar: el informe ${oda.informe.prefijo}-${oda.informe.numero} ya está en estado "${oda.informe.estado}".`
+        `No se puede anular: el informe ${oda.informe.prefijo}-${oda.informe.numero} ya está en estado "${oda.informe.estado}".`
       )
     }
-    // Si está en BORRADOR o CON_RESULTADO, eliminar el informe primero
-    await prisma.informe.delete({ where: { id: oda.informe.id } })
   }
 
-  // ODAItems tienen onDelete: Cascade — se eliminan automáticamente
-  await prisma.oDA.delete({ where: { id: odaId } })
-
-  // Si el SET ya no tiene ODAs, volver a estado EMITIDA
-  const odaRestantes = await prisma.oDA.count({ where: { setId: oda.setId } })
-  if (odaRestantes === 0) {
-    await prisma.sET.update({ where: { id: oda.setId }, data: { estado: 'EMITIDA' } })
-  }
+  // Soft delete: marcar como ANULADO en lugar de eliminar
+  await prisma.oDA.update({ where: { id: odaId }, data: { estado: 'ANULADO' } })
 
   revalidatePath(`/set/${oda.setId}`)
   revalidatePath(`/set/${oda.setId}/editar`)

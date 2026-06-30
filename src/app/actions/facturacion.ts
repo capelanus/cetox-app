@@ -35,8 +35,8 @@ export async function generarFacturaClienteConItems(
     include: { cliente: true },
   })
 
-  if (cot.estado !== 'ACEPTADA') {
-    return { error: 'Solo se puede facturar una cotización en estado ACEPTADA.' }
+  if (!['REVISADO', 'APROBADA'].includes(cot.estado)) {
+    return { error: 'Solo se puede facturar una cotización revisada o aprobada.' }
   }
 
   // Calcular totales solo con los ítems seleccionados
@@ -63,7 +63,10 @@ export async function generarFacturaClienteConItems(
     },
   })
 
+  await prisma.cotizacion.update({ where: { id: cotizacionId }, data: { estado: 'APROBADA' } })
+
   revalidatePath('/facturacion')
+  revalidatePath('/cotizaciones')
   revalidatePath(`/cotizaciones/${cotizacionId}`)
 
   return { id: factura.id }
@@ -88,8 +91,8 @@ export async function generarFacturaCliente(cotizacionId: string) {
     },
   })
 
-  if (cot.estado !== 'ACEPTADA') {
-    throw new Error('Solo se puede facturar una cotización en estado ACEPTADA')
+  if (!['REVISADO', 'APROBADA'].includes(cot.estado)) {
+    throw new Error('Solo se puede facturar una cotización revisada o aprobada')
   }
 
   const existente = await prisma.facturaCliente.findFirst({
@@ -125,7 +128,10 @@ export async function generarFacturaCliente(cotizacionId: string) {
     },
   })
 
+  await prisma.cotizacion.update({ where: { id: cotizacionId }, data: { estado: 'APROBADA' } })
+
   revalidatePath('/facturacion')
+  revalidatePath('/cotizaciones')
   revalidatePath(`/cotizaciones/${cotizacionId}`)
   redirect(`/facturacion/${factura.id}`)
 }

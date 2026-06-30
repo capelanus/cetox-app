@@ -2,7 +2,7 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib'
 import { formatFecha, formatNumInforme } from '@/lib/format'
 
 // ── Colores corporativos CETOX ────────────────────────────────────────────────
@@ -125,6 +125,16 @@ export async function GET(
         x: ML, y: PAGE_H - 20, size: 8, font: fontBold, color: WHITE,
       })
     }
+    // Marca de agua diagonal — previene modificaciones no autorizadas
+    p.drawText('CETOX LAB — DOCUMENTO OFICIAL', {
+      x: 95,
+      y: PAGE_H / 2 - 20,
+      size: 36,
+      font: fontBold,
+      color: rgb(0.075, 0.376, 0.173),
+      opacity: 0.06,
+      rotate: degrees(45),
+    })
     return p
   }
 

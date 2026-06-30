@@ -11,6 +11,7 @@ const ESTADO_LABELS: Record<string, string> = {
   EN_EJECUCION: 'En ejecución',
   CON_RESULTADO: 'Con resultado',
   INFORME_EMITIDO: 'Informe emitido',
+  ANULADO: 'Anulado',
 }
 
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
@@ -127,7 +128,8 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
                   <Badge
                     className={
                       o.estado === 'CON_RESULTADO' ? 'bg-green-100 text-green-700' :
-                      o.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' : ''
+                      o.estado === 'EN_EJECUCION' ? 'bg-blue-100 text-blue-700' :
+                      o.estado === 'ANULADO' ? 'bg-red-100 text-red-700' : ''
                     }
                   >
                     {ESTADO_LABELS[o.estado] ?? o.estado}

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Download } from 'lucide-react'
 import { formatFecha, formatNumSET } from '@/lib/format'
 import { crearCargoEntrega } from '@/app/actions/cargos'
 
@@ -33,6 +33,15 @@ export default async function CargoDetailPage({ params }: { params: Promise<{ se
           <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />Cargos</Button>
         </Link>
         <h1 className="text-xl font-bold text-slate-900">Cargo de Entrega</h1>
+        <a
+          href={`/api/cargos/${setId}/generar-pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#13602C] text-[#13602C] text-sm font-medium hover:bg-green-50 transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          Descargar PDF
+        </a>
       </div>
 
       {/* SET info */}

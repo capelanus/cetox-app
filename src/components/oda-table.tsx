@@ -26,6 +26,7 @@ interface ODA {
   anio: number
   area: string
   estado: string
+  fechaRecepcion: Date | string | null
   fechaEntregaCompromiso: Date | string
   items: ODAItem[]
   set: { cliente: { razonSocial: string } }
@@ -95,6 +96,7 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Área</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Ensayos</th>
               {!isAnalista && <th className="text-left px-4 py-3 font-semibold text-slate-600">Cliente</th>}
+              <th className="text-left px-4 py-3 font-semibold text-slate-600">Recepción</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Entrega</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Estado</th>
             </tr>
@@ -123,6 +125,7 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
                   )}
                 </td>
                 {!isAnalista && <td className="px-4 py-3">{o.set.cliente.razonSocial}</td>}
+                <td className="px-4 py-3 text-slate-600">{o.fechaRecepcion ? formatFecha(o.fechaRecepcion) : <span className="text-slate-300">—</span>}</td>
                 <td className="px-4 py-3 text-slate-600">{formatFecha(o.fechaEntregaCompromiso)}</td>
                 <td className="px-4 py-3">
                   <Badge
@@ -139,7 +142,7 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
             ))}
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">No hay ODAs</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">No hay ODAs</td>
               </tr>
             )}
           </tbody>

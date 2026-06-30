@@ -22,7 +22,7 @@ export async function crearSET(formData: FormData) {
 
   const anio = new Date().getFullYear()
   const numero = await siguienteCorrelativo('set', anio)
-  const codigoMuestra = `MU-${anio}-${String(numero).padStart(4, '0')}`
+  const codigoMuestra = `${String(numero).padStart(4, '0')}`
 
   const fechaIngresoRaw = formData.get('fechaIngreso') as string
   const fechaIngreso = fechaIngresoRaw ? new Date(fechaIngresoRaw) : new Date()
@@ -225,7 +225,7 @@ export async function crearSETsFromMuestras(formData: FormData) {
     const muestraId = muestraIds[i]
     if (!selectedSet.has(muestraId)) continue
     const numero = await siguienteCorrelativo('set', anio)
-    const codigoMuestra = `MU-${anio}-${String(numero).padStart(4, '0')}`
+    const codigoMuestra = `${String(numero).padStart(4, '0')}`
 
     const setData = buildSETData(formData, `${i}_`)
     const muestraDB = muestraMap[muestraId]
@@ -270,7 +270,7 @@ export async function crearSETCero(formData: FormData) {
 
   const anio = new Date().getFullYear()
   const numero = await siguienteCorrelativo('set', anio)
-  const codigoMuestra = `MU-${anio}-${String(numero).padStart(4, '0')}`
+  const codigoMuestra = `${String(numero).padStart(4, '0')}`
 
   const fechaIngresoRaw = formData.get('fechaIngreso') as string
   const fechaIngreso = fechaIngresoRaw ? new Date(fechaIngresoRaw) : new Date()

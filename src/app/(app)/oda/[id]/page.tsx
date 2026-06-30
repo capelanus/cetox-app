@@ -49,7 +49,7 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
     { label: 'Condiciones ambientales', value: set.condicionesAmbientales },
     { label: 'N° de muestras', value: set.numeroMuestras?.toString() },
     { label: 'Peso / Volumen', value: set.pesoVolumen },
-    { label: 'Código de muestra', value: set.codigoMuestra?.split('-').pop() ?? null },
+    { label: 'Código de muestra', value: set.codigoMuestra ?? null },
     // Indicación específica para el área de esta ODA (nuevo); fallback al campo único legacy
     {
       label: 'Otra indicación',

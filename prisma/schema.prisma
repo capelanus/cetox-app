@@ -499,6 +499,7 @@ model OrdenCompra {
   estado                     String               @default("EMITIDA")
   observaciones              String?
   archivoPdfUrl              String?
+  facturaOcUrl               String?
   fechaConfirmacionProveedor DateTime?
   emitidoPorId               String
   emitidoPor                 Usuario              @relation("OCEmitidaPor", fields: [emitidoPorId], references: [id])
@@ -544,6 +545,7 @@ model OrdenCompraItem {
   precioUnitario   Float
   subtotal         Float
   orden            Int         @default(0)
+  facturaUrl       String?
 }
 
 model Recepcion {

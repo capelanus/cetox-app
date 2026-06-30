@@ -7,6 +7,7 @@ import { ArrowLeft, PackageCheck, Receipt, Pencil } from 'lucide-react'
 import { formatNumOrdenCompra, formatNumRecepcion, formatFecha } from '@/lib/format'
 import { ESTADO_OC_LABELS } from '@/lib/constants'
 import { actualizarEstadoOC } from '@/app/actions/ordenes-compra'
+import FacturaAdjuntos from './factura-adjuntos'
 
 export default async function OrdenCompraDetallePage({ params }: { params: Promise<{ id: string }> }) {
   await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
@@ -284,6 +285,14 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
           </table>
         </div>
       )}
+      {/* Facturas adjuntas */}
+      <FacturaAdjuntos
+        ocId={oc.id}
+        facturaOcUrl={oc.facturaOcUrl ?? null}
+        items={oc.items}
+        moneda={oc.moneda}
+      />
+
       {/* Historial de modificaciones */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="font-semibold text-gray-700 mb-3">Historial de modificaciones</h2>

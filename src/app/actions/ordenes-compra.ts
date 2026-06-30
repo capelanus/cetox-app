@@ -123,6 +123,22 @@ export async function actualizarOC(id: string, formData: FormData) {
   redirect(`/operaciones/ordenes-compra/${id}`)
 }
 
+export async function adjuntarFacturaOC(ocId: string, facturaUrl: string) {
+  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  await prisma.ordenCompra.update({ where: { id: ocId }, data: { facturaOcUrl: facturaUrl } })
+  revalidatePath(`/operaciones/ordenes-compra/${ocId}`)
+}
+
+export async function adjuntarFacturaItem(itemId: string, facturaUrl: string) {
+  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  const item = await prisma.ordenCompraItem.update({
+    where: { id: itemId },
+    data: { facturaUrl },
+    select: { ordenCompraId: true },
+  })
+  revalidatePath(`/operaciones/ordenes-compra/${item.ordenCompraId}`)
+}
+
 export async function actualizarEstadoOC(id: string, estado: string) {
   await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
   const data: Record<string, unknown> = { estado }

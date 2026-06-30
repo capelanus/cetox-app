@@ -38,6 +38,8 @@ import {
   Shield,
   Banknote,
   Landmark,
+  FolderOpen,
+  ClipboardCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -152,11 +154,13 @@ const sectionesCoordinadorCalidad: NavSection[] = [
   {
     label: 'Calidad',
     items: [
-      { href: '/ensayos',  label: 'Ensayos',   icon: FlaskConical,  roles: ['COORDINADOR_CALIDAD'] },
-      { href: '/set',      label: 'SET',        icon: ClipboardList, roles: ['COORDINADOR_CALIDAD'] },
-      { href: '/oda',      label: 'ODA',        icon: TestTube,      roles: ['COORDINADOR_CALIDAD'] },
-      { href: '/informes', label: 'Informes',   icon: FileCheck,     roles: ['COORDINADOR_CALIDAD'] },
-      { href: '/cargos',   label: 'Cargos',     icon: Package,       roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/ensayos',              label: 'Ensayos',       icon: FlaskConical,   roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/set',                  label: 'SET',           icon: ClipboardList,  roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/oda',                  label: 'ODA',           icon: TestTube,       roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/informes',             label: 'Informes',      icon: FileCheck,      roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/cargos',               label: 'Cargos',        icon: Package,        roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/documentos-personal',  label: 'Docs Personal', icon: FolderOpen,     roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/auditorias',           label: 'Auditorías',    icon: ClipboardCheck, roles: ['COORDINADOR_CALIDAD'] },
     ],
   },
   {
@@ -243,8 +247,10 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/set',        label: 'SET',         icon: ClipboardList, roles: ['DIRECTOR_CALIDAD'] },
       { href: '/oda',        label: 'ODA',         icon: TestTube,      roles: ['DIRECTOR_CALIDAD'] },
       { href: '/informes',   label: 'Informes',    icon: FileCheck,     roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/equipos',            label: 'Equipos',            icon: Wrench,    roles: ['DIRECTOR_CALIDAD'] },
-      { href: '/equipos/calendario', label: 'Cal. Mantenimiento', icon: Calendar,  roles: ['DIRECTOR_CALIDAD'], muted: true },
+      { href: '/equipos',             label: 'Equipos',            icon: Wrench,          roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/equipos/calendario',  label: 'Cal. Mantenimiento', icon: Calendar,        roles: ['DIRECTOR_CALIDAD'], muted: true },
+      { href: '/documentos-personal', label: 'Docs Personal',      icon: FolderOpen,      roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/auditorias',          label: 'Auditorías',         icon: ClipboardCheck,  roles: ['DIRECTOR_CALIDAD'] },
       { href: '/caja-chica',            label: 'Caja Chica',          icon: Wallet,    roles: ['DIRECTOR_CALIDAD'] },
       { href: '/caja-chica/peticiones', label: 'Petición de Efectivo', icon: Banknote,  roles: ['DIRECTOR_CALIDAD'], muted: true },
     ],

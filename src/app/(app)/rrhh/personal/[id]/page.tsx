@@ -60,13 +60,14 @@ export default async function EmpleadoDetailPage({ params }: { params: Promise<{
   const vac        = emp.vacacion
   const totalPorCobrar = (vac?.diasAtrasados ?? 0) + (vac?.diasReglamentarios ?? 0)
   const documentos = emp.documentos.map((d) => ({
-    id:          d.id,
-    nombre:      d.nombre,
-    tipo:        d.tipo,
-    archivoUrl:  d.archivoUrl,
-    archivoTipo: d.archivoTipo,
-    tamanio:     d.tamanio,
-    createdAt:   d.createdAt.toISOString(),
+    id:             d.id,
+    nombre:         d.nombre,
+    tipo:           d.tipo,
+    archivoUrl:     d.archivoUrl,
+    archivoTipo:    d.archivoTipo,
+    tamanio:        d.tamanio,
+    visibleCalidad: d.visibleCalidad,
+    createdAt:      d.createdAt.toISOString(),
   }))
 
   return (

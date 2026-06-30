@@ -50,6 +50,7 @@ model Usuario {
   empleado                  Empleado?
   historialOC               OrdenCompraHistorial[]       @relation("OCHistorialUsuario")
   movimientosInventario     InventarioMovimiento[]       @relation("InventarioMovimientoUsuario")
+  auditorias                Auditoria[]                  @relation("AuditoriaCreadaPor")
 }
 
 /// Matriz N:M de aprobadores de vacaciones.
@@ -710,15 +711,16 @@ model Asistencia {
 }
 
 model DocumentoEmpleado {
-  id           String   @id @default(cuid())
-  empleadoId   String
-  empleado     Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
-  nombre       String
-  tipo         String?
-  archivoUrl   String
-  archivoTipo  String?
-  tamanio      Int?
-  createdAt    DateTime @default(now())
+  id             String   @id @default(cuid())
+  empleadoId     String
+  empleado       Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  nombre         String
+  tipo           String?
+  archivoUrl     String
+  archivoTipo    String?
+  tamanio        Int?
+  visibleCalidad Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
   @@index([empleadoId])
 }
@@ -906,4 +908,24 @@ model AuditLog {
   @@index([usuarioId])
   @@index([entidad, entidadId])
   @@index([createdAt])
+}
+
+model Auditoria {
+  id          String               @id @default(cuid())
+  codigo      String               @unique
+  fecha       DateTime
+  descripcion String?
+  creadoPorId String
+  creadoPor   Usuario              @relation("AuditoriaCreadaPor", fields: [creadoPorId], references: [id])
+  createdAt   DateTime             @default(now())
+  documentos  AuditoriaDocumento[]
+}
+
+model AuditoriaDocumento {
+  id          String    @id @default(cuid())
+  auditoriaId String
+  auditoria   Auditoria @relation(fields: [auditoriaId], references: [id], onDelete: Cascade)
+  nombre      String
+  archivoUrl  String
+  createdAt   DateTime  @default(now())
 }

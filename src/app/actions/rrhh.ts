@@ -108,13 +108,18 @@ export async function subirDocumentoEmpleado(empleadoId: string, formData: FormD
   await requireRRHH()
   const { put } = await import('@vercel/blob')
 
-  const file        = formData.get('archivo') as File | null
-  const nombre      = (formData.get('nombre') as string)?.trim() || ''
-  const tipo        = (formData.get('tipo')   as string)?.trim() || null
+  const file             = formData.get('archivo') as File | null
+  const nombre           = (formData.get('nombre') as string)?.trim() || ''
+  const tipo             = (formData.get('tipo')   as string)?.trim() || null
+  const visibleCalidad   = formData.get('visibleCalidad') === 'true'
 
   if (!file || file.size === 0) throw new Error('Debes adjuntar un archivo')
   if (!nombre) throw new Error('El nombre es obligatorio')
   if (file.size > 25 * 1024 * 1024) throw new Error('El archivo no puede superar 25 MB')
+
+  // Competencias técnicas y fichas de ingreso siempre visibles para calidad
+  const TIPOS_SIEMPRE_VISIBLES = ['Competencia técnica', 'Ficha de ingreso']
+  const visibleCalidadFinal = TIPOS_SIEMPRE_VISIBLES.includes(tipo ?? '') ? true : visibleCalidad
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
   const blob = await put(
@@ -128,9 +133,10 @@ export async function subirDocumentoEmpleado(empleadoId: string, formData: FormD
       empleadoId,
       nombre,
       tipo,
-      archivoUrl:  blob.url,
-      archivoTipo: file.type || null,
-      tamanio:     file.size,
+      archivoUrl:     blob.url,
+      archivoTipo:    file.type || null,
+      tamanio:        file.size,
+      visibleCalidad: visibleCalidadFinal,
     },
   })
 
@@ -144,6 +150,19 @@ export async function eliminarDocumentoEmpleado(documentoId: string) {
     select: { empleadoId: true },
   })
   await prisma.documentoEmpleado.delete({ where: { id: documentoId } })
+  revalidatePath(`/rrhh/personal/${doc.empleadoId}`)
+}
+
+export async function actualizarVisibilidadDoc(documentoId: string, visibleCalidad: boolean) {
+  await requireRRHH()
+  const doc = await prisma.documentoEmpleado.findUniqueOrThrow({
+    where:  { id: documentoId },
+    select: { empleadoId: true, tipo: true },
+  })
+  // Competencias y fichas de ingreso no se pueden ocultar de calidad
+  const TIPOS_SIEMPRE_VISIBLES = ['Competencia técnica', 'Ficha de ingreso']
+  if (TIPOS_SIEMPRE_VISIBLES.includes(doc.tipo ?? '')) return
+  await prisma.documentoEmpleado.update({ where: { id: documentoId }, data: { visibleCalidad } })
   revalidatePath(`/rrhh/personal/${doc.empleadoId}`)
 }
 

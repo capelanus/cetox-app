@@ -269,6 +269,7 @@ const sectionesDirectorCalidad: NavSection[] = [
     items: [
       { href: '/operaciones',                       label: 'Panel Operaciones', icon: LayoutDashboard, roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/cotizaciones-proveedor', label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/operaciones/ordenes-compra',        label: 'Órdenes de Compra', icon: ShoppingCart,    roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/facturas',              label: 'Facturas',          icon: Receipt,         roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/pagos',                 label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
       { href: '/solicitudes',      label: 'Mis Solicitudes',    icon: ShoppingBag,  roles: ['DIRECTOR_CALIDAD'] },

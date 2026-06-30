@@ -69,6 +69,7 @@ export const ESTADO_OC_LABELS: Record<string, string> = {
   CONFIRMADA_PROVEEDOR: 'Confirmada por proveedor',
   EN_TRANSITO: 'En tránsito',
   RECIBIDA: 'Recibida',
+  PENDIENTE_PAGO: 'Pendiente de pago',
   CERRADA: 'Cerrada',
   CANCELADA: 'Cancelada',
 }

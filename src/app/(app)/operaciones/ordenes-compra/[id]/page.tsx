@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, PackageCheck, Receipt, Pencil } from 'lucide-react'
 import { formatNumOrdenCompra, formatNumRecepcion, formatFecha } from '@/lib/format'
 import { ESTADO_OC_LABELS } from '@/lib/constants'
-import { actualizarEstadoOC } from '@/app/actions/ordenes-compra'
+import { actualizarEstadoOC, enviarOCaCalidad } from '@/app/actions/ordenes-compra'
 import FacturaAdjuntos from './factura-adjuntos'
 import ComprobantePago from './comprobante-pago'
 
@@ -38,6 +38,7 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
 
   const confirmarProveedor = actualizarEstadoOC.bind(null, id, 'CONFIRMADA_PROVEEDOR')
   const marcarEnTransito = actualizarEstadoOC.bind(null, id, 'EN_TRANSITO')
+  const enviarACalidad = enviarOCaCalidad.bind(null, id)
 
   return (
     <div className="p-6 max-w-4xl space-y-6">
@@ -200,6 +201,18 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
                 <Receipt className="w-4 h-4 mr-2" />Registrar factura
               </Button>
             </Link>
+          )}
+          {oc.facturaOcUrl && !['PENDIENTE_PAGO', 'CERRADA', 'CANCELADA'].includes(oc.estado) && (
+            <form action={enviarACalidad}>
+              <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white">
+                Enviar a Calidad para pago
+              </Button>
+            </form>
+          )}
+          {oc.estado === 'PENDIENTE_PAGO' && (
+            <span className="text-sm text-purple-700 bg-purple-50 border border-purple-200 px-3 py-2 rounded-lg">
+              Enviado a calidad — pendiente de pago
+            </span>
           )}
         </div>
       )}

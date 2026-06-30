@@ -129,6 +129,34 @@ export async function adjuntarFacturaOC(ocId: string, facturaUrl: string) {
   revalidatePath(`/operaciones/ordenes-compra/${ocId}`)
 }
 
+export async function enviarOCaCalidad(ocId: string) {
+  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  const oc = await prisma.ordenCompra.findUnique({
+    where: { id: ocId },
+    select: { facturaOcUrl: true, total: true, moneda: true, numero: true, anio: true, proveedor: { select: { razonSocial: true } } },
+  })
+  if (!oc?.facturaOcUrl) throw new Error('Adjunta la factura del proveedor antes de enviar a calidad.')
+  await prisma.ordenCompra.update({ where: { id: ocId }, data: { estado: 'PENDIENTE_PAGO' } })
+  const directores = await prisma.usuario.findMany({
+    where: { rol: 'DIRECTOR_CALIDAD', activo: true },
+    select: { id: true },
+  })
+  if (directores.length > 0) {
+    const totalFmt = new Intl.NumberFormat('es-PE', { style: 'currency', currency: oc.moneda, minimumFractionDigits: 2 }).format(oc.total)
+    await prisma.notificacion.createMany({
+      data: directores.map(u => ({
+        usuarioId: u.id,
+        tipo:      'OC_PENDIENTE_PAGO',
+        titulo:    'Orden de compra pendiente de pago',
+        mensaje:   `Logística adjuntó la factura de "${oc.proveedor.razonSocial}" por ${totalFmt}. Pendiente de pago.`,
+        enlace:    `/operaciones/ordenes-compra/${ocId}`,
+      })),
+    })
+  }
+  revalidatePath('/operaciones/ordenes-compra')
+  revalidatePath(`/operaciones/ordenes-compra/${ocId}`)
+}
+
 export async function subirComprobantePago(ocId: string, comprobanteUrl: string) {
   await requireRol(['DIRECTOR_CALIDAD'])
   await prisma.ordenCompra.update({ where: { id: ocId }, data: { comprobantePagoUrl: comprobanteUrl } })

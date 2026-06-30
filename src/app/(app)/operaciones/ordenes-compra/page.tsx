@@ -11,9 +11,11 @@ export default async function OrdenesCompraPage() {
   const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
   const esCalidad = hasRol(session.user.rol, 'DIRECTOR_CALIDAD')
 
-  // Calidad only sees OCs where a factura document has been attached (ready for payment)
+  // Calidad only sees OCs explicitly sent for payment (PENDIENTE_PAGO) or already paid (comprobante uploaded)
   const ocs = await prisma.ordenCompra.findMany({
-    where: esCalidad ? { facturaOcUrl: { not: null } } : undefined,
+    where: esCalidad
+      ? { OR: [{ estado: 'PENDIENTE_PAGO' }, { comprobantePagoUrl: { not: null } }] }
+      : undefined,
     orderBy: { createdAt: 'desc' },
     include: {
       proveedor: true,
@@ -40,7 +42,7 @@ export default async function OrdenesCompraPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#13602C]" style={{ fontFamily: 'Oswald, sans-serif' }}>Órdenes de Compra</h1>
           <p className="text-gray-500 text-sm">
-            {esCalidad ? `${ocs.length} orden(es) con factura adjunta` : `${ocs.length} orden(es)`}
+            {esCalidad ? `${ocs.length} orden(es) pendiente(s) de pago` : `${ocs.length} orden(es)`}
           </p>
         </div>
         {!esCalidad && (

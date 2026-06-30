@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireRol, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -8,10 +8,13 @@ import { formatNumOrdenCompra, formatNumRecepcion, formatFecha } from '@/lib/for
 import { ESTADO_OC_LABELS } from '@/lib/constants'
 import { actualizarEstadoOC } from '@/app/actions/ordenes-compra'
 import FacturaAdjuntos from './factura-adjuntos'
+import ComprobantePago from './comprobante-pago'
 
 export default async function OrdenCompraDetallePage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
   const { id } = await params
+
+  const esCalidad = hasRol(session.user.rol, 'DIRECTOR_CALIDAD')
 
   const oc = await prisma.ordenCompra.findUnique({
     where: { id },
@@ -58,7 +61,7 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
           }`}>
             {ESTADO_OC_LABELS[oc.estado] || oc.estado}
           </span>
-          {!['CERRADA', 'CANCELADA'].includes(oc.estado) && (
+          {!esCalidad && !['CERRADA', 'CANCELADA'].includes(oc.estado) && (
             <Link href={`/operaciones/ordenes-compra/${id}/editar`}>
               <Button variant="outline" size="sm">
                 <Pencil className="w-4 h-4 mr-1" />Editar
@@ -171,33 +174,35 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
         </table>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 flex-wrap">
-        {oc.estado === 'EMITIDA' && (
-          <form action={confirmarProveedor}>
-            <Button type="submit" variant="outline">Confirmar por proveedor</Button>
-          </form>
-        )}
-        {(oc.estado === 'EMITIDA' || oc.estado === 'CONFIRMADA_PROVEEDOR') && (
-          <form action={marcarEnTransito}>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Marcar en tránsito</Button>
-          </form>
-        )}
-        {(oc.estado === 'EN_TRANSITO' || oc.estado === 'CONFIRMADA_PROVEEDOR') && (
-          <Link href={`/operaciones/recepciones/nueva?oc=${oc.id}`}>
-            <Button className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
-              <PackageCheck className="w-4 h-4 mr-2" />Registrar recepción
-            </Button>
-          </Link>
-        )}
-        {oc.estado === 'RECIBIDA' && oc.facturas.length === 0 && (
-          <Link href={`/operaciones/facturas/nueva?oc=${oc.id}`}>
-            <Button className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
-              <Receipt className="w-4 h-4 mr-2" />Registrar factura
-            </Button>
-          </Link>
-        )}
-      </div>
+      {/* Actions — logística only */}
+      {!esCalidad && (
+        <div className="flex gap-3 flex-wrap">
+          {oc.estado === 'EMITIDA' && (
+            <form action={confirmarProveedor}>
+              <Button type="submit" variant="outline">Confirmar por proveedor</Button>
+            </form>
+          )}
+          {(oc.estado === 'EMITIDA' || oc.estado === 'CONFIRMADA_PROVEEDOR') && (
+            <form action={marcarEnTransito}>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Marcar en tránsito</Button>
+            </form>
+          )}
+          {(oc.estado === 'EN_TRANSITO' || oc.estado === 'CONFIRMADA_PROVEEDOR') && (
+            <Link href={`/operaciones/recepciones/nueva?oc=${oc.id}`}>
+              <Button className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
+                <PackageCheck className="w-4 h-4 mr-2" />Registrar recepción
+              </Button>
+            </Link>
+          )}
+          {oc.estado === 'RECIBIDA' && oc.facturas.length === 0 && (
+            <Link href={`/operaciones/facturas/nueva?oc=${oc.id}`}>
+              <Button className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
+                <Receipt className="w-4 h-4 mr-2" />Registrar factura
+              </Button>
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Recepciones */}
       {oc.recepciones.length > 0 && (
@@ -251,7 +256,7 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
         </div>
       )}
 
-      {/* Facturas */}
+      {/* Facturas (accounting records) */}
       {oc.facturas.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 font-semibold text-gray-700">Facturas</div>
@@ -285,13 +290,24 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
           </table>
         </div>
       )}
-      {/* Facturas adjuntas */}
-      <FacturaAdjuntos
-        ocId={oc.id}
-        facturaOcUrl={oc.facturaOcUrl ?? null}
-        items={oc.items}
-        moneda={oc.moneda}
-      />
+
+      {/* Facturas adjuntas (logística only) / Comprobante de pago (calidad only) */}
+      {esCalidad ? (
+        <ComprobantePago
+          ocId={oc.id}
+          facturaOcUrl={oc.facturaOcUrl ?? null}
+          comprobantePagoUrl={oc.comprobantePagoUrl ?? null}
+          items={oc.items}
+          moneda={oc.moneda}
+        />
+      ) : (
+        <FacturaAdjuntos
+          ocId={oc.id}
+          facturaOcUrl={oc.facturaOcUrl ?? null}
+          items={oc.items}
+          moneda={oc.moneda}
+        />
+      )}
 
       {/* Historial de modificaciones */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">

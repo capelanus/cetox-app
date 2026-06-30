@@ -129,6 +129,12 @@ export async function adjuntarFacturaOC(ocId: string, facturaUrl: string) {
   revalidatePath(`/operaciones/ordenes-compra/${ocId}`)
 }
 
+export async function subirComprobantePago(ocId: string, comprobanteUrl: string) {
+  await requireRol(['DIRECTOR_CALIDAD'])
+  await prisma.ordenCompra.update({ where: { id: ocId }, data: { comprobantePagoUrl: comprobanteUrl } })
+  revalidatePath(`/operaciones/ordenes-compra/${ocId}`)
+}
+
 export async function adjuntarFacturaItem(itemId: string, facturaUrl: string) {
   await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
   const item = await prisma.ordenCompraItem.update({

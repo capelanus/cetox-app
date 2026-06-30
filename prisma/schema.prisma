@@ -500,6 +500,7 @@ model OrdenCompra {
   observaciones              String?
   archivoPdfUrl              String?
   facturaOcUrl               String?
+  comprobantePagoUrl         String?
   fechaConfirmacionProveedor DateTime?
   emitidoPorId               String
   emitidoPor                 Usuario              @relation("OCEmitidaPor", fields: [emitidoPorId], references: [id])

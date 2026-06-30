@@ -94,7 +94,7 @@ const operacionesNavItems: NavItem[] = [
   { href: '/operaciones/requerimientos',          label: 'Requerimientos',    icon: ClipboardList,   roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/proveedores',             label: 'Proveedores',       icon: Building2,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/cotizaciones-proveedor',  label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
-  { href: '/operaciones/ordenes-compra',          label: 'Órdenes de Compra', icon: ShoppingCart,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/operaciones/ordenes-compra',          label: 'Órdenes de Compra', icon: ShoppingCart,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
   { href: '/operaciones/recepciones',             label: 'Recepciones',       icon: PackageCheck,    roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/devoluciones',            label: 'Devoluciones',      icon: RotateCcw,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/facturas',                label: 'Facturas',          icon: Receipt,         roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },

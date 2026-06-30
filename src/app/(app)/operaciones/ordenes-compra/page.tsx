@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireRol, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { formatNumOrdenCompra, formatFecha } from '@/lib/format'
 import { ESTADO_OC_LABELS } from '@/lib/constants'
@@ -8,8 +8,12 @@ import { Plus } from 'lucide-react'
 import OCListClient from './oc-list-client'
 
 export default async function OrdenesCompraPage() {
-  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
+  const esCalidad = hasRol(session.user.rol, 'DIRECTOR_CALIDAD')
+
+  // Calidad only sees OCs where a factura document has been attached (ready for payment)
   const ocs = await prisma.ordenCompra.findMany({
+    where: esCalidad ? { facturaOcUrl: { not: null } } : undefined,
     orderBy: { createdAt: 'desc' },
     include: {
       proveedor: true,
@@ -35,13 +39,17 @@ export default async function OrdenesCompraPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#13602C]" style={{ fontFamily: 'Oswald, sans-serif' }}>Órdenes de Compra</h1>
-          <p className="text-gray-500 text-sm">{ocs.length} orden(es)</p>
+          <p className="text-gray-500 text-sm">
+            {esCalidad ? `${ocs.length} orden(es) con factura adjunta` : `${ocs.length} orden(es)`}
+          </p>
         </div>
-        <Link href="/operaciones/ordenes-compra/nueva">
-          <Button className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
-            <Plus className="w-4 h-4 mr-2" />Nueva OC
-          </Button>
-        </Link>
+        {!esCalidad && (
+          <Link href="/operaciones/ordenes-compra/nueva">
+            <Button className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
+              <Plus className="w-4 h-4 mr-2" />Nueva OC
+            </Button>
+          </Link>
+        )}
       </div>
       <OCListClient rows={rows} estadoLabels={ESTADO_OC_LABELS} />
     </div>

@@ -41,6 +41,9 @@ const RULES = [
   { match: (p: string) => p.startsWith('/api/validation/'),    limit: 30, windowMs: 60_000,     label: 'validation' },
 ]
 
+// Routes whose responses must be embeddable in a same-origin <iframe>
+const EMBEDDABLE_PREFIXES = ['/api/informes/', '/api/documentos-calidad/']
+
 // ── Proxy: rate-limit first, then NextAuth's authorized callback ────────────
 
 export default auth((req) => {
@@ -71,8 +74,11 @@ export default auth((req) => {
     return res
   }
 
-  // Let NextAuth's authorized callback handle redirect/allow
-  return undefined
+  // Set X-Frame-Options per route so there's only one value (no stacking with headers() config)
+  const embeddable = EMBEDDABLE_PREFIXES.some(p => path.startsWith(p))
+  const res = NextResponse.next()
+  res.headers.set('X-Frame-Options', embeddable ? 'SAMEORIGIN' : 'DENY')
+  return res
 })
 
 export const config = {

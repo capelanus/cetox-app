@@ -28,14 +28,17 @@ export default async function DocumentoViewerPage({
     if (!tieneAcceso) notFound()
   }
 
-  const url = doc.archivoUrl.split('?')[0].toLowerCase()
-  const esPdf    = url.endsWith('.pdf')
-  const esImagen = /\.(png|jpe?g|gif|webp|svg)$/.test(url)
-  const src      = `/api/documentos-calidad/${id}/ver`
+  const urlBase  = doc.archivoUrl.split('?')[0]
+  const esPdf    = /\.pdf$/i.test(urlBase)
+  const esImagen = /\.(png|jpe?g|gif|webp|svg)$/i.test(urlBase)
+
+  // Use the Blob URL directly in the iframe — no proxy needed, no X-Frame-Options issues.
+  // Access control is enforced above (session + department check before we get here).
+  const iframeSrc = esPdf ? `${doc.archivoUrl}#toolbar=0&navpanes=0&scrollbar=0` : doc.archivoUrl
 
   return (
     <div
-      className="fixed inset-0 flex flex-col bg-slate-900"
+      className="fixed inset-0 flex flex-col bg-slate-900 z-[9999]"
       style={{ userSelect: 'none' }}
     >
       {/* Header */}
@@ -50,7 +53,7 @@ export default async function DocumentoViewerPage({
       <div className="flex-1 relative">
         {(esPdf || esImagen) ? (
           <iframe
-            src={esPdf ? `${src}#toolbar=0&navpanes=0&scrollbar=0` : src}
+            src={iframeSrc}
             className="absolute inset-0 w-full h-full border-0"
             title={doc.nombre}
           />

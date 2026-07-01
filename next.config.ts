@@ -13,7 +13,7 @@ const cspDirectives = [
   "connect-src 'self' https://*.public.blob.vercel-storage.com https://*.vercel-storage.com",
   "media-src 'self' blob: https://*.public.blob.vercel-storage.com",
   "object-src 'none'",
-  "frame-src 'self' blob:",
+  "frame-src 'self' blob: https://*.public.blob.vercel-storage.com https://*.vercel-storage.com",
   "base-uri 'self'",
   "form-action 'self'",
   "upgrade-insecure-requests",

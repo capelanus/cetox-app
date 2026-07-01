@@ -92,6 +92,7 @@ const allNavItems: NavItem[] = [
   { href: '/caja-chica',           label: 'Caja Chica',        icon: Wallet,   roles: ['DIRECTOR_CALIDAD'] },
   { href: '/gerencia/accesos',     label: 'Control de Accesos', icon: Shield,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION'] },
   { href: '/rrhh',                 label: 'RRHH',               icon: Users2,   roles: ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'] },
+  { href: '/documentos', label: 'Documentos Calidad', icon: BookOpen, roles: ['GERENTE_TECNICO', 'ANALISTA', 'ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'] },
 ]
 
 const operacionesNavItems: NavItem[] = [
@@ -106,6 +107,7 @@ const operacionesNavItems: NavItem[] = [
   { href: '/operaciones/pagos',                   label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['DIRECTOR_CALIDAD'] },
   { href: '/operaciones/inventario',              label: 'Inventario',        icon: Microscope,      roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/historial',               label: 'Historial OC',      icon: History,         roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
+  { href: '/documentos', label: 'Documentos Calidad', icon: BookOpen, roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
 ]
 
 // ── Sections for ADMINISTRACION ───────────────────────────────────────────────
@@ -119,6 +121,7 @@ const sectionesAdministracion: NavSection[] = [
       { href: '/oda',       label: 'ODA',         icon: TestTube,      roles: ['ADMINISTRACION'] },
       { href: '/informes',  label: 'Informes',    icon: FileCheck,     roles: ['ADMINISTRACION'] },
       { href: '/cargos',    label: 'Cargos',      icon: Package,       roles: ['ADMINISTRACION'] },
+      { href: '/documentos', label: 'Documentos', icon: BookOpen,      roles: ['ADMINISTRACION'] },
     ],
   },
   {
@@ -206,6 +209,7 @@ const sectionesDirectorAdmin: NavSection[] = [
       { href: '/oda',       label: 'ODA',         icon: TestTube,      roles: ['DIRECTOR_ADMINISTRACION'] },
       { href: '/informes',  label: 'Informes',    icon: FileCheck,     roles: ['DIRECTOR_ADMINISTRACION'] },
       { href: '/cargos',    label: 'Cargos',      icon: Package,       roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/documentos', label: 'Documentos', icon: BookOpen,      roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
   {

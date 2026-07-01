@@ -939,6 +939,17 @@ model DocumentoCalidad {
   subidoPorId String
   subidoPor   Usuario  @relation("DocCalidadSubidoPor", fields: [subidoPorId], references: [id])
   createdAt   DateTime @default(now())
+  accesos     DocumentoCalidadAcceso[]
 
   @@index([categoria])
+}
+
+model DocumentoCalidadAcceso {
+  id           String           @id @default(cuid())
+  documentoId  String
+  documento    DocumentoCalidad @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  departamento String           // ADMINISTRACION | LABORATORIO | OPERACIONES
+
+  @@unique([documentoId, departamento])
+  @@index([departamento])
 }

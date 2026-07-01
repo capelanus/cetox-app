@@ -22,7 +22,10 @@ export default async function CalidadCategoriaPage({
 
   const documentos = await prisma.documentoCalidad.findMany({
     where: { categoria: meta.db },
-    include: { subidoPor: { select: { nombre: true } } },
+    include: {
+      subidoPor: { select: { nombre: true } },
+      accesos:   { select: { departamento: true } },
+    },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -38,6 +41,7 @@ export default async function CalidadCategoriaPage({
           archivoUrl: d.archivoUrl,
           createdAt: d.createdAt,
           subidoPor: d.subidoPor,
+          accesos: d.accesos,
         }))}
       />
     </div>

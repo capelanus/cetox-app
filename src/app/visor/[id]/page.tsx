@@ -34,10 +34,6 @@ export default async function VisorPage({
   const proxyUrl  = `/api/documentos-calidad/${id}/ver`
   const iframeSrc = esPdf ? `${proxyUrl}#toolbar=0&navpanes=0&scrollbar=0` : proxyUrl
 
-  const userName  = session.user.name ?? session.user.email ?? 'Usuario'
-  const fecha     = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  const watermark = `${userName} · ${fecha}`
-
   return (
     <div className="flex flex-col bg-slate-900" style={{ height: '100dvh', userSelect: 'none' }}>
       <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 border-b border-slate-700 shrink-0">
@@ -51,7 +47,7 @@ export default async function VisorPage({
 
       <div style={{ flex: 1, position: 'relative' }}>
         {(esPdf || esImagen) ? (
-          <IframeViewer src={iframeSrc} title={doc.nombre} watermark={watermark} />
+          <IframeViewer src={iframeSrc} title={doc.nombre} />
         ) : (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                className="text-slate-300 text-sm">

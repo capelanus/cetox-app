@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { getDepartamento } from '@/lib/calidad-constants'
-import { ArrowLeft } from 'lucide-react'
+import { CloseButton } from './close-button'
 
 export default async function DocumentoViewerPage({
   params,
@@ -40,13 +40,7 @@ export default async function DocumentoViewerPage({
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 border-b border-slate-700 shrink-0">
-        <button
-          onClick={() => window.close()}
-          className="flex items-center gap-1.5 text-slate-300 hover:text-white text-sm transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Cerrar
-        </button>
+        <CloseButton />
         <span className="text-slate-400 text-sm">|</span>
         <span className="text-white text-sm font-medium truncate">{doc.nombre}</span>
         <span className="ml-auto text-xs text-slate-500 shrink-0">Solo lectura · Calidad</span>

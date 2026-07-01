@@ -9,9 +9,8 @@ import {
   subirDocumentoCalidad,
   eliminarDocumentoCalidad,
   toggleAccesoDocumento,
-  DEPARTAMENTOS,
-  type Departamento,
 } from '@/app/actions/documentos-calidad'
+import { DEPARTAMENTOS, type Departamento } from '@/lib/calidad-constants'
 
 interface Acceso { departamento: string }
 

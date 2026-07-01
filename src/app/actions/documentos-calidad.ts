@@ -3,18 +3,11 @@
 import { prisma } from '@/lib/prisma'
 import { requireRol, type Rol } from '@/lib/roles'
 import { revalidatePath } from 'next/cache'
+import { type Departamento } from '@/lib/calidad-constants'
 
 const ROLES_CALIDAD: Rol[] = ['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD']
 
 const CATEGORIAS_VALIDAS = ['FORMATO', 'PROCEDIMIENTO', 'INSTRUCTIVO'] as const
-
-export const DEPARTAMENTOS = [
-  { key: 'ADMINISTRACION', label: 'Administración' },
-  { key: 'LABORATORIO',    label: 'Laboratorio' },
-  { key: 'OPERACIONES',    label: 'Operaciones' },
-] as const
-
-export type Departamento = typeof DEPARTAMENTOS[number]['key']
 
 export async function subirDocumentoCalidad(
   categoria: string,

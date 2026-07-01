@@ -30,7 +30,23 @@ export async function GET(
   const upstream = await fetch(doc.archivoUrl)
   if (!upstream.ok) return NextResponse.json({ error: 'Archivo no disponible' }, { status: 502 })
 
-  const contentType = upstream.headers.get('content-type') ?? 'application/octet-stream'
+  // Detect content-type from URL extension when upstream returns a generic type
+  const ext = doc.archivoUrl.split('?')[0].split('.').pop()?.toLowerCase() ?? ''
+  const MIME: Record<string, string> = {
+    pdf:  'application/pdf',
+    png:  'image/png',
+    jpg:  'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif:  'image/gif',
+    webp: 'image/webp',
+    svg:  'image/svg+xml',
+  }
+  const upstreamType = upstream.headers.get('content-type') ?? ''
+  const contentType =
+    (upstreamType && upstreamType !== 'application/octet-stream')
+      ? upstreamType
+      : (MIME[ext] ?? 'application/octet-stream')
+
   const body = await upstream.arrayBuffer()
 
   return new NextResponse(body, {
@@ -39,6 +55,7 @@ export async function GET(
       'Content-Disposition': 'inline',
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'no-store',
+      'X-Frame-Options': 'SAMEORIGIN',
     },
   })
 }

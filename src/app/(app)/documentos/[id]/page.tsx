@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
-import { SecureViewer } from './viewer'
 import { getDepartamento } from '@/lib/calidad-constants'
 
 export default async function DocumentoViewerPage({
@@ -28,16 +27,7 @@ export default async function DocumentoViewerPage({
     if (!tieneAcceso) notFound()
   }
 
-  const url = doc.archivoUrl.split('?')[0].toLowerCase()
-  const esPdf    = url.endsWith('.pdf')
-  const esImagen = /\.(png|jpe?g|gif|webp|svg)$/.test(url)
-
-  return (
-    <SecureViewer
-      docId={doc.id}
-      nombre={doc.nombre}
-      esPdf={esPdf}
-      esImagen={esImagen}
-    />
-  )
+  // Redirect to the proxy route — the browser renders the file inline in its native viewer.
+  // This sidesteps X-Frame-Options / CSP frame-src completely (no iframe involved).
+  redirect(`/api/documentos-calidad/${id}/ver`)
 }

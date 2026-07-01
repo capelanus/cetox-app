@@ -1,17 +1,15 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
 interface Props {
   src: string
   title: string
+  watermark: string  // e.g. "Ana García · 01/07/2026"
 }
 
-export function IframeViewer({ src, title }: Props) {
-  const overlayRef = useRef<HTMLDivElement>(null)
-
+export function IframeViewer({ src, title, watermark }: Props) {
   useEffect(() => {
-    // Block keyboard shortcuts for save/print on the parent document
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && ['s', 'p', 'u'].includes(e.key.toLowerCase())) {
         e.preventDefault()
@@ -21,6 +19,9 @@ export function IframeViewer({ src, title }: Props) {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
+  // Repeat the watermark text in a grid pattern across the whole viewer
+  const tiles = Array.from({ length: 24 })
+
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <iframe
@@ -28,18 +29,35 @@ export function IframeViewer({ src, title }: Props) {
         title={title}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
       />
-      {/* Overlay blocks right-click and floating download buttons.
-          pointer-events:auto intercepts mouse events; wheel events still reach the iframe
-          underneath in most browsers so scroll works. */}
+
+      {/* Watermark overlay — pointer-events:none so scroll/interaction work normally */}
       <div
-        ref={overlayRef}
-        style={{ position: 'absolute', inset: 0, zIndex: 10, cursor: 'default' }}
-        onContextMenu={(e) => e.preventDefault()}
-        onMouseDown={(e) => {
-          // Allow wheel-click (middle button) to pass for scroll but block left/right
-          if (e.button !== 1) e.preventDefault()
+        aria-hidden
+        style={{
+          position: 'absolute', inset: 0, zIndex: 10,
+          pointerEvents: 'none', userSelect: 'none', overflow: 'hidden',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateRows: 'repeat(8, 1fr)',
         }}
-      />
+      >
+        {tiles.map((_, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transform: 'rotate(-30deg)',
+              whiteSpace: 'nowrap',
+              fontSize: '13px',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              color: 'rgba(0,0,0,0.09)',
+            }}
+          >
+            {watermark}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

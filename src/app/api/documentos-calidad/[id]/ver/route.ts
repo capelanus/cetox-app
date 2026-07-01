@@ -20,14 +20,32 @@ export async function GET(
   if (!doc) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 
   const esCalidad = rol === 'DIRECTOR_CALIDAD' || rol === 'COORDINADOR_CALIDAD' || rol === 'SUPER_ADMIN'
-
   if (!esCalidad) {
     const dept = getDepartamento(rol, area)
     const tieneAcceso = dept && doc.accesos.some(a => a.departamento === dept)
     if (!tieneAcceso) return NextResponse.json({ error: 'Sin acceso' }, { status: 403 })
   }
 
-  // Redirect directly to the Vercel Blob URL — avoids server-side proxy fetch issues.
-  // The URL is public but unguessable; access control is enforced above.
-  return NextResponse.redirect(doc.archivoUrl)
+  const upstream = await fetch(doc.archivoUrl)
+  if (!upstream.ok) return NextResponse.json({ error: 'Archivo no disponible' }, { status: 502 })
+
+  const ext = doc.archivoUrl.split('?')[0].split('.').pop()?.toLowerCase() ?? ''
+  const MIME: Record<string, string> = {
+    pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg',
+    jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml',
+  }
+  const upstreamType = upstream.headers.get('content-type') ?? ''
+  const contentType = (upstreamType && upstreamType !== 'application/octet-stream')
+    ? upstreamType : (MIME[ext] ?? 'application/octet-stream')
+
+  const body = await upstream.arrayBuffer()
+
+  return new NextResponse(body, {
+    headers: {
+      'Content-Type':        contentType,
+      'Content-Disposition': 'inline',
+      'X-Frame-Options':     'SAMEORIGIN',
+      'Cache-Control':       'no-store',
+    },
+  })
 }

@@ -3,16 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { FileText, File, Eye } from 'lucide-react'
-
-const ROL_A_DEPARTAMENTO: Record<string, string> = {
-  ADMINISTRACION:          'ADMINISTRACION',
-  DIRECTOR_ADMINISTRACION: 'ADMINISTRACION',
-  GERENTE_TECNICO:         'LABORATORIO',
-  ANALISTA:                'LABORATORIO',
-  GERENTE_GENERAL:         'LABORATORIO',
-  JEFE_OPERACIONES:        'OPERACIONES',
-  ASISTENTE_LOGISTICA:     'OPERACIONES',
-}
+import { getDepartamento } from '@/lib/calidad-constants'
 
 const CATEGORIA_LABELS: Record<string, string> = {
   FORMATO:       'Formato',
@@ -34,8 +25,8 @@ export default async function DocumentosPage() {
   const session = await auth()
   if (!session) redirect('/login')
 
-  const rol = session.user.rol
-  const dept = ROL_A_DEPARTAMENTO[rol]
+  const { rol, area } = session.user
+  const dept = getDepartamento(rol, area)
   if (!dept) redirect('/')
 
   const documentos = await prisma.documentoCalidad.findMany({

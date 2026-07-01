@@ -2,16 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { SecureViewer } from './viewer'
-
-const ROL_A_DEPARTAMENTO: Record<string, string> = {
-  ADMINISTRACION:          'ADMINISTRACION',
-  DIRECTOR_ADMINISTRACION: 'ADMINISTRACION',
-  GERENTE_TECNICO:         'LABORATORIO',
-  ANALISTA:                'LABORATORIO',
-  GERENTE_GENERAL:         'LABORATORIO',
-  JEFE_OPERACIONES:        'OPERACIONES',
-  ASISTENTE_LOGISTICA:     'OPERACIONES',
-}
+import { getDepartamento } from '@/lib/calidad-constants'
 
 export default async function DocumentoViewerPage({
   params,
@@ -22,7 +13,7 @@ export default async function DocumentoViewerPage({
   if (!session) redirect('/login')
 
   const { id } = await params
-  const rol = session.user.rol
+  const { rol, area } = session.user
 
   const doc = await prisma.documentoCalidad.findUnique({
     where: { id },
@@ -32,7 +23,7 @@ export default async function DocumentoViewerPage({
 
   const esCalidad = rol === 'DIRECTOR_CALIDAD' || rol === 'COORDINADOR_CALIDAD' || rol === 'SUPER_ADMIN'
   if (!esCalidad) {
-    const dept = ROL_A_DEPARTAMENTO[rol]
+    const dept = getDepartamento(rol, area)
     const tieneAcceso = dept && doc.accesos.some(a => a.departamento === dept)
     if (!tieneAcceso) notFound()
   }

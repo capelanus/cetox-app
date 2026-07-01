@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { getDepartamento } from '@/lib/calidad-constants'
+import { IframeViewer } from './iframe-viewer'
 
 export default async function VisorPage({
   params,
@@ -46,11 +47,7 @@ export default async function VisorPage({
 
       <div style={{ flex: 1, position: 'relative' }}>
         {(esPdf || esImagen) ? (
-          <iframe
-            src={iframeSrc}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
-            title={doc.nombre}
-          />
+          <IframeViewer src={iframeSrc} title={doc.nombre} />
         ) : (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                className="text-slate-300 text-sm">

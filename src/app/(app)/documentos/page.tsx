@@ -81,7 +81,7 @@ export default async function DocumentosPage() {
                           </p>
                         </div>
                         <a
-                          href={`/documentos/${doc.id}`}
+                          href={`/visor/${doc.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#13602C] text-xs font-medium text-[#13602C] hover:bg-green-50 transition-colors shrink-0"

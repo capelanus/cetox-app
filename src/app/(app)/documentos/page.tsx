@@ -80,13 +80,15 @@ export default async function DocumentosPage() {
                             {formatFechaCorta(doc.createdAt)} · Calidad
                           </p>
                         </div>
-                        <Link
-                          href={`/documentos/${doc.id}`}
+                        <a
+                          href={`/api/documentos-calidad/${doc.id}/ver`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#13602C] text-xs font-medium text-[#13602C] hover:bg-green-50 transition-colors shrink-0"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           Visualizar
-                        </Link>
+                        </a>
                       </li>
                     )
                   })}

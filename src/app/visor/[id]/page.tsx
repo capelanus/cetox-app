@@ -30,9 +30,8 @@ export default async function VisorPage({
   const urlBase   = doc.archivoUrl.split('?')[0]
   const esPdf     = /\.pdf$/i.test(urlBase)
   const esImagen  = /\.(png|jpe?g|gif|webp|svg)$/i.test(urlBase)
-  const iframeSrc = esPdf
-    ? `${doc.archivoUrl}#toolbar=0&navpanes=0&scrollbar=0`
-    : doc.archivoUrl
+  const proxyUrl  = `/api/documentos-calidad/${id}/ver`
+  const iframeSrc = esPdf ? `${proxyUrl}#toolbar=0&navpanes=0&scrollbar=0` : proxyUrl
 
   return (
     <div className="flex flex-col bg-slate-900" style={{ height: '100dvh', userSelect: 'none' }}>

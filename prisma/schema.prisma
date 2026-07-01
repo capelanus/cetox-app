@@ -51,6 +51,7 @@ model Usuario {
   historialOC               OrdenCompraHistorial[]       @relation("OCHistorialUsuario")
   movimientosInventario     InventarioMovimiento[]       @relation("InventarioMovimientoUsuario")
   auditorias                Auditoria[]                  @relation("AuditoriaCreadaPor")
+  documentosCalidad         DocumentoCalidad[]            @relation("DocCalidadSubidoPor")
 }
 
 /// Matriz N:M de aprobadores de vacaciones.
@@ -928,4 +929,16 @@ model AuditoriaDocumento {
   nombre      String
   archivoUrl  String
   createdAt   DateTime  @default(now())
+}
+
+model DocumentoCalidad {
+  id          String   @id @default(cuid())
+  nombre      String
+  archivoUrl  String
+  categoria   String   // FORMATO | PROCEDIMIENTO | INSTRUCTIVO
+  subidoPorId String
+  subidoPor   Usuario  @relation("DocCalidadSubidoPor", fields: [subidoPorId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([categoria])
 }

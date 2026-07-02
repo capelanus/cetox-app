@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useTransition } from 'react'
+import { useState, useMemo, useTransition, useRef } from 'react'
 import { Plus, X, Check, Trash2, ChevronDown, Search } from 'lucide-react'
 import {
   crearAseguramientoItem,
@@ -50,12 +50,21 @@ const EMPTY_FORM = { departamento: '', muestra: '', ensayoId: '', fechaInicio: '
 const inputCls = 'w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#13602C]/25 focus:border-[#13602C] transition-all placeholder:text-slate-400'
 
 export function AseguramientoClient({ items, ensayos }: Props) {
-  const [showForm, setShowForm]           = useState(false)
-  const [form, setForm]                   = useState(EMPTY_FORM)
-  const [ensayoSearch, setEnsayoSearch]   = useState('')
+  const [showForm, setShowForm]             = useState(false)
+  const [form, setForm]                     = useState(EMPTY_FORM)
+  const [ensayoSearch, setEnsayoSearch]     = useState('')
   const [showEnsayoList, setShowEnsayoList] = useState(false)
-  const [isPending, startTransition]      = useTransition()
-  const [error, setError]                 = useState('')
+  const [isPending, startTransition]        = useTransition()
+  const [error, setError]                   = useState('')
+  // Stable order: locked on mount/new item, only changes when a new row is added
+  const orderRef = useRef<string[]>(items.map(i => i.id))
+  const stableItems = useMemo(() => {
+    const map = Object.fromEntries(items.map(i => [i.id, i]))
+    // Keep existing order; append any new ids at the end
+    const newIds = items.map(i => i.id).filter(id => !orderRef.current.includes(id))
+    orderRef.current = [...orderRef.current.filter(id => map[id]), ...newIds]
+    return orderRef.current.map(id => map[id]).filter(Boolean)
+  }, [items])
 
   const fechaEntregaCalc = useMemo(
     () => addDays(form.fechaInicio, Number(form.dias)),
@@ -269,7 +278,7 @@ export function AseguramientoClient({ items, ensayos }: Props) {
 
       {/* ── Tabla ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {items.length === 0 ? (
+        {stableItems.length === 0 ? (
           <div className="py-20 text-center">
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
               <Plus className="w-5 h-5 text-slate-400" />
@@ -290,11 +299,11 @@ export function AseguramientoClient({ items, ensayos }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, i) => {
+                {stableItems.map((item, i) => {
                   const dColors = DEPT_COLORS[item.departamento] ?? { bg: '#f1f5f9', text: '#475569' }
                   return (
                     <tr key={item.id}
-                      style={{ borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : undefined }}
+                      style={{ borderBottom: i < stableItems.length - 1 ? '1px solid #f1f5f9' : undefined }}
                       className={item.completado ? 'bg-green-50/50' : 'hover:bg-slate-50/60 transition-colors'}>
                       <td className="px-4 py-3.5">
                         <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: dColors.bg, color: dColors.text }}>

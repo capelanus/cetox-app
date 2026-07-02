@@ -968,3 +968,26 @@ model DocumentoCalidadAcceso {
   @@unique([documentoId, departamento])
   @@index([departamento])
 }
+
+model SugerenciaCliente {
+  id                  String   @id @default(cuid())
+  medioContacto       String[] // PERSONALMENTE | TELEFONICAMENTE | EMAIL | OTROS
+  ratingAtencion      String?  // MUY_BUENO | BUENO | REGULAR | MALO | MUY_MALO
+  ratingRapidez       String?
+  ratingInformacion   String?
+  ratingAmbiente      String?
+  ratingCumplimiento  String?
+  ratingTiempoEspera  String?
+  satisfecho          Boolean?
+  tuvoQuejaAntes      Boolean?
+  quejaCuando         String?
+  quejaSobre          String?
+  quejaManejo         String?
+  sugerencias         String?
+  empresa             String?
+  contacto            String?
+  fechaCliente        String?
+  createdAt           DateTime @default(now())
+
+  @@index([createdAt])
+}

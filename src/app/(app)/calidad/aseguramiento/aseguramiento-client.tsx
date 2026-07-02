@@ -535,7 +535,7 @@ export function AseguramientoClient({ items, ensayos }: Props) {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-slate-700 max-w-[160px]">
-                        <span className="block truncate">{item.muestra}</span>
+                        <span className="block truncate" title={item.muestra}>{item.muestra}</span>
                       </td>
                       <td className="px-4 py-3.5 max-w-[240px]">
                         <span className="text-xs font-mono font-bold text-slate-400 mr-1.5">{item.ensayo.codigo}</span>

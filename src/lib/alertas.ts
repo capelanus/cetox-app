@@ -245,6 +245,57 @@ export async function sincronizarNotificacionesAlertas(): Promise<{ creadas: num
   return { creadas }
 }
 
+// ── Notificaciones de inicio de aseguramiento (2 días antes) ───────────────
+const ROLES_CALIDAD = ['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD', 'SUPER_ADMIN']
+
+export async function sincronizarNotificacionesAseguramiento(): Promise<{ creadas: number }> {
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+
+  // Objetivo: fechaInicio exactamente en 2 días
+  const en2dias = new Date(hoy)
+  en2dias.setDate(en2dias.getDate() + 2)
+  const en2diasFin = new Date(en2dias)
+  en2diasFin.setHours(23, 59, 59, 999)
+
+  const [items, destinatarios] = await Promise.all([
+    prisma.aseguramientoItem.findMany({
+      where: { fechaInicio: { gte: en2dias, lte: en2diasFin } },
+      include: { ensayo: { select: { nombre: true } } },
+    }),
+    prisma.usuario.findMany({
+      where: { activo: true, rol: { in: ROLES_CALIDAD } },
+      select: { id: true },
+    }),
+  ])
+  if (items.length === 0) return { creadas: 0 }
+
+  const fecha = en2dias.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+  let creadas = 0
+  for (const dest of destinatarios) {
+    for (const item of items) {
+      const tipo = 'ASEGURAMIENTO_INICIO'
+      const existe = await prisma.notificacion.findFirst({
+        where: { usuarioId: dest.id, tipo, enlace: `/calidad/aseguramiento#${item.id}`, createdAt: { gte: hoy } },
+        select: { id: true },
+      })
+      if (existe) continue
+      await prisma.notificacion.create({
+        data: {
+          usuarioId: dest.id,
+          tipo,
+          titulo: 'Análisis próximo a iniciar',
+          mensaje: `${item.muestra} – ${item.ensayo.nombre} inicia el ${fecha}`,
+          enlace: `/calidad/aseguramiento#${item.id}`,
+        },
+      })
+      creadas++
+    }
+  }
+  return { creadas }
+}
+
 // ── Conteos agrupados (para tarjetas resumen) ───────────────────────────────
 export interface ResumenAlertas {
   totalVencidas:        number

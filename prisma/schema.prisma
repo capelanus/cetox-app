@@ -185,8 +185,23 @@ model Ensayo {
   alias             String?
   activo            Boolean  @default(true)
 
-  cotizacionItems CotizacionItem[]
-  odaItems        ODAItem[]
+  cotizacionItems    CotizacionItem[]
+  odaItems           ODAItem[]
+  aseguramientoItems AseguramientoItem[]
+}
+
+model AseguramientoItem {
+  id            String   @id @default(cuid())
+  departamento  String   // QUIMICA | BIOLOGIA | MICROBIOLOGIA
+  muestra       String
+  ensayoId      String
+  ensayo        Ensayo   @relation(fields: [ensayoId], references: [id])
+  fechaInicio   DateTime
+  dias          Int
+  fechaEntrega  DateTime
+  completado    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Cotizacion {

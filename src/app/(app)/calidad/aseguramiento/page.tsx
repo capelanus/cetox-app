@@ -13,7 +13,7 @@ export default async function AseguramientoPage() {
 
   const [items, ensayos] = await Promise.all([
     prisma.aseguramientoItem.findMany({
-      include: { ensayo: { select: { id: true, nombre: true, codigo: true } } },
+      include: { ensayo: { select: { id: true, nombre: true, codigo: true, metodoNorma: true } } },
       orderBy: [{ fechaInicio: 'asc' }, { createdAt: 'asc' }],
     }),
     prisma.ensayo.findMany({

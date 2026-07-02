@@ -254,34 +254,35 @@ export function AseguramientoClient({ items, ensayos }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Aseguramiento</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Seguimiento de análisis por departamento</p>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Selecciona análisis con los checkboxes para generar un memorandum
+          </p>
         </div>
-        <button onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: '#13602C' }}>
-          <Plus className="w-4 h-4" /> Nuevo análisis
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openMemo}
+            disabled={selectedIds.size === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+            style={selectedIds.size > 0
+              ? { backgroundColor: '#13602C', color: 'white', boxShadow: '0 1px 3px rgba(0,0,0,.15)' }
+              : { backgroundColor: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }
+            }
+          >
+            <FileText className="w-4 h-4" />
+            Generar Memorandum
+            {selectedIds.size > 0 && (
+              <span className="ml-1 bg-white/25 rounded-full px-1.5 py-0.5 text-xs leading-none">
+                {selectedIds.size}
+              </span>
+            )}
+          </button>
+          <button onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: '#13602C' }}>
+            <Plus className="w-4 h-4" /> Nuevo análisis
+          </button>
+        </div>
       </div>
-
-      {/* Selection action bar */}
-      {selectedIds.size > 0 && (
-        <div className="mb-4 flex items-center justify-between px-4 py-3 rounded-xl border border-[#13602C]/30 bg-[#13602C]/5">
-          <span className="text-sm font-medium text-[#13602C]">
-            {selectedIds.size} análisis seleccionado{selectedIds.size > 1 ? 's' : ''}
-          </span>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSelectedIds(new Set())}
-              className="text-sm text-slate-500 hover:text-slate-700 transition-colors">
-              Limpiar selección
-            </button>
-            <button onClick={openMemo}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#13602C' }}>
-              <FileText className="w-4 h-4" /> Generar Memorandum
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Modal nuevo análisis ── */}
       {showForm && (

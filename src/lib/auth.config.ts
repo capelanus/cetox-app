@@ -10,6 +10,7 @@ export const authConfig: NextAuthConfig = {
       const isPublic =
         pathname.startsWith('/login') ||
         pathname.startsWith('/validation') ||
+        pathname.startsWith('/sugerencias') ||
         pathname.startsWith('/api/auth') ||
         pathname.startsWith('/api/validation') ||
         pathname.startsWith('/api/asistencia/sync')

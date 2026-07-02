@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { getDepartamento } from '@/lib/calidad-constants'
+import { PdfViewer } from './pdf-viewer'
 import { IframeViewer } from './iframe-viewer'
 
 export default async function VisorPage({
@@ -28,11 +29,10 @@ export default async function VisorPage({
     if (!tieneAcceso) notFound()
   }
 
-  const urlBase   = doc.archivoUrl.split('?')[0]
-  const esPdf     = /\.pdf$/i.test(urlBase)
-  const esImagen  = /\.(png|jpe?g|gif|webp|svg)$/i.test(urlBase)
-  const proxyUrl  = `/api/documentos-calidad/${id}/ver`
-  const iframeSrc = esPdf ? `${proxyUrl}#toolbar=0&navpanes=0&scrollbar=0` : proxyUrl
+  const urlBase  = doc.archivoUrl.split('?')[0]
+  const esPdf    = /\.pdf$/i.test(urlBase)
+  const esImagen = /\.(png|jpe?g|gif|webp|svg)$/i.test(urlBase)
+  const proxyUrl = `/api/documentos-calidad/${id}/ver`
 
   return (
     <div className="flex flex-col bg-slate-900" style={{ height: '100dvh', userSelect: 'none' }}>
@@ -46,8 +46,10 @@ export default async function VisorPage({
       </div>
 
       <div style={{ flex: 1, position: 'relative' }}>
-        {(esPdf || esImagen) ? (
-          <IframeViewer src={iframeSrc} title={doc.nombre} />
+        {esPdf ? (
+          <PdfViewer src={proxyUrl} />
+        ) : esImagen ? (
+          <IframeViewer src={proxyUrl} title={doc.nombre} />
         ) : (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                className="text-slate-300 text-sm">

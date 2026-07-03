@@ -268,17 +268,17 @@ export function SugerenciasForm() {
         <div className="border-t border-slate-200 pt-4 space-y-3">
           <p className="text-[11px] text-slate-500">Si desea déjenos sus datos para contactarnos con Usted:</p>
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-slate-600 whitespace-nowrap w-16">Empresa:</label>
+            <label className="text-xs font-medium text-slate-600 whitespace-nowrap w-24 flex-shrink-0">Empresa:</label>
             <input type="text" value={form.empresa} onChange={e => setForm(f => ({ ...f, empresa: e.target.value }))}
               className={inputCls} />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-slate-600 whitespace-nowrap w-16">Telef / e-mail:</label>
+            <label className="text-xs font-medium text-slate-600 whitespace-nowrap w-24 flex-shrink-0">Telef / e-mail:</label>
             <input type="text" value={form.contacto} onChange={e => setForm(f => ({ ...f, contacto: e.target.value }))}
               className={inputCls} />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-slate-600 whitespace-nowrap w-16">Fecha:</label>
+            <label className="text-xs font-medium text-slate-600 whitespace-nowrap w-24 flex-shrink-0">Fecha:</label>
             <input type="text" placeholder="dd/mm/aaaa" value={form.fechaCliente}
               onChange={e => setForm(f => ({ ...f, fechaCliente: e.target.value }))}
               className={inputCls} />

@@ -121,16 +121,7 @@ export function SugerenciasForm() {
 
       {/* Header */}
       <div className="border-b-2 border-slate-800 px-6 pt-5 pb-4 text-center">
-        <div className="flex items-center justify-center gap-3 mb-1">
-          {/* Logo placeholder — replace with <Image> if you have the asset */}
-          <div className="w-10 h-10 rounded-full border-2 border-slate-600 flex items-center justify-center text-[9px] font-bold text-slate-600 leading-tight text-center">
-            CETOX
-          </div>
-          <div className="text-left">
-            <p className="text-xs font-bold text-slate-800 leading-tight">CENTRO TOXICOLÓGICO S.A.C.</p>
-            <p className="text-xs font-bold text-slate-800">CETOX</p>
-          </div>
-        </div>
+        <p className="text-lg font-bold text-slate-800 tracking-wide">CETOX LAB</p>
       </div>
 
       <div className="px-6 pt-4 pb-6 space-y-5">

@@ -110,7 +110,7 @@ export function SugerenciasForm() {
         </div>
         <h2 className="text-xl font-bold text-slate-800 mb-2">¡Gracias por su opinión!</h2>
         <p className="text-slate-500 text-sm">Su sugerencia ha sido registrada. Trabajaremos para mejorar nuestro servicio.</p>
-        <p className="mt-1 text-xs text-slate-400 font-semibold tracking-wide">CENTRO TOXICOLÓGICO S.A.C. – CETOX</p>
+        <p className="mt-1 text-xs text-slate-400 font-semibold tracking-wide">CETOX LAB</p>
       </div>
     )
   }

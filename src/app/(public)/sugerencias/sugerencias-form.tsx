@@ -96,6 +96,7 @@ export function SugerenciasForm() {
         fechaCliente:       form.fechaCliente  || undefined,
       })
       setEnviado(true)
+      setTimeout(() => { window.location.href = 'https://cetox.com.pe' }, 3000)
     })
   }
 

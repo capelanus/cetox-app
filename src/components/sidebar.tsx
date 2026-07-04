@@ -479,12 +479,12 @@ export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover,
         }}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="flex items-center justify-center rounded-lg flex-shrink-0"
-            style={{ backgroundColor: '#4AC3B2', width: 36, height: 36 }}
-          >
-            <Microscope className="h-5 w-5 text-white" />
-          </div>
+          <img
+            src="/cetox-logo.svg"
+            alt="CETOX"
+            className="flex-shrink-0"
+            style={{ width: 36, height: 36 }}
+          />
           <div
             className="overflow-hidden whitespace-nowrap"
             style={{

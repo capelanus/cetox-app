@@ -39,60 +39,43 @@ export default function LoginPage() {
       >
         {/* Decorative geometry */}
         <div className="absolute inset-0 pointer-events-none select-none">
-          {/* Big circle top-right */}
           <div
-            className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full opacity-[0.07]"
+            className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full opacity-[0.07]"
             style={{ background: 'radial-gradient(circle, #4AC3B2 0%, transparent 70%)' }}
           />
-          {/* Medium circle bottom-left */}
           <div
-            className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-[0.08]"
+            className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full opacity-[0.08]"
             style={{ background: 'radial-gradient(circle, #4AC3B2 0%, transparent 70%)' }}
           />
-          {/* Hex grid pattern via box outlines */}
-          <svg
-            className="absolute top-0 left-0 w-full h-full opacity-[0.035]"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg className="absolute top-0 left-0 w-full h-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="hex-grid" x="0" y="0" width="60" height="52" patternUnits="userSpaceOnUse">
-                <polygon
-                  points="30,2 58,17 58,47 30,62 2,47 2,17"
-                  fill="none"
-                  stroke="#4AC3B2"
-                  strokeWidth="1"
-                />
+                <polygon points="30,2 58,17 58,47 30,62 2,47 2,17" fill="none" stroke="#4AC3B2" strokeWidth="1" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#hex-grid)" />
           </svg>
-          {/* Accent teal line */}
-          <div
-            className="absolute left-12 top-0 bottom-0 w-[2px] opacity-20"
-            style={{ background: 'linear-gradient(to bottom, transparent, #4AC3B2 30%, #4AC3B2 70%, transparent)' }}
-          />
         </div>
 
-        {/* Logo + brand */}
-        <div className="relative z-10">
-          <div className="mb-10">
-            <img
-              src="/cetox-logo.svg"
-              alt="CETOX Lab"
-              className="h-24 w-auto"
-            />
-          </div>
+        {/* Center block — logo + headline */}
+        <div className="relative z-10 flex flex-col items-center justify-center flex-1 text-center">
+          <img
+            src="/cetox-logo.svg"
+            alt="CETOX Lab"
+            className="w-auto mb-10 drop-shadow-2xl"
+            style={{ height: 'clamp(160px, 22vh, 240px)' }}
+          />
 
           <h1
-            className="font-heading text-white font-bold leading-[1.05] mb-6"
-            style={{ fontSize: 'clamp(2.4rem, 4vw, 3.2rem)' }}
+            className="font-heading text-white font-bold leading-[1.05] mb-4"
+            style={{ fontSize: 'clamp(2.6rem, 4.5vw, 3.6rem)' }}
           >
             Laboratorio<br />
             <span style={{ color: '#4AC3B2' }}>de Ensayo</span><br />
             Acreditado
           </h1>
 
-          <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Centro Toxicológico S.A.C. — gestión integral de muestras,
             ensayos y certificados de calidad.
           </p>

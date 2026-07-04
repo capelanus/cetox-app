@@ -290,7 +290,7 @@ export function SugerenciasForm() {
         {/* Footer */}
         <p className="text-center text-[10px] text-slate-400 font-semibold tracking-wide">
           MUCHAS GRACIAS<br />
-          <span className="font-normal">FR N° 021-CETOX-V.03</span>
+          <span className="font-normal">FR N° 021-CETOX-V.04</span>
         </p>
       </div>
     </form>

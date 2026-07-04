@@ -1,31 +1,40 @@
 'use client'
 
-import { ReactNode, useState, useTransition } from 'react'
+import { ReactNode, useState, useEffect, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Loader2 } from 'lucide-react'
 
 export interface Usuario { id: string; nombre: string; rol?: string }
 
 // ── Modal ──────────────────────────────────────────────────────────────────────
+// Se renderiza vía portal a document.body para escapar del ancestro transformado
+// (PageTransition usa motion/transform, que atraparía un position:fixed y cortaría
+// el modal). El overlay hace scroll propio cuando el contenido es más alto que la
+// ventana.
 export function Modal({
   open, onClose, title, children, onSubmit, submitLabel = 'Guardar', pending, wide,
 }: {
   open: boolean; onClose: () => void; title: string; children: ReactNode
   onSubmit: () => void; submitLabel?: string; pending?: boolean; wide?: boolean
 }) {
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 py-10 px-4">
-      <div className={`bg-white rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-md'} my-auto`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!open || !mounted) return null
+
+  const content = (
+    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/40 py-10 px-4"
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className={`bg-white rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-md'} my-auto max-h-[calc(100vh-5rem)] flex flex-col`}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
           <h3 className="font-bold text-slate-800">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit() }}
-          className="px-6 py-5 space-y-4"
+          className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
         >
           {children}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-2 sticky bottom-0 bg-white">
             <button type="button" onClick={onClose}
               className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">
               Cancelar
@@ -41,6 +50,7 @@ export function Modal({
       </div>
     </div>
   )
+  return createPortal(content, document.body)
 }
 
 // ── Campos ───────────────────────────────────────────────────────────────────

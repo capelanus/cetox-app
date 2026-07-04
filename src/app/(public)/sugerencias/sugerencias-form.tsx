@@ -121,8 +121,8 @@ export function SugerenciasForm() {
     <form onSubmit={handleSubmit} className="bg-white w-full max-w-[420px] shadow-md rounded-lg overflow-hidden">
 
       {/* Header */}
-      <div className="border-b-2 border-slate-800 px-6 pt-5 pb-4 text-center">
-        <p className="text-lg font-bold text-slate-800 tracking-wide">CETOX LAB</p>
+      <div className="px-6 pt-5 pb-4 text-center" style={{ backgroundColor: '#13602C' }}>
+        <img src="/cetox-logo.svg" alt="CETOX Lab" className="h-16 w-auto mx-auto" />
       </div>
 
       <div className="px-6 pt-4 pb-6 space-y-5">

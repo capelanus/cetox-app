@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, AlertCircle, FlaskConical, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -75,21 +75,12 @@ export default function LoginPage() {
 
         {/* Logo + brand */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-10">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: 'rgba(74,195,178,0.18)', border: '1px solid rgba(74,195,178,0.3)' }}
-            >
-              <FlaskConical className="w-6 h-6" style={{ color: '#4AC3B2' }} />
-            </div>
-            <div>
-              <p className="font-heading text-white text-xl font-bold tracking-widest uppercase leading-none">
-                Cetox Lab
-              </p>
-              <p className="text-[11px] tracking-wider mt-0.5" style={{ color: 'rgba(74,195,178,0.8)' }}>
-                Sistema ERP
-              </p>
-            </div>
+          <div className="mb-10">
+            <img
+              src="/cetox-logo.svg"
+              alt="CETOX Lab"
+              className="h-24 w-auto"
+            />
           </div>
 
           <h1
@@ -134,19 +125,12 @@ export default function LoginPage() {
         style={{ backgroundColor: '#f8faf9' }}
       >
         {/* Mobile logo (shown only on small screens) */}
-        <div className="lg:hidden flex items-center gap-3 mb-10">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: '#13602C' }}
-          >
-            <FlaskConical className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="font-heading font-bold text-lg tracking-widest uppercase" style={{ color: '#13602C' }}>
-              Cetox Lab
-            </p>
-            <p className="text-[10px] text-slate-400 tracking-wider">Sistema ERP</p>
-          </div>
+        <div className="lg:hidden mb-10 px-4 py-3 rounded-xl" style={{ backgroundColor: '#13602C' }}>
+          <img
+            src="/cetox-logo.svg"
+            alt="CETOX Lab"
+            className="h-16 w-auto mx-auto"
+          />
         </div>
 
         {/* Form card */}

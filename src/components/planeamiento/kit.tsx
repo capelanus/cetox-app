@@ -128,6 +128,16 @@ export function useAction(): [boolean, (fn: () => Promise<void>) => void] {
   return [pending, (fn) => start(async () => { await fn() })]
 }
 
+// ── Subida de archivos (Vercel Blob vía /api/upload) ─────────────────────────
+export async function subirArchivo(file: File): Promise<string> {
+  const fd = new FormData()
+  fd.append('file', file)
+  const res = await fetch('/api/upload', { method: 'POST', body: fd })
+  if (!res.ok) throw new Error('Error al subir el archivo')
+  const { url } = await res.json()
+  return url as string
+}
+
 // ── Confirmación de borrado ──────────────────────────────────────────────────
 export function useConfirmDelete() {
   const [id, setId] = useState<string | null>(null)

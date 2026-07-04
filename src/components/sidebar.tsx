@@ -107,6 +107,12 @@ const allNavItems: NavItem[] = [
   { href: '/gerencia/riesgos',      label: 'Riesgos',             icon: ShieldAlert, roles: ['GERENTE_TECNICO'] },
   { href: '/gerencia/proyectos',    label: 'Proyectos',           icon: Rocket,      roles: ['GERENTE_TECNICO'] },
   { href: '/gerencia/mejoras',      label: 'Acciones de Mejora',  icon: Wrench,      roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/contabilidad',                label: 'Panel Financiero',   icon: Landmark,    roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/contabilidad/presupuesto',    label: 'Presupuesto',        icon: Wallet,      roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/contabilidad/flujo-caja',     label: 'Flujo de Caja',      icon: TrendingUp,  roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/contabilidad/centros-costo',  label: 'Centros de Costo',   icon: Building2,   roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/contabilidad/rentabilidad',   label: 'Rentabilidad',       icon: DollarSign,  roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/contabilidad/documentos',     label: 'Docs Financieros',   icon: FileText,    roles: ['GERENTE_TECNICO'] },
 ]
 
 const operacionesNavItems: NavItem[] = [
@@ -275,6 +281,17 @@ const sectionesDirectorAdmin: NavSection[] = [
       { href: '/gerencia/mejoras',     label: 'Acciones de Mejora',  icon: Wrench,        roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
+  {
+    label: 'Contabilidad y Finanzas',
+    items: [
+      { href: '/gerencia/contabilidad',                label: 'Panel Financiero',  icon: Landmark,   roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/contabilidad/presupuesto',    label: 'Presupuesto',       icon: Wallet,     roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/contabilidad/flujo-caja',     label: 'Flujo de Caja',     icon: TrendingUp, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/contabilidad/centros-costo',  label: 'Centros de Costo',  icon: Building2,  roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/contabilidad/rentabilidad',   label: 'Rentabilidad',      icon: DollarSign, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/contabilidad/documentos',     label: 'Documentos',        icon: FileText,   roles: ['DIRECTOR_ADMINISTRACION'] },
+    ],
+  },
 ]
 
 // ── Sections for DIRECTOR_CALIDAD ─────────────────────────────────────────────
@@ -339,6 +356,17 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/gerencia/riesgos',     label: 'Riesgos',             icon: ShieldAlert,   roles: ['DIRECTOR_CALIDAD'] },
       { href: '/gerencia/proyectos',   label: 'Proyectos',           icon: Rocket,        roles: ['DIRECTOR_CALIDAD'] },
       { href: '/gerencia/mejoras',     label: 'Acciones de Mejora',  icon: Wrench,        roles: ['DIRECTOR_CALIDAD'] },
+    ],
+  },
+  {
+    label: 'Contabilidad y Finanzas',
+    items: [
+      { href: '/gerencia/contabilidad',                label: 'Panel Financiero',  icon: Landmark,   roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/contabilidad/presupuesto',    label: 'Presupuesto',       icon: Wallet,     roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/contabilidad/flujo-caja',     label: 'Flujo de Caja',     icon: TrendingUp, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/contabilidad/centros-costo',  label: 'Centros de Costo',  icon: Building2,  roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/contabilidad/rentabilidad',   label: 'Rentabilidad',      icon: DollarSign, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/contabilidad/documentos',     label: 'Documentos',        icon: FileText,   roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
 ]

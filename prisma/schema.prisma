@@ -1196,3 +1196,84 @@ model AccionMejora {
 
   @@index([estado])
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONTABILIDAD Y FINANZAS (GERENCIA)
+// Presupuestos, ejecución, flujo de caja proyectado, centros de costo,
+// rentabilidad por cliente/servicio y carga de documentos.
+// Ids de Usuario/Cliente se guardan como string plano (resueltos en la app).
+// ═══════════════════════════════════════════════════════════════════════════
+
+model CentroCosto {
+  id            String                @id @default(cuid())
+  codigo        String                // "CC-QUIM"
+  nombre        String
+  departamento  String?               // QUIMICA | BIOLOGIA | ... (opcional)
+  responsableId String?
+  activo        Boolean               @default(true)
+  partidas      PartidaPresupuestal[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+model PartidaPresupuestal {
+  id            String             @id @default(cuid())
+  anio          Int
+  centroCostoId String?
+  centroCosto   CentroCosto?       @relation(fields: [centroCostoId], references: [id], onDelete: SetNull)
+  tipo          String             // INGRESO | EGRESO
+  categoria     String             // Personal | Reactivos | Servicios básicos | ...
+  concepto      String
+  lineas        LineaPresupuesto[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([anio, tipo])
+  @@index([centroCostoId])
+}
+
+model LineaPresupuesto {
+  id          String              @id @default(cuid())
+  partidaId   String
+  partida     PartidaPresupuestal @relation(fields: [partidaId], references: [id], onDelete: Cascade)
+  periodo     Int                 // 1-12
+  planificado Float               @default(0)
+  ejecutado   Float               @default(0)
+  comentario  String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([partidaId, periodo])
+}
+
+model RegistroRentabilidad {
+  id             String   @id @default(cuid())
+  anio           Int
+  periodo        Int      // 1-12
+  clienteId      String?  // id de Cliente (opcional, resuelto en app)
+  clienteNombre  String
+  servicio       String
+  ingreso        Float    @default(0)
+  costoDirecto   Float    @default(0)
+  costoIndirecto Float    @default(0)
+  comentario     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([anio])
+}
+
+model DocumentoFinanciero {
+  id            String   @id @default(cuid())
+  nombre        String
+  categoria     String?  // Estado de cuenta | Comprobante | Reporte | Conciliación | Otro
+  url           String
+  tamano        Int?     // bytes
+  centroCostoId String?
+  anio          Int?
+  periodo       Int?
+  subidoPorId   String?
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}

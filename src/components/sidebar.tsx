@@ -45,6 +45,11 @@ import {
   ListChecks,
   ShieldCheck,
   MessageSquare,
+  Target,
+  Gauge,
+  ShieldAlert,
+  Rocket,
+  Goal,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -95,6 +100,13 @@ const allNavItems: NavItem[] = [
   { href: '/gerencia/accesos',     label: 'Control de Accesos', icon: Shield,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION'] },
   { href: '/rrhh',                 label: 'RRHH',               icon: Users2,   roles: ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'] },
   { href: '/documentos', label: 'Documentos Calidad', icon: BookOpen, roles: ['GERENTE_TECNICO', 'ANALISTA', 'ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'] },
+  { href: '/gerencia/dashboard',    label: 'Dashboard Gerencial', icon: Goal,        roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/pei',          label: 'Plan Estratégico',    icon: Target,      roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/poa',          label: 'Plan Operativo',      icon: ClipboardList, roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/indicadores',  label: 'Indicadores (KPIs)',  icon: Gauge,       roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/riesgos',      label: 'Riesgos',             icon: ShieldAlert, roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/proyectos',    label: 'Proyectos',           icon: Rocket,      roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/mejoras',      label: 'Acciones de Mejora',  icon: Wrench,      roles: ['GERENTE_TECNICO'] },
 ]
 
 const operacionesNavItems: NavItem[] = [
@@ -251,6 +263,18 @@ const sectionesDirectorAdmin: NavSection[] = [
       { href: '/caja-chica/peticiones', label: 'Peticiones de Efectivo',  icon: Banknote,  roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
+  {
+    label: 'Planeamiento Estratégico',
+    items: [
+      { href: '/gerencia/dashboard',   label: 'Dashboard Gerencial', icon: Goal,          roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/pei',         label: 'Plan Estratégico',    icon: Target,        roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/poa',         label: 'Plan Operativo',      icon: ClipboardList, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/indicadores', label: 'Indicadores (KPIs)',  icon: Gauge,         roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/riesgos',     label: 'Riesgos',             icon: ShieldAlert,   roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/proyectos',   label: 'Proyectos',           icon: Rocket,        roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/mejoras',     label: 'Acciones de Mejora',  icon: Wrench,        roles: ['DIRECTOR_ADMINISTRACION'] },
+    ],
+  },
 ]
 
 // ── Sections for DIRECTOR_CALIDAD ─────────────────────────────────────────────
@@ -303,6 +327,18 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/vacaciones',       label: 'Mis Vacaciones',     icon: CalendarDays, roles: ['DIRECTOR_CALIDAD'] },
       { href: '/historial',        label: 'Historial',          icon: History,      roles: ['DIRECTOR_CALIDAD'], muted: true },
       { href: '/gerencia/accesos', label: 'Control de Accesos', icon: Shield,      roles: ['DIRECTOR_CALIDAD'] },
+    ],
+  },
+  {
+    label: 'Planeamiento Estratégico',
+    items: [
+      { href: '/gerencia/dashboard',   label: 'Dashboard Gerencial', icon: Goal,          roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/pei',         label: 'Plan Estratégico',    icon: Target,        roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/poa',         label: 'Plan Operativo',      icon: ClipboardList, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/indicadores', label: 'Indicadores (KPIs)',  icon: Gauge,         roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/riesgos',     label: 'Riesgos',             icon: ShieldAlert,   roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/proyectos',   label: 'Proyectos',           icon: Rocket,        roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/mejoras',     label: 'Acciones de Mejora',  icon: Wrench,        roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
 ]

@@ -991,3 +991,208 @@ model SugerenciaCliente {
 
   @@index([createdAt])
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PLANEAMIENTO ESTRATÉGICO Y CONTROL GERENCIAL
+// PEI/POA (CEPLAN) + Indicadores, Riesgos, Proyectos, Mejoras.
+// responsableId se guarda como string plano (id de Usuario) y se resuelve en
+// la app, para no acoplar el modelo Usuario a este módulo.
+// ═══════════════════════════════════════════════════════════════════════════
+
+model PlanEstrategico {
+  id         String                @id @default(cuid())
+  nombre     String                // "PEI 2026-2030"
+  vision     String?
+  mision     String?
+  anioInicio Int
+  anioFin    Int
+  activo     Boolean               @default(true)
+  objetivos  ObjetivoEstrategico[]
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+}
+
+model ObjetivoEstrategico {
+  id            String                @id @default(cuid())
+  planId        String
+  plan          PlanEstrategico       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  codigo        String                // "OEI.01"
+  nombre        String
+  descripcion   String?
+  departamento  String?               // null = institucional | QUIMICA | BIOLOGIA | MICROBIOLOGIA | CALIDAD | ADMINISTRACION | OPERACIONES
+  responsableId String?               // id de Usuario (resuelto en app)
+  orden         Int                   @default(0)
+  acciones      AccionEstrategica[]
+  indicadores   Indicador[]
+  riesgos       Riesgo[]
+  proyectos     ProyectoEstrategico[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([planId])
+}
+
+model AccionEstrategica {
+  id            String               @id @default(cuid())
+  objetivoId    String
+  objetivo      ObjetivoEstrategico  @relation(fields: [objetivoId], references: [id], onDelete: Cascade)
+  codigo        String               // "AEI.01.01"
+  nombre        String
+  departamento  String?
+  responsableId String?
+  orden         Int                  @default(0)
+  actividades   ActividadOperativa[]
+  indicadores   Indicador[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([objetivoId])
+}
+
+model ActividadOperativa {
+  id            String                 @id @default(cuid())
+  accionId      String
+  accion        AccionEstrategica      @relation(fields: [accionId], references: [id], onDelete: Cascade)
+  anio          Int
+  codigo        String?
+  nombre        String
+  departamento  String                 // QUIMICA | BIOLOGIA | MICROBIOLOGIA | CALIDAD | ADMINISTRACION | OPERACIONES | GERENCIA
+  responsableId String?
+  unidadMedida  String?                // "informes" | "capacitaciones" | ...
+  metaAnual     Float                  @default(0)
+  presupuesto   Float?
+  estado        String                 @default("EN_CURSO") // PLANIFICADO | EN_CURSO | COMPLETADO | CANCELADO
+  seguimientos  SeguimientoActividad[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([accionId])
+  @@index([anio, departamento])
+}
+
+model SeguimientoActividad {
+  id             String             @id @default(cuid())
+  actividadId    String
+  actividad      ActividadOperativa @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+  periodo        Int                // mes 1-12
+  metaProgramada Float              @default(0)
+  ejecutado      Float              @default(0)
+  comentario     String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([actividadId, periodo])
+}
+
+model Indicador {
+  id            String               @id @default(cuid())
+  objetivoId    String?
+  objetivo      ObjetivoEstrategico? @relation(fields: [objetivoId], references: [id], onDelete: SetNull)
+  accionId      String?
+  accion        AccionEstrategica?   @relation(fields: [accionId], references: [id], onDelete: SetNull)
+  nombre        String
+  formula       String?
+  unidad        String?              // "%" | "días" | "n°"
+  sentido       String               @default("ASCENDENTE") // ASCENDENTE (mayor mejor) | DESCENDENTE
+  frecuencia    String               @default("MENSUAL")    // MENSUAL | TRIMESTRAL | ANUAL
+  lineaBase     Float?
+  meta          Float?
+  departamento  String?
+  responsableId String?
+  mediciones    MedicionIndicador[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([objetivoId])
+}
+
+model MedicionIndicador {
+  id          String    @id @default(cuid())
+  indicadorId String
+  indicador   Indicador @relation(fields: [indicadorId], references: [id], onDelete: Cascade)
+  anio        Int
+  periodo     Int       // 1-12
+  valor       Float
+  comentario  String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([indicadorId, anio, periodo])
+}
+
+model Riesgo {
+  id             String               @id @default(cuid())
+  objetivoId     String?
+  objetivo       ObjetivoEstrategico? @relation(fields: [objetivoId], references: [id], onDelete: SetNull)
+  codigo         String?
+  descripcion    String
+  causa          String?
+  categoria      String?              // ESTRATEGICO | OPERATIVO | FINANCIERO | CUMPLIMIENTO | TECNOLOGICO
+  probabilidad   Int                  @default(1) // 1-5
+  impacto        Int                  @default(1) // 1-5
+  departamento   String?
+  responsableId  String?
+  planMitigacion String?
+  estado         String               @default("IDENTIFICADO") // IDENTIFICADO | EN_TRATAMIENTO | MITIGADO | MATERIALIZADO
+  fechaRevision  DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([estado])
+}
+
+model ProyectoEstrategico {
+  id              String               @id @default(cuid())
+  objetivoId      String?
+  objetivo        ObjetivoEstrategico? @relation(fields: [objetivoId], references: [id], onDelete: SetNull)
+  nombre          String
+  descripcion     String?
+  sponsorId       String?
+  gerenteId       String?
+  departamento    String?
+  fechaInicioPlan DateTime?
+  fechaFinPlan    DateTime?
+  fechaInicioReal DateTime?
+  fechaFinReal    DateTime?
+  presupuesto     Float?
+  avance          Int                  @default(0) // 0-100
+  estado          String               @default("PLANIFICADO") // PLANIFICADO | EN_CURSO | EN_PAUSA | COMPLETADO | CANCELADO
+  hitos           HitoProyecto[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([estado])
+}
+
+model HitoProyecto {
+  id         String              @id @default(cuid())
+  proyectoId String
+  proyecto   ProyectoEstrategico @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  nombre     String
+  fechaPlan  DateTime?
+  fechaReal  DateTime?
+  completado Boolean             @default(false)
+  orden      Int                 @default(0)
+  createdAt  DateTime            @default(now())
+
+  @@index([proyectoId])
+}
+
+model AccionMejora {
+  id                 String    @id @default(cuid())
+  codigo             String?
+  origen             String    // AUDITORIA | RIESGO | SUGERENCIA | NO_CONFORMIDAD | REVISION_DIRECCION | OTRO
+  auditoriaId        String?   // id de Auditoria (resuelto en app)
+  descripcion        String
+  causaRaiz          String?
+  accion             String?   // acción correctiva propuesta
+  departamento       String?
+  responsableId      String?
+  fechaCompromiso    DateTime?
+  fechaCierre        DateTime?
+  estado             String    @default("ABIERTA") // ABIERTA | EN_PROCESO | CERRADA
+  eficaciaVerificada Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([estado])
+}

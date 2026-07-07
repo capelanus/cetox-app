@@ -113,6 +113,7 @@ const allNavItems: NavItem[] = [
   { href: '/gerencia/contabilidad/centros-costo',  label: 'Centros de Costo',   icon: Building2,   roles: ['GERENTE_TECNICO'] },
   { href: '/gerencia/contabilidad/rentabilidad',   label: 'Rentabilidad',       icon: DollarSign,  roles: ['GERENTE_TECNICO'] },
   { href: '/gerencia/contabilidad/documentos',     label: 'Docs Financieros',   icon: FileText,    roles: ['GERENTE_TECNICO'] },
+  { href: '/gerencia/ayuda',                       label: 'Guía / Ayuda',       icon: BookOpen,    roles: ['GERENTE_TECNICO'] },
 ]
 
 const operacionesNavItems: NavItem[] = [
@@ -290,6 +291,7 @@ const sectionesDirectorAdmin: NavSection[] = [
       { href: '/gerencia/contabilidad/centros-costo',  label: 'Centros de Costo',  icon: Building2,  roles: ['DIRECTOR_ADMINISTRACION'] },
       { href: '/gerencia/contabilidad/rentabilidad',   label: 'Rentabilidad',      icon: DollarSign, roles: ['DIRECTOR_ADMINISTRACION'] },
       { href: '/gerencia/contabilidad/documentos',     label: 'Documentos',        icon: FileText,   roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/gerencia/ayuda',                       label: 'Guía / Ayuda',      icon: BookOpen,   roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
 ]
@@ -367,6 +369,7 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/gerencia/contabilidad/centros-costo',  label: 'Centros de Costo',  icon: Building2,  roles: ['DIRECTOR_CALIDAD'] },
       { href: '/gerencia/contabilidad/rentabilidad',   label: 'Rentabilidad',      icon: DollarSign, roles: ['DIRECTOR_CALIDAD'] },
       { href: '/gerencia/contabilidad/documentos',     label: 'Documentos',        icon: FileText,   roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/gerencia/ayuda',                       label: 'Guía / Ayuda',      icon: BookOpen,   roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
 ]

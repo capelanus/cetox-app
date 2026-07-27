@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle2, Circle, Clock } from 'lucide-react'
 import { formatFecha, formatNumODA, formatNumInforme } from '@/lib/format'
 import { recibirODA, iniciarEjecucionODA } from '@/app/actions/oda'
 import { ResultadoForm } from '@/components/forms/resultado-form'
+import { SetPdfButton } from '@/components/set-pdf-button'
 
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
 const ESTADO_LABELS: Record<string, string> = {
@@ -75,6 +76,9 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
         }>
           {ESTADO_LABELS[oda.estado] ?? oda.estado}
         </Badge>
+        <div className="ml-auto">
+          <SetPdfButton href={`/api/oda/${id}/generar-pdf`} />
+        </div>
       </div>
 
       <div className="space-y-5">

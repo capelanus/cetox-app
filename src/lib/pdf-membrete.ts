@@ -1,4 +1,4 @@
-import { PDFDocument, PDFFont, PDFPage, rgb, degrees, StandardFonts } from 'pdf-lib'
+import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib'
 import { formatFecha } from '@/lib/format'
 
 // ── Colores corporativos CETOX ────────────────────────────────────────────────
@@ -101,9 +101,6 @@ export async function crearMembrete(titulo: string, numero: string): Promise<Mem
         p.drawRectangle({ x: 0, y: PAGE_H - 30, width: PAGE_W, height: 30, color: rgb(0, 0, 0), opacity: 0.25 })
         p.drawText(`${numero} — continuación`, { x: ML, y: PAGE_H - 20, size: 8, font: fontBold, color: WHITE })
       }
-      p.drawText('CETOX LAB — DOCUMENTO OFICIAL', {
-        x: 95, y: PAGE_H / 2 - 20, size: 36, font: fontBold, color: GREEN, opacity: 0.06, rotate: degrees(45),
-      })
       doc.page = p
       doc.y = TOP_Y
     },

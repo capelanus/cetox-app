@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { formatFecha, formatNumODA } from '@/lib/format'
+import { asignarODA } from '@/app/actions/oda'
 
 const ESTADO_LABELS: Record<string, string> = {
   EMITIDA: 'Emitida',
@@ -31,24 +32,46 @@ interface ODA {
   items: ODAItem[]
   set: { cliente: { razonSocial: string } }
   informe: { id: string } | null
+  asignadoAId?: string | null
+  asignadoNombre?: string | null
 }
+
+interface Analista { id: string; nombre: string }
 
 interface Props {
   odas: ODA[]
   userArea: string | null
   isAnalista: boolean
+  esJefe?: boolean
+  analistas?: Analista[]
 }
 
-export function ODATable({ odas, userArea, isAnalista }: Props) {
+export function ODATable({ odas, userArea, isAnalista, esJefe = false, analistas = [] }: Props) {
   const router = useRouter()
   const [filtroArea, setFiltroArea] = useState(userArea ?? '')
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [pendingId, setPendingId] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  // Columna de asignación: la ve el jefe (con selector) y los roles administrativos (solo lectura).
+  const showAsignado = esJefe || !isAnalista
 
   const filtradas = odas.filter((o) => {
     if (filtroArea && o.area !== filtroArea) return false
     if (filtroEstado && o.estado !== filtroEstado) return false
     return true
   })
+
+  function asignar(odaId: string, analistaId: string) {
+    setPendingId(odaId)
+    startTransition(async () => {
+      await asignarODA(odaId, analistaId)
+      setPendingId(null)
+      router.refresh()
+    })
+  }
+
+  const colCount = 7 + (showAsignado ? 1 : 0) - (isAnalista ? 1 : 0)
 
   return (
     <div>
@@ -96,6 +119,7 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Área</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Ensayos</th>
               {!isAnalista && <th className="text-left px-4 py-3 font-semibold text-slate-600">Cliente</th>}
+              {showAsignado && <th className="text-left px-4 py-3 font-semibold text-slate-600">Asignado a</th>}
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Recepción</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Entrega</th>
               <th className="text-left px-4 py-3 font-semibold text-slate-600">Estado</th>
@@ -125,6 +149,27 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
                   )}
                 </td>
                 {!isAnalista && <td className="px-4 py-3">{o.set.cliente.razonSocial}</td>}
+                {showAsignado && (
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    {esJefe ? (
+                      <select
+                        className="h-8 rounded-md border border-input bg-white px-2 py-0.5 text-xs shadow-sm max-w-[170px] disabled:opacity-50"
+                        value={o.asignadoAId ?? ''}
+                        disabled={pendingId === o.id}
+                        onChange={(e) => asignar(o.id, e.target.value)}
+                      >
+                        <option value="">— Sin asignar —</option>
+                        {analistas.map((a) => (
+                          <option key={a.id} value={a.id}>{a.nombre}</option>
+                        ))}
+                      </select>
+                    ) : o.asignadoNombre ? (
+                      <span className="text-slate-700">{o.asignadoNombre}</span>
+                    ) : (
+                      <span className="text-slate-300">— Sin asignar —</span>
+                    )}
+                  </td>
+                )}
                 <td className="px-4 py-3 text-slate-600">{o.fechaRecepcion ? formatFecha(o.fechaRecepcion) : <span className="text-slate-300">—</span>}</td>
                 <td className="px-4 py-3 text-slate-600">{formatFecha(o.fechaEntregaCompromiso)}</td>
                 <td className="px-4 py-3">
@@ -142,7 +187,7 @@ export function ODATable({ odas, userArea, isAnalista }: Props) {
             ))}
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">No hay ODAs</td>
+                <td colSpan={colCount} className="px-4 py-8 text-center text-slate-400">No hay ODAs</td>
               </tr>
             )}
           </tbody>

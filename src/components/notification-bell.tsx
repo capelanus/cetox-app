@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useTransition } from 'react'
 import {
   Bell, FileCheck, CheckCircle2, FileText, ClipboardList,
-  BellOff, Banknote, ShieldCheck,
+  BellOff, Banknote, ShieldCheck, TestTube, UserCheck,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { marcarLeida, marcarTodasLeidas } from '@/app/actions/notificaciones'
@@ -33,6 +33,8 @@ const TIPO_META: Record<string, { icon: React.ElementType; color: string; bg: st
   COTIZACION_PROVEEDOR_REVISION:   { icon: ClipboardList,  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
   PETICION_EFECTIVO:               { icon: Banknote,       color: '#13602C', bg: 'rgba(19,96,44,0.10)'   },
   ASEGURAMIENTO_INICIO:            { icon: ShieldCheck,    color: '#7e22ce', bg: 'rgba(126,34,206,0.10)'  },
+  ODA_NUEVA_AREA:                  { icon: TestTube,       color: '#0891b2', bg: 'rgba(8,145,178,0.10)'   },
+  ODA_ASIGNADA:                    { icon: UserCheck,      color: '#2563eb', bg: 'rgba(37,99,235,0.10)'   },
   default:                         { icon: Bell,           color: '#64748b', bg: 'rgba(100,116,139,0.12)' },
 }
 

@@ -3,9 +3,61 @@
 import { prisma } from '@/lib/prisma'
 import { requireRol } from '@/lib/roles'
 import { siguienteCorrelativo } from '@/lib/correlativo'
+import { formatNumODA } from '@/lib/format'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
+
+// Roles administrativos que también pueden asignar/repartir ODAs
+const ROLES_REPARTO = ['ANALISTA', 'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'COORDINADOR_CALIDAD'] as const
+
+/**
+ * Asigna (o reasigna) una ODA a un científico del área. Solo lo pueden hacer los
+ * jefes de laboratorio de esa área o los roles administrativos. Notifica al
+ * científico asignado. Pasar analistaId='' para desasignar.
+ */
+export async function asignarODA(odaId: string, analistaId: string) {
+  const session = await requireRol([...ROLES_REPARTO])
+
+  const oda = await prisma.oDA.findUniqueOrThrow({
+    where: { id: odaId },
+    select: { area: true, numero: true, anio: true, set: { select: { nombreComercial: true } } },
+  })
+  const me = await prisma.usuario.findUniqueOrThrow({
+    where: { id: session.user.id },
+    select: { esJefeLab: true, area: true, rol: true },
+  })
+
+  // Un ANALISTA solo puede repartir si es jefe de laboratorio de esa área
+  if (me.rol === 'ANALISTA' && !(me.esJefeLab && me.area === oda.area)) {
+    throw new Error('No tienes permiso para repartir ODAs de esta área')
+  }
+
+  const nuevo = analistaId
+    ? await prisma.usuario.findUnique({ where: { id: analistaId }, select: { id: true, area: true } })
+    : null
+  if (analistaId && (!nuevo || nuevo.area !== oda.area)) {
+    throw new Error('El científico seleccionado no pertenece al área de la ODA')
+  }
+
+  await prisma.oDA.update({ where: { id: odaId }, data: { asignadoAId: analistaId || null } })
+
+  if (nuevo) {
+    const muestra = oda.set.nombreComercial ? ` (${oda.set.nombreComercial})` : ''
+    await prisma.notificacion.create({
+      data: {
+        usuarioId: nuevo.id,
+        tipo: 'ODA_ASIGNADA',
+        titulo: 'ODA asignada',
+        mensaje: `Se te asignó la ODA ${formatNumODA(oda.numero, oda.anio)}${muestra}.`,
+        enlace: `/oda/${odaId}`,
+      },
+    })
+  }
+
+  revalidatePath('/oda')
+  revalidatePath(`/oda/${odaId}`)
+}
 
 export async function cargarResultado(odaId: string, formData: FormData) {
   const session = await requireRol(['ANALISTA'])

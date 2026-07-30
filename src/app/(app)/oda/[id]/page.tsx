@@ -9,6 +9,7 @@ import { formatFecha, formatNumODA, formatNumInforme } from '@/lib/format'
 import { recibirODA, iniciarEjecucionODA } from '@/app/actions/oda'
 import { ResultadoForm } from '@/components/forms/resultado-form'
 import { SetPdfButton } from '@/components/set-pdf-button'
+import { OdaAsignacion } from '@/components/oda-asignacion'
 
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
 const ESTADO_LABELS: Record<string, string> = {
@@ -38,6 +39,23 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
   const miArea = session?.user.area
   const puedoCargar = esAnalista && (miArea === oda.area || rol === 'SUPER_ADMIN') && oda.estado === 'EN_EJECUCION'
   const set = oda.set
+
+  // ── Asignación (jefe de laboratorio) ──
+  const me = session?.user.id
+    ? await prisma.usuario.findUnique({ where: { id: session.user.id }, select: { esJefeLab: true } })
+    : null
+  const esJefe = (me?.esJefeLab ?? false) && miArea === oda.area
+  const [asignado, analistasArea] = await Promise.all([
+    oda.asignadoAId
+      ? prisma.usuario.findUnique({ where: { id: oda.asignadoAId }, select: { nombre: true } })
+      : Promise.resolve(null),
+    esJefe
+      ? prisma.usuario.findMany({
+          where: { rol: 'ANALISTA', activo: true, area: oda.area },
+          select: { id: true, nombre: true }, orderBy: { nombre: 'asc' },
+        })
+      : Promise.resolve([]),
+  ])
 
   const recibirAction = recibirODA.bind(null, id)
   const iniciarAction = iniciarEjecucionODA.bind(null, id)
@@ -80,6 +98,18 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
           <SetPdfButton href={`/api/oda/${id}/generar-pdf`} />
         </div>
       </div>
+
+      {(esJefe || asignado) && (
+        <div className="mb-6">
+          <OdaAsignacion
+            odaId={id}
+            asignadoAId={oda.asignadoAId ?? null}
+            asignadoNombre={asignado?.nombre ?? null}
+            analistas={analistasArea}
+            esJefe={esJefe}
+          />
+        </div>
+      )}
 
       <div className="space-y-5">
         {/* Flujo de aprobación ODA */}

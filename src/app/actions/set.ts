@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { requireRol } from '@/lib/roles'
 import { siguienteCorrelativo } from '@/lib/correlativo'
+import { notificarJefesNuevasODAs } from '@/lib/oda-notif'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { addDays } from 'date-fns'
@@ -132,6 +133,7 @@ export async function generarODAs(setId: string, formData: FormData) {
   }
 
   await prisma.sET.update({ where: { id: setId }, data: { estado: 'EN_EJECUCION' } })
+  await notificarJefesNuevasODAs(setId)
   revalidatePath('/set')
   revalidatePath(`/set/${setId}`)
   revalidatePath('/oda')
@@ -341,6 +343,7 @@ export async function crearSETCero(formData: FormData) {
   }
 
   await prisma.sET.update({ where: { id: set.id }, data: { estado: 'EN_EJECUCION' } })
+  await notificarJefesNuevasODAs(set.id)
 
   revalidatePath('/set')
   revalidatePath('/oda')

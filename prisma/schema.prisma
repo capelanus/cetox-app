@@ -15,6 +15,7 @@ model Usuario {
   nombre       String
   rol          String
   area         String?
+  esJefeLab    Boolean  @default(false) // jefe/subdirector de laboratorio: reparte ODAs de su área
   activo       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -331,10 +332,12 @@ model ODA {
   revisado               Boolean   @default(false)
   fechaRevisado          DateTime?
   edadPaciente           String?
+  asignadoAId            String?   // científico asignado por el jefe de laboratorio (id de Usuario)
   items                  ODAItem[]
   informe                Informe?
 
   @@unique([numero, anio])
+  @@index([asignadoAId])
 }
 
 model ODAItem {

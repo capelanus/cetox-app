@@ -4,7 +4,7 @@ import { ReactNode } from 'react'
 import Link from 'next/link'
 import {
   BookOpen, Target, ClipboardList, Gauge, ShieldAlert, Rocket, Wrench, LayoutDashboard,
-  Wallet, TrendingUp, Building2, PieChart, FileText, ArrowRight, Info,
+  Wallet, TrendingUp, Building2, PieChart, FileText, ArrowRight, Info, Truck, LayoutGrid,
 } from 'lucide-react'
 
 // ── Índice ───────────────────────────────────────────────────────────────────
@@ -24,9 +24,11 @@ const TOC = [
   {
     grupo: 'Contabilidad y Finanzas',
     items: [
-      { id: 'presupuesto', label: 'Presupuesto' },
+      { id: 'presupuesto', label: 'Presupuesto (+ OPEX/CAPEX)' },
+      { id: 'egresos', label: 'Egresos de Logística' },
       { id: 'flujo', label: 'Flujo de Caja' },
       { id: 'centros', label: 'Centros de Costo' },
+      { id: 'departamentos', label: 'Panel por Departamento' },
       { id: 'rentabilidad', label: 'Rentabilidad' },
       { id: 'documentos', label: 'Documentos' },
       { id: 'panel', label: 'Panel Financiero' },
@@ -200,12 +202,19 @@ DESCENDENTE (menor mejor):  cumplimiento = (meta / valor) × 100`}</Formula>
           </Section>
 
           {/* ── Proyectos ── */}
-          <Section id="proyectos" icon={<Rocket className="w-4 h-4" />} title="Proyectos" route="/gerencia/proyectos">
-            <p>Portafolio de proyectos estratégicos con hitos.</p>
+          <Section id="proyectos" icon={<Rocket className="w-4 h-4" />} title="Proyectos + Tareas (estilo Asana)" route="/gerencia/proyectos">
+            <p>Portafolio de proyectos estratégicos con hitos y <b>gestión de tareas estilo Asana</b>.</p>
             <Steps>
               <li>Cada proyecto: nombre, descripción, OEI asociado, departamento, <b>sponsor</b>, <b>gerente</b>, fechas plan, presupuesto, <b>% de avance</b> y estado.</li>
-              <li>Al desplegar el proyecto se gestionan sus <b>hitos</b>: se marcan como completados (registra fecha real), se agregan y se eliminan.</li>
+              <li>Al desplegar el proyecto se gestionan sus <b>hitos</b> (marcados como completados, se agregan/eliminan).</li>
+              <li><b>Nuevo:</b> clic en el nombre del proyecto o en <b>“Tablero”</b> abre su gestión de tareas.</li>
             </Steps>
+            <p className="font-semibold text-slate-700">Tablero de tareas (Asana):</p>
+            <Bullets>
+              <li><b>Tablero Kanban</b> con columnas <b>Por hacer · En curso · En revisión · Hecho</b>; las tarjetas se mueven entre columnas con las flechas.</li>
+              <li>Cada tarea: título, <b>responsable</b> (iniciales), <b>fecha de vencimiento</b> (roja si está vencida) y <b>prioridad</b> (Alta/Media/Baja).</li>
+              <li>Vista alterna <b>Lista</b> (tabla con estado editable en línea). Contador “X/Y tareas hechas” en la cabecera.</li>
+            </Bullets>
             <Estados items={[['Planificado', '#64748b'], ['En curso', '#3b82f6'], ['En pausa', '#f59e0b'], ['Completado', '#10b981'], ['Cancelado', '#94a3b8']]} />
             <Note>Un proyecto se marca como <b>atrasado</b> (alerta en el dashboard) si su fecha de fin planificada ya pasó y no está Completado ni Cancelado.</Note>
           </Section>
@@ -244,17 +253,20 @@ Riesgos                 = solo activos (no mitigados)`}</Formula>
           <div className="bg-white rounded-xl border border-slate-200 p-5 mb-8 mt-4 shadow-sm">
             <h2 className="text-base font-bold text-slate-800 mb-2">Contabilidad y Finanzas — visión general</h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Se arma el <b>presupuesto</b> (partidas de ingresos y egresos con montos mensuales planificados y ejecutados);
-              de ahí se derivan automáticamente el <b>flujo de caja</b> y el análisis por <b>centro de costo</b>.
-              La <b>rentabilidad</b> se registra por operación (cliente × servicio) y los <b>documentos</b> de respaldo se archivan.
+              Se arma el <b>presupuesto</b> (partidas de ingresos y egresos, con clasificación <b>OPEX/CAPEX</b>);
+              de ahí se derivan el <b>flujo de caja</b> y el análisis por <b>centro de costo</b>. Los <b>egresos reales</b> se
+              extraen del módulo de <b>Logística</b>, y el <b>Panel por Departamento</b> consolida presupuesto, ejecución y
+              producción por área. La <b>rentabilidad</b> se registra por operación (cliente × servicio) y los <b>documentos</b>
+              de respaldo se archivan.
             </p>
           </div>
 
           {/* ── Presupuesto ── */}
-          <Section id="presupuesto" icon={<Wallet className="w-4 h-4" />} title="Presupuesto" route="/gerencia/contabilidad/presupuesto">
+          <Section id="presupuesto" icon={<Wallet className="w-4 h-4" />} title="Presupuesto (+ OPEX / CAPEX)" route="/gerencia/contabilidad/presupuesto">
             <p>Núcleo del submódulo. Se registran <b>partidas</b> de tipo <b>Ingreso</b> o <b>Egreso</b>.</p>
             <Steps>
               <li>Selector de año. Cada partida: tipo, <b>categoría</b> (predefinidas), <b>concepto</b> y centro de costo opcional.</li>
+              <li><b>Nuevo:</b> cada egreso se clasifica como <b>OPEX</b> (gasto operativo) o <b>CAPEX</b> (gasto de capital) para el análisis financiero.</li>
               <li>Se agrupan en Ingresos y Egresos, con ejecutado vs. planificado y % de ejecución.</li>
               <li>Al desplegar, la <b>grilla mensual</b> con filas <b>Plan</b> y <b>Real</b> (montos en soles); se guarda al salir de la celda.</li>
             </Steps>
@@ -262,7 +274,19 @@ Riesgos                 = solo activos (no mitigados)`}</Formula>
             <Bullets>
               <li><b>Egreso</b>: &gt; 100 % rojo (sobregasto) · 85–100 % ámbar · &lt; 85 % verde.</li>
               <li><b>Ingreso</b>: ≥ 100 % verde (superó meta) · 80–99 % ámbar · &lt; 80 % rojo.</li>
+              <li>Resumen <b>OPEX vs CAPEX</b> del año en el Presupuesto y en el Panel Financiero.</li>
             </Bullets>
+          </Section>
+
+          {/* ── Egresos de Logística ── */}
+          <Section id="egresos" icon={<Truck className="w-4 h-4" />} title="Egresos de Logística" route="/gerencia/contabilidad/egresos">
+            <p><b>Nuevo:</b> el gasto real se extrae automáticamente del módulo de <b>Logística/compras</b>, por departamento y por mes.</p>
+            <Bullets>
+              <li><b>Comprometido</b> = Órdenes de Compra emitidas (no canceladas).</li>
+              <li><b>Facturado (devengado)</b> = Facturas de proveedor → es el criterio de “ejecutado”.</li>
+              <li><b>Pagado</b> = Pagos efectivamente realizados (salida de caja).</li>
+            </Bullets>
+            <p>El departamento sale de <b>Requerimiento → área solicitante</b>. Incluye gráfico mensual (facturado/pagado + línea de comprometido) y tabla por departamento.</p>
           </Section>
 
           {/* ── Flujo ── */}
@@ -280,6 +304,20 @@ Riesgos                 = solo activos (no mitigados)`}</Formula>
             <Bullets>
               <li>Cada centro: código, nombre, departamento y responsable.</li>
               <li>Se le asignan partidas desde el Presupuesto; la tarjeta muestra <b>presupuesto vs. ejecutado</b> del año.</li>
+            </Bullets>
+          </Section>
+
+          {/* ── Panel por Departamento ── */}
+          <Section id="departamentos" icon={<LayoutGrid className="w-4 h-4" />} title="Panel por Departamento" route="/gerencia/departamentos">
+            <p><b>Nuevo:</b> control gerencial por área. Una tarjeta por departamento con lo clave para decidir.</p>
+            <Bullets>
+              <li><b>Responsable</b> (del centro de costo), <b>presupuesto asignado</b> (partidas de egreso del área) y <b>ejecutado</b> (facturado de Logística).</li>
+              <li><b>% de avance</b> (ejecutado / asignado, semaforizado) y <b>estado del proyecto</b> del departamento.</li>
+            </Bullets>
+            <p className="font-semibold text-slate-700">Al seleccionar un departamento se muestran dos curvas:</p>
+            <Bullets>
+              <li><b>Ejecución presupuestal (curva-S)</b>: planificado vs. ejecutado acumulado por mes.</li>
+              <li><b>Producción de laboratorio</b>: informes de ensayo emitidos por mes (aplica a Química, Biología y Microbiología).</li>
             </Bullets>
           </Section>
 
@@ -311,7 +349,7 @@ margen % = (margen / ingreso) × 100`}</Formula>
             <p>Consolida el submódulo:</p>
             <Bullets>
               <li>KPIs: ingresos y egresos ejecutados, resultado real vs. proyectado, n° de centros de costo.</li>
-              <li>Mini gráfico de flujo de caja, <b>top de rentabilidad por cliente y servicio</b>, documentos recientes y accesos rápidos.</li>
+              <li>Tarjeta <b>OPEX vs CAPEX</b>, mini gráfico de flujo de caja, <b>top de rentabilidad por cliente y servicio</b>, documentos recientes y accesos rápidos.</li>
             </Bullets>
           </Section>
         </div>

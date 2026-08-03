@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Rocket, Plus, Pencil, Trash2, ChevronDown, ChevronRight, User, CheckCircle2, Circle, Flag } from 'lucide-react'
+import Link from 'next/link'
+import { Rocket, Plus, Pencil, Trash2, ChevronDown, ChevronRight, User, CheckCircle2, Circle, Flag, LayoutGrid } from 'lucide-react'
 import {
   crearProyecto, actualizarProyecto, eliminarProyecto, crearHito, toggleHito, eliminarHito,
 } from '@/app/actions/planeamiento'
@@ -92,10 +93,13 @@ function ProyectoCard({ p, usuarios, pending, run, onEdit, onDelete }: {
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-slate-800">{p.nombre}</p>
+              <Link href={`/gerencia/proyectos/${p.id}`} className="text-sm font-semibold text-slate-800 hover:text-emerald-700 hover:underline">{p.nombre}</Link>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: ESTADO_PROYECTO_COLOR[p.estado] }}>
                 {ESTADO_PROYECTO_LABEL[p.estado] ?? p.estado}
               </span>
+              <Link href={`/gerencia/proyectos/${p.id}`} className="flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-800">
+                <LayoutGrid className="w-3 h-3" /> Tablero
+              </Link>
             </div>
             {p.descripcion && <p className="text-xs text-slate-500 mt-0.5">{p.descripcion}</p>}
             <div className="flex items-center gap-3 mt-1.5 flex-wrap">

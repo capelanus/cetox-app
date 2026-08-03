@@ -6,15 +6,19 @@ import { Wallet, Plus, Pencil, Trash2, ChevronDown, ChevronRight, TrendingUp, Tr
 import { crearPartida, actualizarPartida, eliminarPartida, guardarLinea } from '@/app/actions/contabilidad'
 import {
   MESES, CATEGORIAS_INGRESO, CATEGORIAS_EGRESO, soles, pctEjecucion, colorEjecucion,
+  CLASIFICACION_LABEL_CORTO, CLASIFICACION_COLOR,
 } from '@/lib/contabilidad'
 import { Modal, Txt, Sel, useAction } from '@/components/planeamiento/kit'
 
 interface Linea { id: string; periodo: number; planificado: number; ejecutado: number }
 interface Partida {
   id: string; anio: number; tipo: string; categoria: string; concepto: string
+  clasificacion: string | null
   centroCostoId: string | null; centroCosto: { nombre: string } | null; lineas: Linea[]
 }
 interface CentroRef { id: string; nombre: string }
+
+const clasifOpts = [{ value: 'OPEX', label: 'OPEX · Gasto operativo' }, { value: 'CAPEX', label: 'CAPEX · Gasto de capital' }]
 
 const sum = (l: Linea[], k: 'planificado' | 'ejecutado') => l.reduce((a, b) => a + b[k], 0)
 
@@ -32,6 +36,10 @@ export function PresupuestoClient({ anio, partidas, centros }: {
   const totIngEjec = ingresos.reduce((a, p) => a + sum(p.lineas, 'ejecutado'), 0)
   const totEgrPlan = egresos.reduce((a, p) => a + sum(p.lineas, 'planificado'), 0)
   const totEgrEjec = egresos.reduce((a, p) => a + sum(p.lineas, 'ejecutado'), 0)
+
+  // OPEX / CAPEX (sobre egresos planificados)
+  const opexPlan = egresos.filter(p => p.clasificacion === 'OPEX').reduce((a, p) => a + sum(p.lineas, 'planificado'), 0)
+  const capexPlan = egresos.filter(p => p.clasificacion === 'CAPEX').reduce((a, p) => a + sum(p.lineas, 'planificado'), 0)
 
   const anios = [anio - 1, anio, anio + 1]
 
@@ -65,6 +73,14 @@ export function PresupuestoClient({ anio, partidas, centros }: {
         <ResumenCard label="Resultado proyectado" value={soles(totIngPlan - totEgrPlan)} color={totIngPlan - totEgrPlan >= 0 ? '#10b981' : '#ef4444'}
           sub={`Real: ${soles(totIngEjec - totEgrEjec)}`} />
       </div>
+
+      {/* OPEX / CAPEX */}
+      {(opexPlan > 0 || capexPlan > 0) && (
+        <div className="grid grid-cols-2 gap-3 mb-6 max-w-md">
+          <ResumenCard label="OPEX · Gasto operativo" value={soles(opexPlan)} color={CLASIFICACION_COLOR.OPEX} />
+          <ResumenCard label="CAPEX · Gasto de capital" value={soles(capexPlan)} color={CLASIFICACION_COLOR.CAPEX} />
+        </div>
+      )}
 
       <Grupo titulo="Ingresos" icon={<TrendingUp className="w-4 h-4" />} partidas={ingresos} pending={pending} run={run}
         onEdit={p => setModal({ mode: 'edit', data: p })} onDelete={p => run(() => eliminarPartida(p.id))} />
@@ -134,9 +150,14 @@ function PartidaRow({ p, pending, run, onEdit, onDelete }: {
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-slate-800 truncate">{p.concepto}</p>
-          <div className="flex items-center gap-3 mt-0.5">
+          <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[11px] text-slate-400">{p.categoria}</span>
             {p.centroCosto && <span className="text-[11px] text-slate-400">· {p.centroCosto.nombre}</span>}
+            {p.clasificacion && (
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ backgroundColor: CLASIFICACION_COLOR[p.clasificacion] }}>
+                {CLASIFICACION_LABEL_CORTO[p.clasificacion] ?? p.clasificacion}
+              </span>
+            )}
           </div>
         </div>
         <div className="text-right flex-shrink-0">
@@ -208,19 +229,27 @@ function PartidaModal({ mode, data, centros, anio, onClose, onSave, pending }: {
 }) {
   const [f, setF] = useState({
     tipo: data?.tipo ?? 'EGRESO', categoria: data?.categoria ?? '', concepto: data?.concepto ?? '',
-    centroCostoId: data?.centroCostoId ?? '',
+    centroCostoId: data?.centroCostoId ?? '', clasificacion: data?.clasificacion ?? '',
   })
   const cats = f.tipo === 'INGRESO' ? CATEGORIAS_INGRESO : CATEGORIAS_EGRESO
   return (
     <Modal open onClose={onClose} title={mode === 'new' ? 'Nueva partida presupuestal' : 'Editar partida'} pending={pending}
       onSubmit={() => {
-        const base = { tipo: f.tipo, categoria: f.categoria, concepto: f.concepto, centroCostoId: f.centroCostoId || undefined }
+        const base = {
+          tipo: f.tipo, categoria: f.categoria, concepto: f.concepto,
+          centroCostoId: f.centroCostoId || undefined,
+          clasificacion: f.tipo === 'EGRESO' ? (f.clasificacion || (mode === 'edit' ? null : undefined)) : null,
+        }
         onSave(mode === 'new' ? { anio, ...base } : base)
       }}>
       <Sel label="Tipo" value={f.tipo} onChange={v => setF({ ...f, tipo: v, categoria: '' })}
         options={[{ value: 'INGRESO', label: 'Ingreso' }, { value: 'EGRESO', label: 'Egreso' }]} />
       <Sel label="Categoría" value={f.categoria} onChange={v => setF({ ...f, categoria: v })}
         placeholder="— Selecciona —" options={cats.map(c => ({ value: c, label: c }))} />
+      {f.tipo === 'EGRESO' && (
+        <Sel label="Clasificación (OPEX / CAPEX)" value={f.clasificacion} onChange={v => setF({ ...f, clasificacion: v })}
+          placeholder="— Sin clasificar —" options={clasifOpts} />
+      )}
       <Txt label="Concepto" value={f.concepto} onChange={v => setF({ ...f, concepto: v })} placeholder="Ej. Compra de reactivos HPLC" required />
       <Sel label="Centro de costo" value={f.centroCostoId} onChange={v => setF({ ...f, centroCostoId: v })}
         placeholder="— Ninguno —" options={centros.map(c => ({ value: c.id, label: c.nombre }))} />

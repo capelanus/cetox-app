@@ -38,6 +38,22 @@ export const TIPO_PARTIDA_LABEL: Record<string, string> = {
   EGRESO:  'Egreso',
 }
 
+// Clasificación contable del gasto/inversión
+export const CLASIFICACION_LABEL: Record<string, string> = {
+  OPEX: 'OPEX · Gasto operativo',
+  CAPEX: 'CAPEX · Gasto de capital',
+}
+
+export const CLASIFICACION_LABEL_CORTO: Record<string, string> = {
+  OPEX: 'OPEX',
+  CAPEX: 'CAPEX',
+}
+
+export const CLASIFICACION_COLOR: Record<string, string> = {
+  OPEX: '#0891b2',
+  CAPEX: '#7c3aed',
+}
+
 // Formato de moneda peruana
 export function soles(n: number): string {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', maximumFractionDigits: 0 }).format(n)

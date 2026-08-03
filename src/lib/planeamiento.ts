@@ -128,6 +128,25 @@ export const ESTADO_MEJORA_LABEL: Record<string, string> = {
   CERRADA:    'Cerrada',
 }
 
+// ── Tareas de proyecto (estilo Asana) ─────────────────────────────────────────
+
+export const ESTADO_TAREA: { key: string; label: string; color: string }[] = [
+  { key: 'POR_HACER',   label: 'Por hacer',   color: '#94a3b8' },
+  { key: 'EN_CURSO',    label: 'En curso',    color: '#3b82f6' },
+  { key: 'EN_REVISION', label: 'En revisión', color: '#f59e0b' },
+  { key: 'HECHO',       label: 'Hecho',       color: '#10b981' },
+]
+
+export const ESTADO_TAREA_LABEL: Record<string, string> = Object.fromEntries(ESTADO_TAREA.map(e => [e.key, e.label]))
+export const ESTADO_TAREA_COLOR: Record<string, string> = Object.fromEntries(ESTADO_TAREA.map(e => [e.key, e.color]))
+
+export const PRIORIDAD_TAREA_LABEL: Record<string, string> = { BAJA: 'Baja', MEDIA: 'Media', ALTA: 'Alta' }
+export const PRIORIDAD_TAREA_COLOR: Record<string, string> = { BAJA: '#64748b', MEDIA: '#f59e0b', ALTA: '#ef4444' }
+
+export function iniciales(nombre: string): string {
+  return nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
+}
+
 export const ESTADO_MEJORA_COLOR: Record<string, string> = {
   ABIERTA:    '#ef4444',
   EN_PROCESO: '#f59e0b',

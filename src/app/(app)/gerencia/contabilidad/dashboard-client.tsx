@@ -4,12 +4,13 @@ import Link from 'next/link'
 import {
   Wallet, TrendingUp, TrendingDown, PieChart, Building2, FileText, ArrowRight, Users, FlaskConical,
 } from 'lucide-react'
-import { MESES, soles, pctEjecucion, colorEjecucion, colorMargen } from '@/lib/contabilidad'
+import { MESES, soles, pctEjecucion, colorEjecucion, colorMargen, CLASIFICACION_COLOR } from '@/lib/contabilidad'
 
 interface TopItem { nombre: string; margen: number; pct: number | null }
 interface Data {
   anio: number
   ingPlan: number; ingReal: number; egrPlan: number; egrReal: number; centrosCount: number
+  opexPlan: number; capexPlan: number
   meses: { periodo: number; neto: number }[]
   topClientes: TopItem[]; topServicios: TopItem[]
   documentos: { id: string; nombre: string; url: string; categoria: string | null; createdAt: string }[]
@@ -82,6 +83,27 @@ export function ContabilidadDashboard({ data }: { data: Data }) {
         <TopCard title="Rentabilidad por cliente" icon={<Users className="w-4 h-4" />} items={data.topClientes} />
         {/* Top servicios */}
         <TopCard title="Rentabilidad por servicio" icon={<FlaskConical className="w-4 h-4" />} items={data.topServicios} />
+
+        {/* OPEX / CAPEX */}
+        {(data.opexPlan > 0 || data.capexPlan > 0) && (
+          <Card title="OPEX vs CAPEX (egresos plan.)" icon={<PieChart className="w-4 h-4" />}>
+            {[['OPEX · Gasto operativo', data.opexPlan, CLASIFICACION_COLOR.OPEX], ['CAPEX · Gasto de capital', data.capexPlan, CLASIFICACION_COLOR.CAPEX]].map(([label, val, color]) => {
+              const total = data.opexPlan + data.capexPlan
+              const pct = total > 0 ? ((val as number) / total) * 100 : 0
+              return (
+                <div key={label as string} className="mb-3 last:mb-0">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-slate-600">{label}</span>
+                    <span className="font-bold" style={{ color: color as string }}>{soles(val as number)}</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color as string }} />
+                  </div>
+                </div>
+              )
+            })}
+          </Card>
+        )}
 
         {/* Accesos rápidos */}
         <Card title="Accesos" icon={<PieChart className="w-4 h-4" />}>

@@ -18,12 +18,16 @@ export default async function ContabilidadPage() {
   ])
 
   // Presupuesto
-  let ingPlan = 0, ingReal = 0, egrPlan = 0, egrReal = 0
+  let ingPlan = 0, ingReal = 0, egrPlan = 0, egrReal = 0, opexPlan = 0, capexPlan = 0
   const meses = Array.from({ length: 12 }, () => ({ neto: 0 }))
   for (const p of partidas) {
     for (const l of p.lineas) {
       if (p.tipo === 'INGRESO') { ingPlan += l.planificado; ingReal += l.ejecutado; meses[l.periodo - 1].neto += l.planificado }
-      else { egrPlan += l.planificado; egrReal += l.ejecutado; meses[l.periodo - 1].neto -= l.planificado }
+      else {
+        egrPlan += l.planificado; egrReal += l.ejecutado; meses[l.periodo - 1].neto -= l.planificado
+        if (p.clasificacion === 'OPEX') opexPlan += l.planificado
+        else if (p.clasificacion === 'CAPEX') capexPlan += l.planificado
+      }
     }
   }
 
@@ -40,7 +44,7 @@ export default async function ContabilidadPage() {
       .sort((a, b) => b.margen - a.margen).slice(0, 5)
 
   const data = {
-    anio, ingPlan, ingReal, egrPlan, egrReal, centrosCount,
+    anio, ingPlan, ingReal, egrPlan, egrReal, opexPlan, capexPlan, centrosCount,
     meses: meses.map((m, i) => ({ periodo: i + 1, neto: m.neto })),
     topClientes: top(aggCliente),
     topServicios: top(aggServicio),

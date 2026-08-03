@@ -1160,6 +1160,7 @@ model ProyectoEstrategico {
   avance          Int                  @default(0) // 0-100
   estado          String               @default("PLANIFICADO") // PLANIFICADO | EN_CURSO | EN_PAUSA | COMPLETADO | CANCELADO
   hitos           HitoProyecto[]
+  tareas          TareaProyecto[]
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
@@ -1176,6 +1177,23 @@ model HitoProyecto {
   completado Boolean             @default(false)
   orden      Int                 @default(0)
   createdAt  DateTime            @default(now())
+
+  @@index([proyectoId])
+}
+
+model TareaProyecto {
+  id               String              @id @default(cuid())
+  proyectoId       String
+  proyecto         ProyectoEstrategico @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  titulo           String
+  descripcion      String?
+  responsableId    String?             // id de Usuario (plano, resuelto en app)
+  estado           String              @default("POR_HACER") // POR_HACER | EN_CURSO | EN_REVISION | HECHO
+  prioridad        String?             // BAJA | MEDIA | ALTA
+  fechaVencimiento DateTime?
+  orden            Int                 @default(0)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   @@index([proyectoId])
 }
@@ -1226,6 +1244,7 @@ model PartidaPresupuestal {
   centroCosto   CentroCosto?       @relation(fields: [centroCostoId], references: [id], onDelete: SetNull)
   tipo          String             // INGRESO | EGRESO
   categoria     String             // Personal | Reactivos | Servicios básicos | ...
+  clasificacion String?            // OPEX | CAPEX (solo aplica a egresos)
   concepto      String
   lineas        LineaPresupuesto[]
   createdAt     DateTime           @default(now())

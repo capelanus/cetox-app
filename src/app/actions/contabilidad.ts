@@ -51,7 +51,7 @@ export async function eliminarCentroCosto(id: string) {
 // ── Partidas presupuestales ───────────────────────────────────────────────────
 
 export async function crearPartida(data: {
-  anio: number; tipo: string; categoria: string; concepto: string; centroCostoId?: string
+  anio: number; tipo: string; categoria: string; concepto: string; centroCostoId?: string; clasificacion?: string
 }) {
   await guard()
   await prisma.partidaPresupuestal.create({ data })
@@ -59,7 +59,7 @@ export async function crearPartida(data: {
 }
 
 export async function actualizarPartida(id: string, data: {
-  categoria?: string; concepto?: string; centroCostoId?: string | null; tipo?: string
+  categoria?: string; concepto?: string; centroCostoId?: string | null; tipo?: string; clasificacion?: string | null
 }) {
   await guard()
   await prisma.partidaPresupuestal.update({ where: { id }, data })

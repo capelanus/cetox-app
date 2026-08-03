@@ -76,6 +76,7 @@ interface SidebarProps {
   userRol:        string
   userArea:       string | null
   isVacApprover?: boolean
+  esJefeLab?:     boolean
   collapsed:      boolean
   onToggle:       () => void
 }
@@ -100,6 +101,7 @@ const allNavItems: NavItem[] = [
   { href: '/gerencia/accesos',     label: 'Control de Accesos', icon: Shield,   roles: ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION'] },
   { href: '/rrhh',                 label: 'RRHH',               icon: Users2,   roles: ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'] },
   { href: '/documentos', label: 'Documentos Calidad', icon: BookOpen, roles: ['GERENTE_TECNICO', 'ANALISTA', 'ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'] },
+  { href: '/biologia/control-odas', label: 'Control Biología',     icon: Microscope,  roles: ['GERENTE_TECNICO'] },
   { href: '/gerencia/dashboard',    label: 'Dashboard Gerencial', icon: Goal,        roles: ['GERENTE_TECNICO'] },
   { href: '/gerencia/pei',          label: 'Plan Estratégico',    icon: Target,      roles: ['GERENTE_TECNICO'] },
   { href: '/gerencia/poa',          label: 'Plan Operativo',      icon: ClipboardList, roles: ['GERENTE_TECNICO'] },
@@ -195,6 +197,7 @@ const sectionesCoordinadorCalidad: NavSection[] = [
       { href: '/calidad/procedimientos', label: 'Procedimientos',    icon: BookOpen,    roles: ['COORDINADOR_CALIDAD'] },
       { href: '/calidad/instructivos',   label: 'Instructivos',      icon: ListChecks,  roles: ['COORDINADOR_CALIDAD'] },
       { href: '/calidad/aseguramiento',  label: 'Aseguramiento',     icon: ShieldCheck, roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/biologia/control-odas',  label: 'Control Biología',  icon: Microscope,  roles: ['COORDINADOR_CALIDAD'] },
     ],
   },
   {
@@ -318,6 +321,7 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/calidad/procedimientos', label: 'Procedimientos',     icon: BookOpen,       roles: ['DIRECTOR_CALIDAD'] },
       { href: '/calidad/instructivos',   label: 'Instructivos',       icon: ListChecks,     roles: ['DIRECTOR_CALIDAD'] },
       { href: '/calidad/aseguramiento',  label: 'Aseguramiento',      icon: ShieldCheck,    roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/biologia/control-odas',  label: 'Control Biología',   icon: Microscope,     roles: ['DIRECTOR_CALIDAD'] },
       { href: '/caja-chica',            label: 'Caja Chica',          icon: Wallet,    roles: ['DIRECTOR_CALIDAD'] },
       { href: '/caja-chica/peticiones', label: 'Petición de Efectivo', icon: Banknote,  roles: ['DIRECTOR_CALIDAD'], muted: true },
     ],
@@ -382,7 +386,7 @@ const sectionesDirectorCalidad: NavSection[] = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover, collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover, esJefeLab, collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
 
   // Build flat navItems for non-DC roles
@@ -406,6 +410,13 @@ export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover,
     navItems = allNavItems.filter(item => item.roles.includes('GERENTE_TECNICO'))
   } else {
     navItems = allNavItems.filter(item => item.roles.includes(userRol))
+  }
+
+  // Jefe de laboratorio de Biología: acceso al cuadro de control de ODAs de Biología.
+  if (esJefeLab && userArea === 'B') {
+    const controlBio: NavItem = { href: '/biologia/control-odas', label: 'Control Biología', icon: Microscope, roles: [userRol] }
+    const yaVisible = (sections ?? [{ items: navItems } as NavSection]).some(s => s.items.some(i => i.href === controlBio.href))
+    if (!yaVisible) navItems = [...navItems, controlBio]
   }
 
   // Aprobador de vacaciones que no es HR: inyectar acceso a la bandeja

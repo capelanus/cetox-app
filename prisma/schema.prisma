@@ -1299,3 +1299,27 @@ model DocumentoFinanciero {
 
   @@index([createdAt])
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONTROL DE ODAs DE BIOLOGÍA
+// Cuadro de control (réplica de la hoja de cálculo) para el jefe de Biología;
+// visualización por Calidad. Una fila por ODA, con datos manuales.
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ControlOdaBiologia {
+  id             String    @id @default(cuid())
+  formulacion    String?   // manual, agrupa por SET (polvo, cebo granulado, …)
+  setNumero      String?   // N° de SET correspondiente
+  odaNumero      String?   // N° de ODA correspondiente
+  prueba         String?   // diminutivo de la prueba (OCT, DAR, IA, EI, ER, IO, …)
+  entregado      Boolean   @default(false) // la "e" = entregado
+  fechaEntrega   DateTime? // fecha en que se entregó el análisis
+  observacion    String?
+  formato        String?   // FN (nacional) | FE (extranjero) | FEE
+  fechaRecepcion DateTime? // fecha de recepción de la ODA
+  orden          Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([setNumero])
+}

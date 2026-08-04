@@ -40,8 +40,8 @@ export async function GET(
   const yTop = doc.y
   const yBot = yTop - 106
 
-  const hline = (y: number) => doc.page.drawLine({ start: { x: bx0, y }, end: { x: bx1, y }, thickness: 0.6, color: BLACK })
-  const vline = (x: number, y1: number, y2: number) => doc.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness: 0.6, color: BLACK })
+  const hline = (y: number) => doc.page.drawLine({ start: { x: bx0, y }, end: { x: bx1, y }, thickness: 0.6, color: GREEN })
+  const vline = (x: number, y1: number, y2: number) => doc.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness: 0.6, color: GREEN })
   const cell = (x: number, yRowTop: number, label: string, value: string | null | undefined, max = 58) => {
     const ly = yRowTop - 12
     doc.page.drawText(label, { x: x + 4, y: ly, size: 8, font: fontBold, color: BLACK })
@@ -93,7 +93,7 @@ export async function GET(
     doc.page.drawText(label, { x: cbx, y: cy - 12, size: 8, font, color: BLACK })
     const lw = font.widthOfTextAtSize(label, 8)
     const boxX = cbx + lw + 3
-    doc.page.drawRectangle({ x: boxX, y: cy - 13.5, width: 8, height: 8, borderColor: BLACK, borderWidth: 0.6, color: WHITE })
+    doc.page.drawRectangle({ x: boxX, y: cy - 13.5, width: 8, height: 8, borderColor: GREEN, borderWidth: 0.6, color: WHITE })
     if (marcado(key)) doc.page.drawText('X', { x: boxX + 1.3, y: cy - 12.3, size: 7, font: fontBold, color: BLACK })
     cbx = boxX + 8 + 14
   }

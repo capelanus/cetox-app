@@ -61,12 +61,13 @@ export interface MembreteDoc {
 export async function crearMembrete(
   titulo: string,
   numero: string,
-  opts: { plantilla?: string } = {},
+  opts: { plantilla?: string; gapExtra?: number } = {},
 ): Promise<MembreteDoc> {
   const templateDoc = await loadTemplate(opts.plantilla)
   const HEADER_H = templateDoc ? 158 : 80
   const FOOTER_H = templateDoc ? 88 : 50
-  const TOP_Y = PAGE_H - HEADER_H - 12
+  // Espacio entre la cabecera y el contenido (gapExtra permite airearlo por doc)
+  const TOP_Y = PAGE_H - HEADER_H - 12 - (opts.gapExtra ?? 0)
 
   const pdfDoc = await PDFDocument.create()
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)

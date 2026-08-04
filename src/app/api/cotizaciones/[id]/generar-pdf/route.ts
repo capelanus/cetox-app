@@ -31,7 +31,7 @@ export async function GET(
   const hasMuestras = cot.muestras.length > 0
   const numCot = formatNumCotizacion(cot.numero, cot.anio, cot.sufijo)
 
-  const doc = await crearMembrete('COTIZACIÓN DE SERVICIOS', numCot)
+  const doc = await crearMembrete('COTIZACIÓN DE SERVICIOS', numCot, { plantilla: 'letterhead-cotizacion.pdf' })
   const { font, fontBold } = doc
 
   // ── Datos ──────────────────────────────────────────────────────────────────

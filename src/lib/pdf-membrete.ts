@@ -15,19 +15,19 @@ export const ML = 42
 export const MR = 42
 export const CW = PAGE_W - ML - MR
 
-/** Carga el membrete oficial; si falla, retorna null (se usa header programático) */
-async function loadTemplate(): Promise<PDFDocument | null> {
+/** Carga un membrete oficial; si falla, retorna null (se usa header programático) */
+async function loadTemplate(nombre = 'letterhead.pdf'): Promise<PDFDocument | null> {
   // 1) Leer del disco (next start sirve /public desde disco)
   try {
     const { readFile } = await import('node:fs/promises')
     const path = await import('node:path')
-    const file = path.join(process.cwd(), 'public', 'templates', 'letterhead.pdf')
+    const file = path.join(process.cwd(), 'public', 'templates', nombre)
     return await PDFDocument.load(await readFile(file))
   } catch { /* intenta fetch */ }
   // 2) Fallback: fetch (serverless donde /public no está en disco)
   try {
     const base = process.env.NEXTAUTH_URL ?? 'https://cetoxlab.tech'
-    const res = await fetch(`${base}/templates/letterhead.pdf`, { cache: 'no-store' })
+    const res = await fetch(`${base}/templates/${nombre}`, { cache: 'no-store' })
     if (!res.ok) return null
     return await PDFDocument.load(await res.arrayBuffer())
   } catch {
@@ -58,8 +58,12 @@ export interface MembreteDoc {
  * Crea un A4 con el membrete oficial de CETOX y el bloque de título estándar.
  * Devuelve helpers para agregar contenido debajo del título.
  */
-export async function crearMembrete(titulo: string, numero: string): Promise<MembreteDoc> {
-  const templateDoc = await loadTemplate()
+export async function crearMembrete(
+  titulo: string,
+  numero: string,
+  opts: { plantilla?: string } = {},
+): Promise<MembreteDoc> {
+  const templateDoc = await loadTemplate(opts.plantilla)
   const HEADER_H = templateDoc ? 158 : 80
   const FOOTER_H = templateDoc ? 88 : 50
   const TOP_Y = PAGE_H - HEADER_H - 12

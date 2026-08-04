@@ -61,7 +61,7 @@ export interface MembreteDoc {
 export async function crearMembrete(
   titulo: string,
   numero: string,
-  opts: { plantilla?: string; gapExtra?: number } = {},
+  opts: { plantilla?: string; gapExtra?: number; numeroDerecha?: boolean } = {},
 ): Promise<MembreteDoc> {
   const templateDoc = await loadTemplate(opts.plantilla)
   const HEADER_H = templateDoc ? 158 : 80
@@ -154,10 +154,17 @@ export async function crearMembrete(
   // Primera página + bloque de título
   await doc.newPage()
   doc.page.drawText(titulo, { x: ML, y: doc.y, size: 13, font: fontBold, color: GREEN })
-  doc.y -= 15
-  doc.page.drawText(numero, { x: ML, y: doc.y, size: 11, font: fontBold, color: BLACK })
-  doc.page.drawText(`Fecha de emisión: ${formatFecha(new Date())}`, { x: PAGE_W - MR - 170, y: doc.y, size: 8.5, font, color: GRAY })
-  doc.y -= 6
+  if (opts.numeroDerecha) {
+    // Número destacado a la derecha, en la misma línea del título (sin fecha ni subtítulo)
+    const w = fontBold.widthOfTextAtSize(numero, 13)
+    doc.page.drawText(numero, { x: PAGE_W - MR - w, y: doc.y, size: 13, font: fontBold, color: BLACK })
+    doc.y -= 21
+  } else {
+    doc.y -= 15
+    doc.page.drawText(numero, { x: ML, y: doc.y, size: 11, font: fontBold, color: BLACK })
+    doc.page.drawText(`Fecha de emisión: ${formatFecha(new Date())}`, { x: PAGE_W - MR - 170, y: doc.y, size: 8.5, font, color: GRAY })
+    doc.y -= 6
+  }
   doc.page.drawLine({ start: { x: ML, y: doc.y }, end: { x: PAGE_W - MR, y: doc.y }, thickness: 0.8, color: GREEN })
   doc.y -= 14
 

@@ -36,6 +36,22 @@ export async function GET(
   const doc = await crearMembrete('COTIZACIÓN DE SERVICIOS', numCot, { plantilla: 'letterhead-cotizacion.pdf', gapExtra: 28, numeroDerecha: true })
   const { font, fontBold } = doc
 
+  // Ajusta un texto (respetando saltos de línea propios) al ancho indicado
+  const wrapText = (text: string, maxW: number, size: number): string[] => {
+    const out: string[] = []
+    for (const para of text.split(/\r?\n/)) {
+      const words = para.split(/\s+/).filter(Boolean)
+      let cur = ''
+      for (const wd of words) {
+        const test = cur ? `${cur} ${wd}` : wd
+        if (font.widthOfTextAtSize(test, size) > maxW && cur) { out.push(cur); cur = wd }
+        else cur = test
+      }
+      out.push(cur)
+    }
+    return out
+  }
+
   // ── Datos del cliente (cuadro tipo formulario, formato tradicional) ──────────
   await doc.ensureSpace(140)
   const bx0 = ML, bx1 = PAGE_W - MR
@@ -124,7 +140,7 @@ export async function GET(
     doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 16, color: GREEN })
     doc.page.drawText('Ensayo', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.page.drawText('Área', { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: WHITE })
-    doc.page.drawText('Plazo', { x: COL_PLAZO, y: doc.y, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText('Tiempo entrega*', { x: COL_PLAZO, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.page.drawText('Costo', { x: COL_COSTO, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.y -= 16
   }
@@ -157,39 +173,44 @@ export async function GET(
     for (const it of cot.items) { await row(it.ensayo, it.costo, it.tiempoEntregaDias, i % 2 === 1); i++ }
   }
 
-  // ── Totales ────────────────────────────────────────────────────────────────
-  await doc.ensureSpace(60)
+  // ── Totales (derecha) + notas al pie (izquierda) ─────────────────────────────
+  await doc.ensureSpace(70)
   doc.hr()
+  const bandY = doc.y
   const totLabelX = PAGE_W - MR - 150, totValX = COL_COSTO
-  for (const [label, val] of [['Subtotal', cot.subtotal], ['IGV (18%)', cot.igv]] as [string, number][]) {
-    doc.page.drawText(label, { x: totLabelX, y: doc.y, size: 9, font, color: GRAY })
-    doc.page.drawText(formatMoneda(val, moneda), { x: totValX, y: doc.y, size: 9, font, color: BLACK })
-    doc.y -= 13
+
+  // Totales
+  let ty = bandY
+  for (const [label, val] of [['Precio neto', cot.subtotal], ['Sub-total', cot.subtotal], ['I.G.V (18%)', cot.igv]] as [string, number][]) {
+    doc.page.drawText(label, { x: totLabelX, y: ty, size: 9, font, color: GRAY })
+    doc.page.drawText(formatMoneda(val, moneda), { x: totValX, y: ty, size: 9, font, color: BLACK })
+    ty -= 13
   }
-  doc.page.drawText('TOTAL', { x: totLabelX, y: doc.y, size: 10, font: fontBold, color: GREEN })
-  doc.page.drawText(formatMoneda(cot.total, moneda), { x: totValX, y: doc.y, size: 10, font: fontBold, color: GREEN })
-  doc.y -= 18
+  doc.page.drawText('TOTAL (S/.)', { x: totLabelX, y: ty, size: 10, font: fontBold, color: GREEN })
+  doc.page.drawText(formatMoneda(cot.total, moneda), { x: totValX, y: ty, size: 10, font: fontBold, color: GREEN })
+  ty -= 13
+
+  // Notas al pie
+  const notas = [
+    '*El tiempo de entrega de los informes de ensayo indicado es referencial, la fecha exacta se especificará en la Solicitud de Ensayo (con el ingreso de la muestra).',
+    '** El Informe de ensayo se emitirá en idioma español, se ofrece servicio de traducción.',
+  ]
+  let ny = bandY
+  const notaW = totLabelX - ML - 14
+  for (const nota of notas) {
+    for (const ln of wrapText(nota, notaW, 6.8)) {
+      doc.page.drawText(ln, { x: ML, y: ny, size: 6.8, font, color: BLACK })
+      ny -= 9
+    }
+    ny -= 2
+  }
+
+  doc.y = Math.min(ty, ny) - 12
 
   // ── Cuadro final: observaciones, muestra y condiciones ───────────────────────
   const labelW = 155
   const valW = CW - labelW
   const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
-
-  // Ajusta un texto (con saltos de línea propios) al ancho de la columna de valor
-  const wrap = (text: string, maxW: number): string[] => {
-    const out: string[] = []
-    for (const para of text.split(/\r?\n/)) {
-      const words = para.split(/\s+/).filter(Boolean)
-      let cur = ''
-      for (const wd of words) {
-        const test = cur ? `${cur} ${wd}` : wd
-        if (font.widthOfTextAtSize(test, 8) > maxW && cur) { out.push(cur); cur = wd }
-        else cur = test
-      }
-      out.push(cur)
-    }
-    return out
-  }
 
   type FRow = { label: string | [string, string]; value: string | null; h: number; wrap?: boolean }
   const filas: FRow[] = [
@@ -219,7 +240,7 @@ export async function GET(
     const labs = Array.isArray(r.label) ? r.label : [r.label]
     labs.forEach((ln, i) => doc.page.drawText(ln, { x: fx0 + 4, y: yr - 12 - i * 10, size: 8, font: fontBold, color: BLACK }))
     if (r.value) {
-      const vlines = r.wrap ? wrap(r.value, valW - 8) : [r.value]
+      const vlines = r.wrap ? wrapText(r.value, valW - 8, 8) : [r.value]
       const maxLines = Math.max(1, Math.floor((r.h - 2) / 10))
       vlines.slice(0, maxLines).forEach((ln, i) => doc.page.drawText(ln.substring(0, 130), { x: fx0 + labelW + 4, y: yr - 12 - i * 10, size: 8, font, color: BLACK }))
     }

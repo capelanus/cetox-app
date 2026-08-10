@@ -2,11 +2,13 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
+import { MODALIDAD_LABELS } from '@/lib/constants'
 import {
   crearMembrete, GREEN, BLACK, GRAY, LIGHT_GRAY, WHITE, ML, MR, CW, PAGE_W,
 } from '@/lib/pdf-membrete'
 
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
+const DIRECCION_CETOX = 'Av. Angamos Este N° 2668–2670, Urb. La Calera – Surquillo'
 
 export async function GET(
   _req: NextRequest,
@@ -168,15 +170,63 @@ export async function GET(
   doc.page.drawText(formatMoneda(cot.total, moneda), { x: totValX, y: doc.y, size: 10, font: fontBold, color: GREEN })
   doc.y -= 18
 
-  // ── Observaciones ────────────────────────────────────────────────────────────
-  if (cot.observaciones) {
-    await doc.section('OBSERVACIONES')
-    for (const line of cot.observaciones.split('\n').slice(0, 12)) {
-      await doc.ensureSpace(14)
-      doc.page.drawText(line.substring(0, 95), { x: ML, y: doc.y, size: 8, font, color: BLACK })
-      doc.y -= 12
+  // ── Cuadro final: observaciones, muestra y condiciones ───────────────────────
+  const labelW = 155
+  const valW = CW - labelW
+  const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
+
+  // Ajusta un texto (con saltos de línea propios) al ancho de la columna de valor
+  const wrap = (text: string, maxW: number): string[] => {
+    const out: string[] = []
+    for (const para of text.split(/\r?\n/)) {
+      const words = para.split(/\s+/).filter(Boolean)
+      let cur = ''
+      for (const wd of words) {
+        const test = cur ? `${cur} ${wd}` : wd
+        if (font.widthOfTextAtSize(test, 8) > maxW && cur) { out.push(cur); cur = wd }
+        else cur = test
+      }
+      out.push(cur)
     }
+    return out
   }
+
+  type FRow = { label: string | [string, string]; value: string | null; h: number; wrap?: boolean }
+  const filas: FRow[] = [
+    { label: 'Observaciones :', value: cot.observaciones ?? null, h: 44, wrap: true },
+    { label: 'Muestra :', value: muestrasNombres || null, h: 16 },
+    { label: 'Cantidad de muestra :', value: null, h: 16 },
+    { label: ['Datos y requisitos', 'necesarios :'], value: null, h: 70, wrap: true },
+    { label: ['Lugar de recepción', 'de muestra :'], value: DIRECCION_CETOX, h: 30, wrap: true },
+    { label: 'Horario de atención :', value: null, h: 16 },
+    { label: 'Vencimiento cotización', value: formatFecha(cot.vigenciaHasta), h: 16 },
+    { label: 'Forma de pago', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, h: 16 },
+    { label: 'Datos bancarios :', value: null, h: 70, wrap: true },
+  ]
+  const totalH = filas.reduce((a, r) => a + r.h, 0)
+
+  await doc.ensureSpace(totalH + 6)
+  const fx0 = ML, fx1 = PAGE_W - MR
+  const fTop = doc.y
+  const fBot = fTop - totalH
+  const fhline = (y: number) => doc.page.drawLine({ start: { x: fx0, y }, end: { x: fx1, y }, thickness: 0.6, color: GREEN })
+  const fvline = (x: number, y1: number, y2: number) => doc.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness: 0.6, color: GREEN })
+
+  fvline(fx0, fTop, fBot); fvline(fx1, fTop, fBot); fvline(fx0 + labelW, fTop, fBot)
+  fhline(fTop)
+  let yr = fTop
+  for (const r of filas) {
+    const labs = Array.isArray(r.label) ? r.label : [r.label]
+    labs.forEach((ln, i) => doc.page.drawText(ln, { x: fx0 + 4, y: yr - 12 - i * 10, size: 8, font: fontBold, color: BLACK }))
+    if (r.value) {
+      const vlines = r.wrap ? wrap(r.value, valW - 8) : [r.value]
+      const maxLines = Math.max(1, Math.floor((r.h - 2) / 10))
+      vlines.slice(0, maxLines).forEach((ln, i) => doc.page.drawText(ln.substring(0, 130), { x: fx0 + labelW + 4, y: yr - 12 - i * 10, size: 8, font, color: BLACK }))
+    }
+    yr -= r.h
+    fhline(yr)
+  }
+  doc.y = fBot - 14
 
   return doc.finish(`Cotizacion-${numCot}.pdf`, 'attachment') as unknown as NextResponse
 }

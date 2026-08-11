@@ -208,22 +208,30 @@ export async function GET(
   doc.y = Math.min(ty, ny) - 12
 
   // ── Cuadro final: observaciones, muestra y condiciones ───────────────────────
+  // Alturas adaptativas: cada fila usa lo justo según su contenido (con un mínimo),
+  // para que el cuadro entre en la primera página siempre que sea posible.
   const labelW = 155
   const valW = CW - labelW
   const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
 
-  type FRow = { label: string | [string, string]; value: string | null; h: number; wrap?: boolean }
-  const filas: FRow[] = [
-    { label: 'Observaciones :', value: cot.observaciones ?? null, h: 44, wrap: true },
-    { label: 'Muestra :', value: muestrasNombres || null, h: 16 },
-    { label: 'Cantidad de muestra :', value: null, h: 16 },
-    { label: ['Datos y requisitos', 'necesarios :'], value: null, h: 70, wrap: true },
-    { label: ['Lugar de recepción', 'de muestra :'], value: DIRECCION_CETOX, h: 30, wrap: true },
-    { label: 'Horario de atención :', value: null, h: 16 },
-    { label: 'Vencimiento cotización', value: formatFecha(cot.vigenciaHasta), h: 16 },
-    { label: 'Forma de pago', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, h: 16 },
-    { label: 'Datos bancarios :', value: null, h: 70, wrap: true },
+  type FRow = { label: string | [string, string]; value: string | null; min: number }
+  const filasBase: FRow[] = [
+    { label: 'Observaciones :', value: cot.observaciones ?? null, min: 20 },
+    { label: 'Muestra :', value: muestrasNombres || null, min: 15 },
+    { label: 'Cantidad de muestra :', value: null, min: 15 },
+    { label: ['Datos y requisitos', 'necesarios :'], value: null, min: 30 },
+    { label: ['Lugar de recepción', 'de muestra :'], value: DIRECCION_CETOX, min: 24 },
+    { label: 'Horario de atención :', value: null, min: 15 },
+    { label: 'Vencimiento cotización', value: formatFecha(cot.vigenciaHasta), min: 15 },
+    { label: 'Forma de pago', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, min: 15 },
+    { label: 'Datos bancarios :', value: null, min: 30 },
   ]
+  const filas = filasBase.map(r => {
+    const labelLines = Array.isArray(r.label) ? r.label.length : 1
+    const valueLines = r.value ? wrapText(r.value, valW - 8, 8) : []
+    const contentLines = Math.max(labelLines, valueLines.length)
+    return { label: r.label, valueLines, h: Math.max(r.min, contentLines * 10 + 5) }
+  })
   const totalH = filas.reduce((a, r) => a + r.h, 0)
 
   await doc.ensureSpace(totalH + 6)
@@ -238,12 +246,8 @@ export async function GET(
   let yr = fTop
   for (const r of filas) {
     const labs = Array.isArray(r.label) ? r.label : [r.label]
-    labs.forEach((ln, i) => doc.page.drawText(ln, { x: fx0 + 4, y: yr - 12 - i * 10, size: 8, font: fontBold, color: BLACK }))
-    if (r.value) {
-      const vlines = r.wrap ? wrapText(r.value, valW - 8, 8) : [r.value]
-      const maxLines = Math.max(1, Math.floor((r.h - 2) / 10))
-      vlines.slice(0, maxLines).forEach((ln, i) => doc.page.drawText(ln.substring(0, 130), { x: fx0 + labelW + 4, y: yr - 12 - i * 10, size: 8, font, color: BLACK }))
-    }
+    labs.forEach((ln, i) => doc.page.drawText(ln, { x: fx0 + 4, y: yr - 11 - i * 10, size: 8, font: fontBold, color: BLACK }))
+    r.valueLines.forEach((ln, i) => doc.page.drawText(ln.substring(0, 130), { x: fx0 + labelW + 4, y: yr - 11 - i * 10, size: 8, font, color: BLACK }))
     yr -= r.h
     fhline(yr)
   }

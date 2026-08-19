@@ -260,5 +260,19 @@ export async function GET(
   }
   doc.y = fBot - 14
 
+  // ── Pie de página legal (verde CETOX, en todas las páginas) ──────────────────
+  const piePagina = [
+    'Este documento no significa que se estén realizando las pruebas indicadas.',
+    'Es necesaria la aceptación de la Solicitud de Ensayo Toxicológico por parte del cliente y el laboratorio.',
+  ]
+  for (const p of doc.pdfDoc.getPages()) {
+    let fy = 56
+    for (const ln of piePagina) {
+      const wln = fontBold.widthOfTextAtSize(ln, 7.5)
+      p.drawText(ln, { x: (PAGE_W - wln) / 2, y: fy, size: 7.5, font: fontBold, color: GREEN })
+      fy -= 10
+    }
+  }
+
   return doc.finish(`Cotizacion-${numCot}.pdf`, 'attachment') as unknown as NextResponse
 }

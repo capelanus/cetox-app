@@ -34,7 +34,7 @@ export async function GET(
   const moneda = (set.cotizacion?.moneda ?? 'USD') as 'USD' | 'PEN'
   const numODA = formatNumODA(oda.numero, oda.anio)
 
-  const doc = await crearMembrete('ORDEN DE ANÁLISIS (ODA)', numODA)
+  const doc = await crearMembrete('ORDEN DE ANÁLISIS (ODA)', numODA, { plantilla: 'letterhead-cotizacion.pdf' })
   const { font, fontBold } = doc
 
   // ── Cliente ──────────────────────────────────────────────────────────────────

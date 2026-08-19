@@ -266,10 +266,9 @@ export async function GET(
     'Es necesaria la aceptación de la Solicitud de Ensayo Toxicológico por parte del cliente y el laboratorio.',
   ]
   for (const p of doc.pdfDoc.getPages()) {
-    let fy = 56
+    let fy = 34
     for (const ln of piePagina) {
-      const wln = fontBold.widthOfTextAtSize(ln, 7.5)
-      p.drawText(ln, { x: (PAGE_W - wln) / 2, y: fy, size: 7.5, font: fontBold, color: GREEN })
+      p.drawText(ln, { x: ML, y: fy, size: 7.5, font: fontBold, color: GREEN })
       fy -= 10
     }
   }

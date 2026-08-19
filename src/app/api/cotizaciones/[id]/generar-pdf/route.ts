@@ -7,7 +7,14 @@ import {
   crearMembrete, GREEN, BLACK, GRAY, LIGHT_GRAY, WHITE, ML, MR, CW, PAGE_W,
 } from '@/lib/pdf-membrete'
 
-const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
+// En la cotización el área se muestra solo como letra (código interno CETOX):
+// Q = Química · B = Biología · M = Microbiología · P = Proveedor
+const AREA_A_LETRA: Record<string, string> = {
+  Q: 'Q', B: 'B', M: 'M', P: 'P',
+  QUIMICA: 'Q', BIOLOGIA: 'B', MICROBIOLOGIA: 'M', PROVEEDOR: 'P',
+}
+const areaLetra = (a: string | null | undefined): string =>
+  a ? (AREA_A_LETRA[a.toUpperCase()] ?? a[0].toUpperCase()) : ''
 const DIRECCION_CETOX = 'Av. Angamos Este N° 2668–2670, Urb. La Calera – Surquillo'
 
 export async function GET(
@@ -149,7 +156,7 @@ export async function GET(
     await doc.ensureSpace(16)
     if (shade) doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 14, color: LIGHT_GRAY })
     doc.page.drawText(ensayo.nombre.substring(0, 55), { x: ML + 4, y: doc.y, size: 8, font, color: BLACK })
-    doc.page.drawText(AREA_LABELS[ensayo.area] ?? ensayo.area, { x: COL_AREA, y: doc.y, size: 8, font, color: GRAY })
+    doc.page.drawText(areaLetra(ensayo.area), { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: GRAY })
     doc.page.drawText(`${dias} días`, { x: COL_PLAZO, y: doc.y, size: 8, font, color: BLACK })
     doc.page.drawText(formatMoneda(costo, moneda), { x: COL_COSTO, y: doc.y, size: 8, font, color: BLACK })
     doc.y -= 14

@@ -108,22 +108,47 @@ export async function GET(
 
   // ── 1. DATOS DEL CLIENTE ─────────────────────────────────────────────────────
   badge('1', 'DATOS DEL CLIENTE')
-  await doc.ensureSpace(120)
   {
-    const yTop = doc.y, split = bx0 + 330, yBot = yTop - 102
+    const contactos = [cot.contactoNombre, cot.contactoNombre2, cot.contactoNombre3].filter(Boolean) as string[]
+    const telefonos = [cot.contactoTelefono, cot.contactoTelefono2, cot.contactoTelefono3].filter(Boolean) as string[]
+    const emails = [cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean) as string[]
+    const maxA = Math.max(1, contactos.length, telefonos.length)
+    const maxB = Math.max(1, emails.length)
+    const hA = 12 + maxA * 10, hB = 12 + maxB * 10, hC = 30
+    const total = hA + hB + hC
+
+    await doc.ensureSpace(total + 8)
+    const yTop = doc.y, yBot = yTop - total
+    const c1 = bx0, c2 = bx0 + 135, c3 = bx0 + 265, c4 = bx0 + 395
+
     vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
-    for (const y of [yTop, yTop - 17, yTop - 34, yTop - 51, yTop - 68, yBot]) hline(y)
-    const join3 = (...vals: (string | null | undefined)[]) => vals.filter(Boolean).join('  ·  ') || null
-    const contactos = join3(cot.contactoNombre, cot.contactoNombre2, cot.contactoNombre3)
-    const telefonos = join3(cot.contactoTelefono, cot.contactoTelefono2, cot.contactoTelefono3)
-    const emails = join3(cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3)
-    vseg(split, yTop, yTop - 17); cell(bx0, yTop, 'Solicitante :', cot.cliente.razonSocial, 60); cell(split, yTop, 'R.U.C. :', cot.cliente.ruc)
-    vseg(split, yTop - 17, yTop - 34); cell(bx0, yTop - 17, 'Contacto :', contactos, 62); cell(split, yTop - 17, 'Teléfono :', telefonos, 40)
-    vseg(split, yTop - 34, yTop - 51); cell(bx0, yTop - 34, 'Dirección :', cot.cliente.direccion, 60); cell(split, yTop - 34, 'Moneda :', monedaTxt)
-    cell(bx0, yTop - 51, 'Email :', emails, 120)
+    for (const y of [yTop, yTop - hA, yTop - hA - hB, yBot]) hline(y)
+
+    // Celda: etiqueta (versalita gris) arriba y valor(es) apilados debajo
+    const cellV = (x: number, rowTop: number, label: string, values: string[], colW: number, size = 8) => {
+      doc.page.drawText(label, { x: x + 3, y: rowTop - 8, size: 6.3, font: fontBold, color: GRAY })
+      const maxCh = Math.max(6, Math.floor((colW - 5) / (size * 0.52)))
+      const vals = values.filter(Boolean)
+      ;(vals.length ? vals : ['—']).forEach((v, i) => {
+        doc.page.drawText(v.substring(0, maxCh), { x: x + 3, y: rowTop - 18 - i * 9.5, size, font, color: vals.length ? BLACK : GRAY })
+      })
+    }
+
+    // Fila A: Solicitante · R.U.C. · Contacto · Teléfono
+    cellV(c1, yTop, 'SOLICITANTE', [cot.cliente.razonSocial], 135)
+    cellV(c2, yTop, 'R.U.C.', [cot.cliente.ruc], 130)
+    cellV(c3, yTop, 'CONTACTO', contactos, 130)
+    cellV(c4, yTop, 'TELÉFONO', telefonos, bx1 - c4)
+
+    // Fila B: Dirección · Moneda · Email · Preparado por
+    const yB = yTop - hA
+    cellV(c1, yB, 'DIRECCIÓN', [cot.cliente.direccion], 135)
+    cellV(c2, yB, 'MONEDA', [monedaTxt], 130)
+    cellV(c3, yB, 'EMAIL', emails, 130, 7)
+    cellV(c4, yB, 'PREPARADO POR', [cot.creadoPor.nombre], bx1 - c4, 7)
 
     // Comunicación (checkboxes)
-    const cy = yTop - 68
+    const cy = yTop - hA - hB
     doc.page.drawText('Comunicación :', { x: bx0 + 4, y: cy - 12, size: 8, font: fontBold, color: BLACK })
     const fc = (cot.formaContacto ?? '').toLowerCase()
     const marcado = (key: string) => {

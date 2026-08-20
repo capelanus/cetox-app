@@ -195,16 +195,20 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
           <div className="border-t pt-4">
             <h3 className="font-semibold text-slate-700 mb-3 text-sm">Datos de contacto</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              {cot.contactoNombre && (
+              {[cot.contactoNombre, cot.contactoNombre2, cot.contactoNombre3].filter(Boolean).length > 0 && (
                 <div>
-                  <p className="text-slate-500">Nombre</p>
-                  <p className="font-medium">{cot.contactoNombre}</p>
+                  <p className="text-slate-500">Contacto{[cot.contactoNombre, cot.contactoNombre2, cot.contactoNombre3].filter(Boolean).length > 1 ? 's' : ''}</p>
+                  {[cot.contactoNombre, cot.contactoNombre2, cot.contactoNombre3].filter(Boolean).map((n, i) => (
+                    <p key={i} className="font-medium">{n}</p>
+                  ))}
                 </div>
               )}
-              {cot.contactoEmail && (
+              {[cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean).length > 0 && (
                 <div>
-                  <p className="text-slate-500">Email</p>
-                  <p className="font-medium">{cot.contactoEmail}</p>
+                  <p className="text-slate-500">Email{[cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean).length > 1 ? 's' : ''}</p>
+                  {[cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean).map((e, i) => (
+                    <p key={i} className="font-medium">{e}</p>
+                  ))}
                 </div>
               )}
               {cot.paisOrigen && (
@@ -219,16 +223,21 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
                   <p className="font-medium font-mono">{cot.contactoRuc}</p>
                 </div>
               )}
-              {cot.contactoTelefono && (
+              {[cot.contactoTelefono, cot.contactoTelefono2, cot.contactoTelefono3].filter(Boolean).length > 0 && (
                 <div>
-                  <p className="text-slate-500">Teléfono</p>
-                  <p className="font-medium">{cot.contactoTelefono}</p>
+                  <p className="text-slate-500">Teléfono{[cot.contactoTelefono, cot.contactoTelefono2, cot.contactoTelefono3].filter(Boolean).length > 1 ? 's' : ''}</p>
+                  {[cot.contactoTelefono, cot.contactoTelefono2, cot.contactoTelefono3].filter(Boolean).map((t, i) => (
+                    <p key={i} className="font-medium">{t}</p>
+                  ))}
                 </div>
               )}
               {cot.formaContacto && (
                 <div>
                   <p className="text-slate-500">Forma de contacto</p>
-                  <p className="font-medium">{FORMA_CONTACTO_LABELS[cot.formaContacto] ?? cot.formaContacto}</p>
+                  <p className="font-medium">
+                    {FORMA_CONTACTO_LABELS[cot.formaContacto] ?? cot.formaContacto}
+                    {cot.formaContacto === 'OTROS' && cot.formaContactoOtro ? ` (${cot.formaContactoOtro})` : ''}
+                  </p>
                 </div>
               )}
               {(cot.fechaContacto || cot.horaContacto) && (

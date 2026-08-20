@@ -173,6 +173,7 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         <Input
           name="horaContacto"
           type="time"
+          step={600}
           value={hora}
           onChange={(e) => setHora(e.target.value)}
         />

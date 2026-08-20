@@ -28,6 +28,7 @@ interface ContactoFieldsProps {
     contactoTelefono2?: string | null
     contactoTelefono3?: string | null
     formaContacto?: string | null
+    formaContactoOtro?: string | null
     fechaContacto?: string | null
     horaContacto?: string | null
   }
@@ -72,6 +73,7 @@ function CampoMultiple({ label, names, valores, placeholder, note, minVisible = 
 export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
   const [ruc, setRuc] = useState(defaults.contactoRuc ?? '')
   const [formaContacto, setFormaContacto] = useState(defaults.formaContacto ?? '')
+  const [formaOtro, setFormaOtro] = useState(defaults.formaContactoOtro ?? '')
   const [fecha, setFecha] = useState(defaults.fechaContacto ?? new Date().toISOString().split('T')[0])
   const [hora, setHora] = useState(defaults.horaContacto ?? '')
   const [pais, setPais] = useState(defaults.paisOrigen ?? 'PE')
@@ -144,6 +146,14 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
+        {formaContacto === 'OTROS' && (
+          <Input
+            name="formaContactoOtro"
+            value={formaOtro}
+            onChange={(e) => setFormaOtro(e.target.value)}
+            placeholder="Especificar otra forma de contacto"
+          />
+        )}
       </div>
 
       {/* 8. Fecha de contacto */}

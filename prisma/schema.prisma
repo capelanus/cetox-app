@@ -231,6 +231,7 @@ model Cotizacion {
   contactoTelefono3 String?
   contactoRuc      String?
   formaContacto    String?
+  formaContactoOtro String?
   fechaContacto    String?
   horaContacto     String?
   paisOrigen       String?

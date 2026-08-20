@@ -57,6 +57,7 @@ function parseContacto(formData: FormData) {
     contactoTelefono3: s('contactoTelefono3'),
     contactoRuc: s('contactoRuc'),
     formaContacto: s('formaContacto'),
+    formaContactoOtro: s('formaContactoOtro'),
     fechaContacto: s('fechaContacto'),
     horaContacto: s('horaContacto'),
     paisOrigen: s('paisOrigen'),
@@ -201,7 +202,7 @@ export async function cambiarEstadoCotizacion(
 }
 
 async function copiarCotizacion(
-  original: { id: string; numero: number; anio: number; sufijo: string; moneda: string; clienteId: string; observaciones: string | null; contactoNombre: string | null; contactoNombre2: string | null; contactoNombre3: string | null; contactoEmail: string | null; contactoEmail2: string | null; contactoEmail3: string | null; contactoTelefono: string | null; contactoTelefono2: string | null; contactoTelefono3: string | null; contactoRuc: string | null; formaContacto: string | null; fechaContacto: string | null; horaContacto: string | null; paisOrigen: string | null; subtotal: number; igv: number; total: number },
+  original: { id: string; numero: number; anio: number; sufijo: string; moneda: string; clienteId: string; observaciones: string | null; contactoNombre: string | null; contactoNombre2: string | null; contactoNombre3: string | null; contactoEmail: string | null; contactoEmail2: string | null; contactoEmail3: string | null; contactoTelefono: string | null; contactoTelefono2: string | null; contactoTelefono3: string | null; contactoRuc: string | null; formaContacto: string | null; formaContactoOtro: string | null; fechaContacto: string | null; horaContacto: string | null; paisOrigen: string | null; subtotal: number; igv: number; total: number },
   overrides: { numero?: number; sufijo?: string },
   creadoPorId: string
 ) {
@@ -231,6 +232,7 @@ async function copiarCotizacion(
       contactoTelefono3: original.contactoTelefono3,
       contactoRuc: original.contactoRuc,
       formaContacto: original.formaContacto,
+      formaContactoOtro: original.formaContactoOtro,
       fechaContacto: original.fechaContacto,
       horaContacto: original.horaContacto,
       paisOrigen: original.paisOrigen,

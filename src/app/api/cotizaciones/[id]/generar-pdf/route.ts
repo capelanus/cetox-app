@@ -143,6 +143,9 @@ export async function GET(
       doc.page.drawRectangle({ x: boxX, y: cy - 13.5, width: 8, height: 8, borderColor: GREEN, borderWidth: 0.6, color: WHITE })
       if (marcado(key)) doc.page.drawText('X', { x: boxX + 1.3, y: cy - 12.3, size: 7, font: fontBold, color: BLACK })
       cbx = boxX + 8 + 12
+      if (key === 'otros' && marcado('otros') && cot.formaContactoOtro) {
+        doc.page.drawText(`(${cot.formaContactoOtro})`, { x: cbx, y: cy - 12, size: 8, font, color: BLACK })
+      }
     }
     // Fecha / Hora de la comunicación
     const tf = (x: number, label: string, value: string | null | undefined) => {

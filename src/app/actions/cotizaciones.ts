@@ -44,15 +44,22 @@ function parseMuestras(formData: FormData): MuestraRaw[] {
 }
 
 function parseContacto(formData: FormData) {
+  const s = (k: string) => (formData.get(k) as string) || null
   return {
-    contactoNombre: (formData.get('contactoNombre') as string) || null,
-    contactoEmail: (formData.get('contactoEmail') as string) || null,
-    contactoTelefono: (formData.get('contactoTelefono') as string) || null,
-    contactoRuc: (formData.get('contactoRuc') as string) || null,
-    formaContacto: (formData.get('formaContacto') as string) || null,
-    fechaContacto: (formData.get('fechaContacto') as string) || null,
-    horaContacto: (formData.get('horaContacto') as string) || null,
-    paisOrigen: (formData.get('paisOrigen') as string) || null,
+    contactoNombre: s('contactoNombre'),
+    contactoNombre2: s('contactoNombre2'),
+    contactoNombre3: s('contactoNombre3'),
+    contactoEmail: s('contactoEmail'),
+    contactoEmail2: s('contactoEmail2'),
+    contactoEmail3: s('contactoEmail3'),
+    contactoTelefono: s('contactoTelefono'),
+    contactoTelefono2: s('contactoTelefono2'),
+    contactoTelefono3: s('contactoTelefono3'),
+    contactoRuc: s('contactoRuc'),
+    formaContacto: s('formaContacto'),
+    fechaContacto: s('fechaContacto'),
+    horaContacto: s('horaContacto'),
+    paisOrigen: s('paisOrigen'),
   }
 }
 
@@ -194,7 +201,7 @@ export async function cambiarEstadoCotizacion(
 }
 
 async function copiarCotizacion(
-  original: { id: string; numero: number; anio: number; sufijo: string; moneda: string; clienteId: string; observaciones: string | null; contactoNombre: string | null; contactoEmail: string | null; contactoTelefono: string | null; contactoRuc: string | null; formaContacto: string | null; fechaContacto: string | null; horaContacto: string | null; paisOrigen: string | null; subtotal: number; igv: number; total: number },
+  original: { id: string; numero: number; anio: number; sufijo: string; moneda: string; clienteId: string; observaciones: string | null; contactoNombre: string | null; contactoNombre2: string | null; contactoNombre3: string | null; contactoEmail: string | null; contactoEmail2: string | null; contactoEmail3: string | null; contactoTelefono: string | null; contactoTelefono2: string | null; contactoTelefono3: string | null; contactoRuc: string | null; formaContacto: string | null; fechaContacto: string | null; horaContacto: string | null; paisOrigen: string | null; subtotal: number; igv: number; total: number },
   overrides: { numero?: number; sufijo?: string },
   creadoPorId: string
 ) {
@@ -214,8 +221,14 @@ async function copiarCotizacion(
       clienteId: original.clienteId,
       observaciones: original.observaciones,
       contactoNombre: original.contactoNombre,
+      contactoNombre2: original.contactoNombre2,
+      contactoNombre3: original.contactoNombre3,
       contactoEmail: original.contactoEmail,
+      contactoEmail2: original.contactoEmail2,
+      contactoEmail3: original.contactoEmail3,
       contactoTelefono: original.contactoTelefono,
+      contactoTelefono2: original.contactoTelefono2,
+      contactoTelefono3: original.contactoTelefono3,
       contactoRuc: original.contactoRuc,
       formaContacto: original.formaContacto,
       fechaContacto: original.fechaContacto,

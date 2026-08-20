@@ -221,8 +221,14 @@ model Cotizacion {
   estado           String   @default("BORRADOR")
   observaciones    String?
   contactoNombre   String?
+  contactoNombre2  String?
+  contactoNombre3  String?
   contactoEmail    String?
+  contactoEmail2   String?
+  contactoEmail3   String?
   contactoTelefono String?
+  contactoTelefono2 String?
+  contactoTelefono3 String?
   contactoRuc      String?
   formaContacto    String?
   fechaContacto    String?

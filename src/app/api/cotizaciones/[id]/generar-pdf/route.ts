@@ -113,10 +113,14 @@ export async function GET(
     const yTop = doc.y, split = bx0 + 330, yBot = yTop - 102
     vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
     for (const y of [yTop, yTop - 17, yTop - 34, yTop - 51, yTop - 68, yBot]) hline(y)
+    const join3 = (...vals: (string | null | undefined)[]) => vals.filter(Boolean).join('  ·  ') || null
+    const contactos = join3(cot.contactoNombre, cot.contactoNombre2, cot.contactoNombre3)
+    const telefonos = join3(cot.contactoTelefono, cot.contactoTelefono2, cot.contactoTelefono3)
+    const emails = join3(cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3)
     vseg(split, yTop, yTop - 17); cell(bx0, yTop, 'Solicitante :', cot.cliente.razonSocial, 60); cell(split, yTop, 'R.U.C. :', cot.cliente.ruc)
-    vseg(split, yTop - 17, yTop - 34); cell(bx0, yTop - 17, 'Contacto :', cot.contactoNombre, 60); cell(split, yTop - 17, 'Teléfono :', cot.contactoTelefono, 24)
+    vseg(split, yTop - 17, yTop - 34); cell(bx0, yTop - 17, 'Contacto :', contactos, 62); cell(split, yTop - 17, 'Teléfono :', telefonos, 40)
     vseg(split, yTop - 34, yTop - 51); cell(bx0, yTop - 34, 'Dirección :', cot.cliente.direccion, 60); cell(split, yTop - 34, 'Moneda :', monedaTxt)
-    cell(bx0, yTop - 51, 'Email :', cot.contactoEmail, 110)
+    cell(bx0, yTop - 51, 'Email :', emails, 120)
 
     // Comunicación (checkboxes)
     const cy = yTop - 68

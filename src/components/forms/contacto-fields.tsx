@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Plus, X } from 'lucide-react'
 import { PAISES } from '@/lib/paises'
 
 const FORMA_CONTACTO_OPTIONS = [
@@ -16,19 +17,59 @@ const FORMA_CONTACTO_OPTIONS = [
 interface ContactoFieldsProps {
   defaults?: {
     contactoNombre?: string | null
+    contactoNombre2?: string | null
+    contactoNombre3?: string | null
     contactoEmail?: string | null
+    contactoEmail2?: string | null
+    contactoEmail3?: string | null
     paisOrigen?: string | null
     contactoRuc?: string | null
     contactoTelefono?: string | null
+    contactoTelefono2?: string | null
+    contactoTelefono3?: string | null
     formaContacto?: string | null
     fechaContacto?: string | null
     horaContacto?: string | null
   }
 }
 
+// Campo que permite varios valores; cada slot tiene su propio name de formulario.
+function CampoMultiple({ label, names, valores, placeholder, note, minVisible = 1 }: {
+  label: string; names: string[]; valores: (string | null | undefined)[]; placeholder: string; note?: string; minVisible?: number
+}) {
+  const [vals, setVals] = useState<string[]>(() => names.map((_, i) => valores[i] ?? ''))
+  const usados = vals.filter(Boolean).length
+  const [visibles, setVisibles] = useState<number>(Math.min(names.length, Math.max(minVisible, usados)))
+  const set = (i: number, v: string) => setVals(prev => prev.map((x, j) => (j === i ? v : x)))
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      {Array.from({ length: visibles }).map((_, i) => (
+        <div key={i} className="flex gap-2">
+          <Input name={names[i]} value={vals[i]} onChange={(e) => set(i, e.target.value)} placeholder={placeholder} className="flex-1" />
+          {i + 1 > minVisible && i + 1 === visibles && (
+            <button type="button" onClick={() => { set(i, ''); setVisibles(v => v - 1) }}
+              className="h-9 w-9 flex items-center justify-center rounded-md border border-input text-slate-400 hover:text-red-500 shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      ))}
+      {/* Inputs ocultos para conservar el name aunque el slot no esté visible (limpia valores retirados) */}
+      {names.slice(visibles).map((n) => <input key={n} type="hidden" name={n} value="" />)}
+      {visibles < names.length && (
+        <button type="button" onClick={() => setVisibles(v => v + 1)}
+          className="flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-800">
+          <Plus className="w-3.5 h-3.5" /> Agregar otro
+        </button>
+      )}
+      {note && <p className="text-xs text-slate-400">{note}</p>}
+    </div>
+  )
+}
+
 export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
-  const [nombre, setNombre] = useState(defaults.contactoNombre ?? '')
-  const [email, setEmail] = useState(defaults.contactoEmail ?? '')
   const [ruc, setRuc] = useState(defaults.contactoRuc ?? '')
   const [formaContacto, setFormaContacto] = useState(defaults.formaContacto ?? '')
   const [fecha, setFecha] = useState(defaults.fechaContacto ?? new Date().toISOString().split('T')[0])
@@ -50,42 +91,22 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      {/* 1. Nombre del contacto */}
-      <div className="space-y-2">
-        <Label>Nombre del contacto</Label>
-        <Input
-          name="contactoNombre"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder="Nombre completo"
-        />
-      </div>
+      {/* 1. Contactos (hasta 3) */}
+      <CampoMultiple
+        label="Nombre del contacto"
+        names={['contactoNombre', 'contactoNombre2', 'contactoNombre3']}
+        valores={[defaults.contactoNombre, defaults.contactoNombre2, defaults.contactoNombre3]}
+        placeholder="Nombre completo"
+      />
 
-      {/* 2. Email del contacto */}
-      <div className="space-y-2">
-        <Label>Email del contacto</Label>
-        <Input
-          name="contactoEmail"
-          type="text"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="correo@empresa.com"
-        />
-        {email.includes(',') && (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {email.split(',').map((e) => e.trim()).filter(Boolean).map((addr, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-mono"
-                style={{ backgroundColor: '#EAF4F4', color: '#13602C' }}
-              >
-                {addr}
-              </span>
-            ))}
-          </div>
-        )}
-        <p className="text-xs text-slate-400">Separar por comas si hay varios destinatarios</p>
-      </div>
+      {/* 2. Emails (hasta 3) */}
+      <CampoMultiple
+        label="Email del contacto"
+        names={['contactoEmail', 'contactoEmail2', 'contactoEmail3']}
+        valores={[defaults.contactoEmail, defaults.contactoEmail2, defaults.contactoEmail3]}
+        placeholder="correo@empresa.com"
+        note="Puedes agregar hasta 3 correos."
+      />
 
       {/* 3. País */}
       <div className="space-y-2">
@@ -113,7 +134,7 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         />
       </div>
 
-      {/* 5. Teléfono con prefijo */}
+      {/* 5. Teléfono 1 (con prefijo) */}
       <div className="space-y-2">
         <Label>Teléfono</Label>
         <div className="flex gap-2">
@@ -130,7 +151,17 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         </div>
       </div>
 
-      {/* 6. Forma de contacto */}
+      {/* 6. Teléfonos adicionales (2 y 3) */}
+      <CampoMultiple
+        label="Teléfonos adicionales"
+        names={['contactoTelefono2', 'contactoTelefono3']}
+        valores={[defaults.contactoTelefono2, defaults.contactoTelefono3]}
+        placeholder="+51 999 999 999"
+        minVisible={0}
+        note="Opcional."
+      />
+
+      {/* 7. Forma de contacto */}
       <div className="space-y-2">
         <Label>Forma de contacto</Label>
         <select
@@ -146,7 +177,7 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         </select>
       </div>
 
-      {/* 7. Fecha de contacto */}
+      {/* 8. Fecha de contacto */}
       <div className="space-y-2">
         <Label>Fecha de contacto</Label>
         <Input
@@ -157,7 +188,7 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         />
       </div>
 
-      {/* 8. Hora */}
+      {/* 9. Hora */}
       <div className="space-y-2">
         <Label>Hora</Label>
         <Input

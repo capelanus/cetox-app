@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, X } from 'lucide-react'
@@ -75,19 +75,6 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
   const [fecha, setFecha] = useState(defaults.fechaContacto ?? new Date().toISOString().split('T')[0])
   const [hora, setHora] = useState(defaults.horaContacto ?? '')
   const [pais, setPais] = useState(defaults.paisOrigen ?? 'PE')
-  const [prefijo, setPrefijo] = useState('')
-  const [telefono, setTelefono] = useState(defaults.contactoTelefono ?? '')
-
-  useEffect(() => {
-    const found = PAISES.find((p) => p.codigo === pais)
-    const nuevoPrefijo = found?.prefijo ?? '+'
-    setPrefijo(nuevoPrefijo)
-    setTelefono((prev) => {
-      if (!prev || prev === nuevoPrefijo) return nuevoPrefijo + ' '
-      const sinPrefijo = prev.replace(/^\+[\d-]+ ?/, '')
-      return nuevoPrefijo + ' ' + sinPrefijo
-    })
-  }, [pais])
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -134,31 +121,13 @@ export function ContactoFields({ defaults = {} }: ContactoFieldsProps) {
         />
       </div>
 
-      {/* 5. Teléfono 1 (con prefijo) */}
-      <div className="space-y-2">
-        <Label>Teléfono</Label>
-        <div className="flex gap-2">
-          <div className="flex items-center h-9 px-3 rounded-md border border-input bg-slate-50 text-sm font-mono text-slate-600 shrink-0">
-            {prefijo || '+'}
-          </div>
-          <Input
-            name="contactoTelefono"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            placeholder={prefijo + ' 999 999 999'}
-            className="flex-1"
-          />
-        </div>
-      </div>
-
-      {/* 6. Teléfonos adicionales (2 y 3) */}
+      {/* 5. Teléfonos (hasta 3) */}
       <CampoMultiple
-        label="Teléfonos adicionales"
-        names={['contactoTelefono2', 'contactoTelefono3']}
-        valores={[defaults.contactoTelefono2, defaults.contactoTelefono3]}
+        label="Teléfono"
+        names={['contactoTelefono', 'contactoTelefono2', 'contactoTelefono3']}
+        valores={[defaults.contactoTelefono, defaults.contactoTelefono2, defaults.contactoTelefono3]}
         placeholder="+51 999 999 999"
-        minVisible={0}
-        note="Opcional."
+        note="Puedes agregar hasta 3 teléfonos. Incluye el código de país (ej. +51)."
       />
 
       {/* 7. Forma de contacto */}

@@ -61,7 +61,7 @@ export interface MembreteDoc {
 export async function crearMembrete(
   titulo: string,
   numero: string,
-  opts: { plantilla?: string; gapExtra?: number; numeroDerecha?: boolean } = {},
+  opts: { plantilla?: string; gapExtra?: number; numeroDerecha?: boolean; sinTitulo?: boolean } = {},
 ): Promise<MembreteDoc> {
   const templateDoc = await loadTemplate(opts.plantilla)
   const HEADER_H = templateDoc ? 158 : 80
@@ -153,6 +153,7 @@ export async function crearMembrete(
 
   // Primera página + bloque de título
   await doc.newPage()
+  if (opts.sinTitulo) return doc   // el llamador dibuja su propio encabezado
   doc.page.drawText(titulo, { x: ML, y: doc.y, size: 13, font: fontBold, color: GREEN })
   if (opts.numeroDerecha) {
     // Número destacado a la derecha, en la misma línea del título (sin fecha ni subtítulo)

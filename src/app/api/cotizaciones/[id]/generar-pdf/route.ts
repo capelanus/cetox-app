@@ -7,15 +7,31 @@ import {
   crearMembrete, GREEN, BLACK, GRAY, LIGHT_GRAY, WHITE, ML, MR, CW, PAGE_W,
 } from '@/lib/pdf-membrete'
 
-// En la cotización el área se muestra solo como letra (código interno CETOX):
-// Q = Química · B = Biología · M = Microbiología · P = Proveedor
+// Área como letra (código interno CETOX): Q Química · B Biología · M Microbiología · P Proveedor
 const AREA_A_LETRA: Record<string, string> = {
-  Q: 'Q', B: 'B', M: 'M', P: 'P',
-  QUIMICA: 'Q', BIOLOGIA: 'B', MICROBIOLOGIA: 'M', PROVEEDOR: 'P',
+  Q: 'Q', B: 'B', M: 'M', P: 'P', QUIMICA: 'Q', BIOLOGIA: 'B', MICROBIOLOGIA: 'M', PROVEEDOR: 'P',
 }
 const areaLetra = (a: string | null | undefined): string =>
   a ? (AREA_A_LETRA[a.toUpperCase()] ?? a[0].toUpperCase()) : ''
+
 const DIRECCION_CETOX = 'Av. Angamos Este N° 2668–2670, Urb. La Calera – Surquillo'
+const HORARIO_ATENCION = '9:00 am – 05:00 pm'
+const NUM_FORMATO = 'FR N° 019-CETOX-V.09'
+const DATOS_REQUISITOS = [
+  '- Muestra(s) debidamente cerrada(s) e identificada(s)',
+  '- Nombre comercial del producto',
+  '- Ingrediente activo y su concentración',
+  '- Tipo de formulación (Ej: polvo soluble, granulado, suspensión concentrada, etc.)',
+  '- Fecha de fabricación, fecha de vencimiento y número de lote',
+].join('\n')
+const DATOS_BANCARIOS = [
+  'Depósito o transferencia — Banco de Crédito del Perú, a nombre de CENTRO TOXICOLÓGICO S.A.C. (RUC 20506303746).',
+  'Dólares americanos: Cta. cte. 1941427241185 // CCI 00219400142724118592',
+  'Soles: Cta. cte. 1941778268001 // CCI 00219400177826800195',
+  'Presentar / escanear el voucher de depósito: 920008680 (WhatsApp) / servicios@cetox.com.pe',
+  'Sistema de Detracción (empresa nacional) tasa 12%: Banco de la Nación (S/) Cta. N° 058-067458. Tipo de operación 01 · Bien/servicio 037 (Demás servicios gravados con el IGV).',
+  'Empresas extranjeras: Swift Code BCPLPEPL — Banco de Crédito del Perú, Jr. Lampa N° 499, Lima. Los gastos bancarios los asume el cliente (cargo "OUR").',
+].join('\n')
 
 export async function GET(
   _req: NextRequest,
@@ -37,13 +53,15 @@ export async function GET(
   if (!cot) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
 
   const moneda = cot.moneda as 'USD' | 'PEN'
+  const monedaTxt = moneda === 'USD' ? 'Dólares americanos (USD)' : 'Soles (PEN)'
   const hasMuestras = cot.muestras.length > 0
   const numCot = formatNumCotizacion(cot.numero, cot.anio, cot.sufijo)
 
-  const doc = await crearMembrete('COTIZACIÓN DE SERVICIOS', numCot, { plantilla: 'letterhead-cotizacion.pdf', gapExtra: 28, numeroDerecha: true })
+  const doc = await crearMembrete('COTIZACIÓN DE SERVICIOS', numCot, {
+    plantilla: 'letterhead-cotizacion.pdf', gapExtra: 14, sinTitulo: true,
+  })
   const { font, fontBold } = doc
 
-  // Ajusta un texto (respetando saltos de línea propios) al ancho indicado
   const wrapText = (text: string, maxW: number, size: number): string[] => {
     const out: string[] = []
     for (const para of text.split(/\r?\n/)) {
@@ -54,115 +72,112 @@ export async function GET(
         if (font.widthOfTextAtSize(test, size) > maxW && cur) { out.push(cur); cur = wd }
         else cur = test
       }
-      out.push(cur)
+      out.push(cur || '')
     }
     return out
   }
 
-  // ── Datos del cliente (cuadro tipo formulario, formato tradicional) ──────────
-  await doc.ensureSpace(140)
   const bx0 = ML, bx1 = PAGE_W - MR
-  const yTop = doc.y
-  const yBot = yTop - 106
-
   const hline = (y: number) => doc.page.drawLine({ start: { x: bx0, y }, end: { x: bx1, y }, thickness: 0.6, color: GREEN })
-  const vline = (x: number, y1: number, y2: number) => doc.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness: 0.6, color: GREEN })
-  const cell = (x: number, yRowTop: number, label: string, value: string | null | undefined, max = 58) => {
-    const ly = yRowTop - 12
-    doc.page.drawText(label, { x: x + 4, y: ly, size: 8, font: fontBold, color: BLACK })
+  const vseg = (x: number, y1: number, y2: number) => doc.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness: 0.6, color: GREEN })
+  const cell = (x: number, yTopRow: number, label: string, value: string | null | undefined, max = 58) => {
+    doc.page.drawText(label, { x: x + 4, y: yTopRow - 12, size: 8, font: fontBold, color: BLACK })
     const lw = fontBold.widthOfTextAtSize(label, 8)
-    if (value) doc.page.drawText(String(value).substring(0, max), { x: x + 4 + lw + 3, y: ly, size: 8, font, color: BLACK })
+    if (value) doc.page.drawText(String(value).substring(0, max), { x: x + 4 + lw + 3, y: yTopRow - 12, size: 8, font, color: BLACK })
   }
 
-  // Bordes exteriores + horizontales de fila
-  vline(bx0, yTop, yBot); vline(bx1, yTop, yBot)
-  for (const y of [yTop, yTop - 18, yTop - 36, yTop - 54, yTop - 72, yBot]) hline(y)
+  // ── Encabezado ───────────────────────────────────────────────────────────────
+  doc.page.drawText('COTIZACIÓN DE SERVICIOS', { x: ML, y: doc.y, size: 15, font: fontBold, color: GREEN })
+  const nw = fontBold.widthOfTextAtSize(numCot, 14)
+  doc.page.drawText(numCot, { x: PAGE_W - MR - nw, y: doc.y, size: 14, font: fontBold, color: BLACK })
+  doc.y -= 12
+  doc.page.drawText('Análisis toxicológicos de laboratorio', { x: ML, y: doc.y, size: 8, font, color: GRAY })
+  const emi = `Emisión: ${formatFecha(cot.fechaEmision)}    |    Vigencia: ${formatFecha(cot.vigenciaHasta)}`
+  const ew = font.widthOfTextAtSize(emi, 7.5)
+  doc.page.drawText(emi, { x: PAGE_W - MR - ew, y: doc.y, size: 7.5, font, color: GRAY })
+  doc.y -= 8
+  doc.page.drawLine({ start: { x: ML, y: doc.y }, end: { x: PAGE_W - MR, y: doc.y }, thickness: 0.8, color: GREEN })
+  doc.y -= 18
 
-  // Fila 1: Fecha de emisión | Ref
-  const d1 = bx0 + 320
-  vline(d1, yTop, yTop - 18)
-  cell(bx0, yTop, 'Fecha de emisión :', formatFecha(cot.fechaEmision))
-  cell(d1, yTop, 'Ref :', cot.sufijo || null)
-
-  // Fila 2: Solicitante | R.U.C
-  const d2 = bx0 + 372
-  vline(d2, yTop - 18, yTop - 36)
-  cell(bx0, yTop - 18, 'Solicitante :', cot.cliente.razonSocial, 62)
-  cell(d2, yTop - 18, 'R.U.C :', cot.cliente.ruc)
-
-  // Fila 3: Dirección
-  cell(bx0, yTop - 36, 'Dirección :', cot.cliente.direccion, 100)
-
-  // Fila 4: Teléfono 1 | Teléfono 2 | Email
-  const e1 = bx0 + 165, e2 = bx0 + 335
-  vline(e1, yTop - 54, yTop - 72); vline(e2, yTop - 54, yTop - 72)
-  cell(bx0, yTop - 54, 'Teléfono 1 :', cot.contactoTelefono, 22)
-  cell(e1, yTop - 54, 'Teléfono 2 :', null, 22)
-  cell(e2, yTop - 54, 'Email :', cot.contactoEmail, 32)
-
-  // Fila 5-6: Comunicación (checkboxes) + Fecha/Hora/Nombre
-  const cy = yTop - 72
-  doc.page.drawText('Comunicación :', { x: bx0 + 4, y: cy - 12, size: 8, font: fontBold, color: BLACK })
-  const fc = (cot.formaContacto ?? '').toLowerCase()
-  const marcado = (key: string) => {
-    if (!fc) return false
-    if (key === 'mail') return fc.includes('mail') || fc.includes('correo')
-    if (key === 'whats') return fc.includes('whats')
-    if (key === 'tel') return fc.includes('telef') || fc.includes('llamad')
-    if (key === 'personal') return fc.includes('personal') || fc.includes('presencial')
-    if (key === 'otros') return !['mail', 'correo', 'whats', 'telef', 'llamad', 'personal', 'presencial'].some(k => fc.includes(k))
-    return false
+  const badge = (n: string, titulo: string) => {
+    doc.page.drawRectangle({ x: ML, y: doc.y - 3, width: 13, height: 13, color: GREEN })
+    doc.page.drawText(n, { x: ML + 4, y: doc.y, size: 8.5, font: fontBold, color: WHITE })
+    doc.page.drawText(titulo, { x: ML + 19, y: doc.y, size: 9.5, font: fontBold, color: GREEN })
+    doc.y -= 16
   }
-  let cbx = bx0 + 92
-  for (const [label, key] of [['E-mail', 'mail'], ['whatsapp', 'whats'], ['Telefónica', 'tel'], ['Personal', 'personal'], ['Otros', 'otros']] as const) {
-    doc.page.drawText(label, { x: cbx, y: cy - 12, size: 8, font, color: BLACK })
-    const lw = font.widthOfTextAtSize(label, 8)
-    const boxX = cbx + lw + 3
-    doc.page.drawRectangle({ x: boxX, y: cy - 13.5, width: 8, height: 8, borderColor: GREEN, borderWidth: 0.6, color: WHITE })
-    if (marcado(key)) doc.page.drawText('X', { x: boxX + 1.3, y: cy - 12.3, size: 7, font: fontBold, color: BLACK })
-    cbx = boxX + 8 + 14
-  }
-  const tf = (x: number, label: string, value: string | null | undefined) => {
-    doc.page.drawText(label, { x, y: cy - 29, size: 8, font: fontBold, color: BLACK })
-    const lw = fontBold.widthOfTextAtSize(label, 8)
-    if (value) doc.page.drawText(String(value).substring(0, 26), { x: x + lw + 3, y: cy - 29, size: 8, font, color: BLACK })
-  }
-  tf(bx0 + 92, 'Fecha :', cot.fechaContacto)
-  tf(bx0 + 230, 'Hora :', cot.horaContacto)
-  tf(bx0 + 355, 'Nombre :', cot.contactoNombre)
 
-  // Línea compacta con datos de la cotización
-  doc.y = yBot - 14
-  doc.page.drawText(
-    `Vigencia: ${formatFecha(cot.vigenciaHasta)}     ·     Moneda: ${moneda === 'USD' ? 'Dólares (USD)' : 'Soles (PEN)'}     ·     Preparado por: ${cot.creadoPor.nombre}`,
-    { x: ML, y: doc.y, size: 8.5, font, color: GRAY },
-  )
-  doc.y -= 16
+  // ── 1. DATOS DEL CLIENTE ─────────────────────────────────────────────────────
+  badge('1', 'DATOS DEL CLIENTE')
+  await doc.ensureSpace(120)
+  {
+    const yTop = doc.y, split = bx0 + 330, yBot = yTop - 102
+    vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
+    for (const y of [yTop, yTop - 17, yTop - 34, yTop - 51, yTop - 68, yBot]) hline(y)
+    vseg(split, yTop, yTop - 17); cell(bx0, yTop, 'Solicitante :', cot.cliente.razonSocial, 60); cell(split, yTop, 'R.U.C. :', cot.cliente.ruc)
+    vseg(split, yTop - 17, yTop - 34); cell(bx0, yTop - 17, 'Contacto :', cot.contactoNombre, 60); cell(split, yTop - 17, 'Teléfono :', cot.contactoTelefono, 24)
+    vseg(split, yTop - 34, yTop - 51); cell(bx0, yTop - 34, 'Dirección :', cot.cliente.direccion, 60); cell(split, yTop - 34, 'Moneda :', monedaTxt)
+    cell(bx0, yTop - 51, 'Email :', cot.contactoEmail, 110)
 
-  // ── Tabla de ensayos ─────────────────────────────────────────────────────────
-  const COL_AREA = 300, COL_PLAZO = 372, COL_COSTO = PAGE_W - MR - 62
+    // Comunicación (checkboxes)
+    const cy = yTop - 68
+    doc.page.drawText('Comunicación :', { x: bx0 + 4, y: cy - 12, size: 8, font: fontBold, color: BLACK })
+    const fc = (cot.formaContacto ?? '').toLowerCase()
+    const marcado = (key: string) => {
+      if (!fc) return false
+      if (key === 'mail') return fc.includes('mail') || fc.includes('correo')
+      if (key === 'whats') return fc.includes('whats')
+      if (key === 'tel') return fc.includes('telef') || fc.includes('llamad')
+      if (key === 'personal') return fc.includes('personal') || fc.includes('presencial')
+      if (key === 'otros') return !['mail', 'correo', 'whats', 'telef', 'llamad', 'personal', 'presencial'].some(k => fc.includes(k))
+      return false
+    }
+    let cbx = bx0 + 92
+    for (const [label, key] of [['E-mail', 'mail'], ['WhatsApp', 'whats'], ['Telefónica', 'tel'], ['Personal', 'personal'], ['Otros', 'otros']] as const) {
+      doc.page.drawText(label, { x: cbx, y: cy - 12, size: 8, font, color: BLACK })
+      const lw = font.widthOfTextAtSize(label, 8)
+      const boxX = cbx + lw + 3
+      doc.page.drawRectangle({ x: boxX, y: cy - 13.5, width: 8, height: 8, borderColor: GREEN, borderWidth: 0.6, color: WHITE })
+      if (marcado(key)) doc.page.drawText('X', { x: boxX + 1.3, y: cy - 12.3, size: 7, font: fontBold, color: BLACK })
+      cbx = boxX + 8 + 12
+    }
+    // Fecha / Hora de la comunicación
+    const tf = (x: number, label: string, value: string | null | undefined) => {
+      doc.page.drawText(label, { x, y: cy - 27, size: 8, font: fontBold, color: BLACK })
+      const lw = fontBold.widthOfTextAtSize(label, 8)
+      if (value) doc.page.drawText(String(value).substring(0, 26), { x: x + lw + 3, y: cy - 27, size: 8, font, color: BLACK })
+    }
+    tf(bx0 + 92, 'Fecha :', cot.fechaContacto)
+    tf(bx0 + 260, 'Hora :', cot.horaContacto)
+    doc.y = yBot - 14
+  }
+
+  // ── 2. ENSAYOS COTIZADOS ─────────────────────────────────────────────────────
+  badge('2', 'ENSAYOS COTIZADOS')
+  // Columna de ensayo más ancha; área/entrega/costo más delgadas y a la derecha
+  const COL_AREA = PAGE_W - MR - 178, COL_PLAZO = PAGE_W - MR - 128, COL_COSTO = PAGE_W - MR - 52
 
   async function tableHeader() {
     await doc.ensureSpace(24)
     doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 16, color: GREEN })
-    doc.page.drawText('Ensayo', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText('Ensayo / método', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.page.drawText('Área', { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: WHITE })
-    doc.page.drawText('Tiempo entrega*', { x: COL_PLAZO, y: doc.y, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText('Entrega*', { x: COL_PLAZO, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.page.drawText('Costo', { x: COL_COSTO, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.y -= 16
   }
 
   async function row(ensayo: { nombre: string; area: string }, costo: number, dias: number, shade: boolean) {
-    await doc.ensureSpace(16)
-    if (shade) doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 14, color: LIGHT_GRAY })
-    doc.page.drawText(ensayo.nombre.substring(0, 55), { x: ML + 4, y: doc.y, size: 8, font, color: BLACK })
+    const lineas = wrapText(ensayo.nombre, COL_AREA - ML - 8, 8)
+    const h = Math.max(14, lineas.length * 10 + 3)
+    await doc.ensureSpace(h + 2)
+    if (shade) doc.page.drawRectangle({ x: ML, y: doc.y - h + 10, width: CW, height: h, color: LIGHT_GRAY })
+    lineas.forEach((ln, i) => doc.page.drawText(ln, { x: ML + 4, y: doc.y - i * 10, size: 8, font, color: BLACK }))
     doc.page.drawText(areaLetra(ensayo.area), { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: GRAY })
     doc.page.drawText(`${dias} días`, { x: COL_PLAZO, y: doc.y, size: 8, font, color: BLACK })
     doc.page.drawText(formatMoneda(costo, moneda), { x: COL_COSTO, y: doc.y, size: 8, font, color: BLACK })
-    doc.y -= 14
+    doc.y -= h
   }
 
-  await doc.section(`ENSAYOS COTIZADOS`)
   if (hasMuestras) {
     for (const muestra of cot.muestras) {
       await doc.ensureSpace(40)
@@ -181,12 +196,10 @@ export async function GET(
   }
 
   // ── Totales (derecha) + notas al pie (izquierda) ─────────────────────────────
-  await doc.ensureSpace(70)
+  await doc.ensureSpace(76)
   doc.hr()
   const bandY = doc.y
   const totLabelX = PAGE_W - MR - 150, totValX = COL_COSTO
-
-  // Totales
   let ty = bandY
   for (const [label, val] of [['Precio neto', cot.subtotal], ['Sub-total', cot.subtotal], ['I.G.V (18%)', cot.igv]] as [string, number][]) {
     doc.page.drawText(label, { x: totLabelX, y: ty, size: 9, font, color: GRAY })
@@ -197,8 +210,8 @@ export async function GET(
   doc.page.drawText(formatMoneda(cot.total, moneda), { x: totValX, y: ty, size: 10, font: fontBold, color: GREEN })
   ty -= 13
 
-  // Notas al pie
   const notas = [
+    `La presente cotización está emitida en ${monedaTxt}.`,
     '*El tiempo de entrega de los informes de ensayo indicado es referencial, la fecha exacta se especificará en la Solicitud de Ensayo (con el ingreso de la muestra).',
     '** El Informe de ensayo se emitirá en idioma español, se ofrece servicio de traducción.',
   ]
@@ -211,66 +224,79 @@ export async function GET(
     }
     ny -= 2
   }
+  doc.y = Math.min(ty, ny) - 14
 
-  doc.y = Math.min(ty, ny) - 12
-
-  // ── Cuadro final: observaciones, muestra y condiciones ───────────────────────
-  // Alturas adaptativas: cada fila usa lo justo según su contenido (con un mínimo),
-  // para que el cuadro entre en la primera página siempre que sea posible.
+  // ── 3. CONDICIONES Y RECEPCIÓN DE MUESTRAS ───────────────────────────────────
   const labelW = 155
   const valW = CW - labelW
   const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
+  const observacionesTxt = [
+    `La presente cotización está emitida en ${monedaTxt}.`,
+    cot.observaciones,
+    'El cliente debe verificar y confirmar si los ensayos cotizados son según sus requerimientos.',
+  ].filter(Boolean).join('\n')
 
   type FRow = { label: string | [string, string]; value: string | null; min: number }
   const filasBase: FRow[] = [
-    { label: 'Observaciones :', value: cot.observaciones ?? null, min: 20 },
+    { label: 'Observaciones :', value: observacionesTxt, min: 20 },
     { label: 'Muestra :', value: muestrasNombres || null, min: 15 },
     { label: 'Cantidad de muestra :', value: null, min: 15 },
-    { label: ['Datos y requisitos', 'necesarios :'], value: null, min: 30 },
-    { label: ['Lugar de recepción', 'de muestra :'], value: DIRECCION_CETOX, min: 24 },
-    { label: 'Horario de atención :', value: null, min: 15 },
-    { label: 'Vencimiento cotización', value: formatFecha(cot.vigenciaHasta), min: 15 },
-    { label: 'Forma de pago', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, min: 15 },
-    { label: 'Datos bancarios :', value: null, min: 30 },
+    { label: ['Datos y requisitos', 'necesarios :'], value: DATOS_REQUISITOS, min: 30 },
+    { label: ['Lugar de recepción', 'de muestra :'], value: DIRECCION_CETOX, min: 22 },
+    { label: 'Horario de atención :', value: HORARIO_ATENCION, min: 15 },
+    { label: 'Forma de pago :', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, min: 15 },
   ]
   const filas = filasBase.map(r => {
     const labelLines = Array.isArray(r.label) ? r.label.length : 1
     const valueLines = r.value ? wrapText(r.value, valW - 8, 8) : []
     const contentLines = Math.max(labelLines, valueLines.length)
-    return { label: r.label, valueLines, h: Math.max(r.min, contentLines * 10 + 5) }
+    return { label: r.label, valueLines, h: Math.max(r.min, contentLines * 9.7 + 5) }
   })
   const totalH = filas.reduce((a, r) => a + r.h, 0)
 
-  await doc.ensureSpace(totalH + 6)
-  const fx0 = ML, fx1 = PAGE_W - MR
-  const fTop = doc.y
-  const fBot = fTop - totalH
-  const fhline = (y: number) => doc.page.drawLine({ start: { x: fx0, y }, end: { x: fx1, y }, thickness: 0.6, color: GREEN })
-  const fvline = (x: number, y1: number, y2: number) => doc.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness: 0.6, color: GREEN })
+  // Datos bancarios como bloque full-width debajo (ocupa menos que en una celda angosta)
+  const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 6.8)
+  const bancH = bancLines.length * 8.2 + 12
 
-  fvline(fx0, fTop, fBot); fvline(fx1, fTop, fBot); fvline(fx0 + labelW, fTop, fBot)
+  // Reservar el título + cuadro + datos bancarios juntos (evita que se separen)
+  await doc.ensureSpace(totalH + bancH + 24)
+  badge('3', 'CONDICIONES Y RECEPCIÓN DE MUESTRAS')
+
+  const fTop = doc.y, fBot = fTop - totalH
+  const fhline = (y: number) => doc.page.drawLine({ start: { x: bx0, y }, end: { x: bx1, y }, thickness: 0.6, color: GREEN })
   fhline(fTop)
+  vseg(bx0, fTop, fBot); vseg(bx1, fTop, fBot); vseg(bx0 + labelW, fTop, fBot)
   let yr = fTop
   for (const r of filas) {
     const labs = Array.isArray(r.label) ? r.label : [r.label]
-    labs.forEach((ln, i) => doc.page.drawText(ln, { x: fx0 + 4, y: yr - 11 - i * 10, size: 8, font: fontBold, color: BLACK }))
-    r.valueLines.forEach((ln, i) => doc.page.drawText(ln.substring(0, 130), { x: fx0 + labelW + 4, y: yr - 11 - i * 10, size: 8, font, color: BLACK }))
+    labs.forEach((ln, i) => doc.page.drawText(ln, { x: bx0 + 4, y: yr - 11 - i * 10, size: 8, font: fontBold, color: BLACK }))
+    r.valueLines.forEach((ln, i) => doc.page.drawText(ln, { x: bx0 + labelW + 4, y: yr - 11 - i * 9.7, size: 8, font, color: BLACK }))
     yr -= r.h
     fhline(yr)
   }
-  doc.y = fBot - 14
+  doc.y = fBot - 12
 
-  // ── Pie de página legal (verde CETOX, en todas las páginas) ──────────────────
+  // Datos bancarios (bloque full-width, texto pequeño)
+  doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8, font: fontBold, color: GREEN })
+  doc.y -= 10
+  for (const ln of bancLines) {
+    doc.page.drawText(ln, { x: ML, y: doc.y, size: 6.8, font, color: BLACK })
+    doc.y -= 8.2
+  }
+
+  // ── Pie de página: N° de formato + texto legal (verde CETOX, en todas las páginas) ─
   const piePagina = [
     'Este documento no significa que se estén realizando las pruebas indicadas.',
     'Es necesaria la aceptación de la Solicitud de Ensayo Toxicológico por parte del cliente y el laboratorio.',
   ]
   for (const p of doc.pdfDoc.getPages()) {
-    let fy = 34
+    let fy = 42
     for (const ln of piePagina) {
       p.drawText(ln, { x: ML, y: fy, size: 7.5, font: fontBold, color: GREEN })
       fy -= 10
     }
+    const fw = font.widthOfTextAtSize(NUM_FORMATO, 7)
+    p.drawText(NUM_FORMATO, { x: PAGE_W - MR - fw, y: 32, size: 7, font: fontBold, color: GREEN })
   }
 
   return doc.finish(`Cotizacion-${numCot}.pdf`, 'attachment') as unknown as NextResponse

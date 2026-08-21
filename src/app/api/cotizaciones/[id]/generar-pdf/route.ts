@@ -114,21 +114,27 @@ export async function GET(
     const emails = [cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean) as string[]
     const maxA = Math.max(1, contactos.length, telefonos.length)
     const maxB = Math.max(1, emails.length)
-    const hA = 12 + maxA * 10, hB = 12 + maxB * 10, hC = 30
+    const hA = 12 + maxA * 10, hB = 12 + maxB * 10, hC = 22
     const total = hA + hB + hC
 
     await doc.ensureSpace(total + 8)
     const yTop = doc.y, yBot = yTop - total
     const c1 = bx0, c2 = bx0 + 135, c3 = bx0 + 265, c4 = bx0 + 395
+    const yB = yTop - hA, yC = yTop - hA - hB
 
+    // Sombreado alternado (filas A y C sombreadas, B blanca)
+    doc.page.drawRectangle({ x: bx0, y: yB, width: bx1 - bx0, height: hA, color: LIGHT_GRAY })
+    doc.page.drawRectangle({ x: bx0, y: yBot, width: bx1 - bx0, height: hC, color: LIGHT_GRAY })
+
+    // Bordes
     vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
-    for (const y of [yTop, yTop - hA, yTop - hA - hB, yBot]) hline(y)
+    for (const y of [yTop, yB, yC, yBot]) hline(y)
 
     // Celda: etiqueta (versalita gris) arriba y valor(es) apilados debajo
-    const cellV = (x: number, rowTop: number, label: string, values: string[], colW: number, size = 8) => {
+    const cellV = (x: number, rowTop: number, label: string, values: (string | null | undefined)[], colW: number, size = 8) => {
       doc.page.drawText(label, { x: x + 3, y: rowTop - 8, size: 6.3, font: fontBold, color: GRAY })
       const maxCh = Math.max(6, Math.floor((colW - 5) / (size * 0.52)))
-      const vals = values.filter(Boolean)
+      const vals = values.filter(Boolean) as string[]
       ;(vals.length ? vals : ['—']).forEach((v, i) => {
         doc.page.drawText(v.substring(0, maxCh), { x: x + 3, y: rowTop - 18 - i * 9.5, size, font, color: vals.length ? BLACK : GRAY })
       })
@@ -141,45 +147,19 @@ export async function GET(
     cellV(c4, yTop, 'TELÉFONO', telefonos, bx1 - c4)
 
     // Fila B: Dirección · Moneda · Email · Preparado por
-    const yB = yTop - hA
     cellV(c1, yB, 'DIRECCIÓN', [cot.cliente.direccion], 135)
     cellV(c2, yB, 'MONEDA', [monedaTxt], 130)
     cellV(c3, yB, 'EMAIL', emails, 130, 7)
     cellV(c4, yB, 'PREPARADO POR', [cot.creadoPor.nombre], bx1 - c4, 7)
 
-    // Comunicación (checkboxes)
-    const cy = yTop - hA - hB
-    doc.page.drawText('Comunicación :', { x: bx0 + 4, y: cy - 12, size: 8, font: fontBold, color: BLACK })
-    const fc = (cot.formaContacto ?? '').toLowerCase()
-    const marcado = (key: string) => {
-      if (!fc) return false
-      if (key === 'mail') return fc.includes('mail') || fc.includes('correo')
-      if (key === 'whats') return fc.includes('whats')
-      if (key === 'tel') return fc.includes('telef') || fc.includes('llamad')
-      if (key === 'personal') return fc.includes('personal') || fc.includes('presencial')
-      if (key === 'otros') return !['mail', 'correo', 'whats', 'telef', 'llamad', 'personal', 'presencial'].some(k => fc.includes(k))
-      return false
-    }
-    let cbx = bx0 + 92
-    for (const [label, key] of [['E-mail', 'mail'], ['WhatsApp', 'whats'], ['Telefónica', 'tel'], ['Personal', 'personal'], ['Otros', 'otros']] as const) {
-      doc.page.drawText(label, { x: cbx, y: cy - 12, size: 8, font, color: BLACK })
-      const lw = font.widthOfTextAtSize(label, 8)
-      const boxX = cbx + lw + 3
-      doc.page.drawRectangle({ x: boxX, y: cy - 13.5, width: 8, height: 8, borderColor: GREEN, borderWidth: 0.6, color: WHITE })
-      if (marcado(key)) doc.page.drawText('X', { x: boxX + 1.3, y: cy - 12.3, size: 7, font: fontBold, color: BLACK })
-      cbx = boxX + 8 + 12
-      if (key === 'otros' && marcado('otros') && cot.formaContactoOtro) {
-        doc.page.drawText(`(${cot.formaContactoOtro})`, { x: cbx, y: cy - 12, size: 8, font, color: BLACK })
-      }
-    }
-    // Fecha / Hora de la comunicación
-    const tf = (x: number, label: string, value: string | null | undefined) => {
-      doc.page.drawText(label, { x, y: cy - 27, size: 8, font: fontBold, color: BLACK })
-      const lw = fontBold.widthOfTextAtSize(label, 8)
-      if (value) doc.page.drawText(String(value).substring(0, 26), { x: x + lw + 3, y: cy - 27, size: 8, font, color: BLACK })
-    }
-    tf(bx0 + 92, 'Fecha :', cot.fechaContacto)
-    tf(bx0 + 260, 'Hora :', cot.horaContacto)
+    // Fila C: Comunicación (solo la forma elegida) · Fecha · Hora
+    const FORMA_LABEL: Record<string, string> = { EMAIL: 'E-mail', WHATSAPP: 'WhatsApp', TELEFONICA: 'Telefónica', PERSONAL: 'Personal', OTROS: 'Otros' }
+    const comBase = cot.formaContacto ? (FORMA_LABEL[cot.formaContacto] ?? cot.formaContacto) : ''
+    const comLabel = comBase + (cot.formaContacto === 'OTROS' && cot.formaContactoOtro ? `: ${cot.formaContactoOtro}` : '')
+    cellV(c1, yC, 'COMUNICACIÓN', [comLabel], 135)
+    cellV(c2, yC, 'FECHA', [cot.fechaContacto], 130)
+    cellV(c3, yC, 'HORA', [cot.horaContacto], 130)
+
     doc.y = yBot - 14
   }
 

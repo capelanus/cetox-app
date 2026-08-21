@@ -3,9 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
 import { MODALIDAD_LABELS } from '@/lib/constants'
+import { rgb } from 'pdf-lib'
 import {
   crearMembrete, GREEN, BLACK, GRAY, LIGHT_GRAY, WHITE, ML, MR, CW, PAGE_W,
 } from '@/lib/pdf-membrete'
+
+// Color de sombreado (fondo claro CETOX #EAF4F4)
+const SHADE = rgb(0.918, 0.957, 0.957)
 
 // Área como letra (código interno CETOX): Q Química · B Biología · M Microbiología · P Proveedor
 const AREA_A_LETRA: Record<string, string> = {
@@ -122,17 +126,29 @@ export async function GET(
     const c1 = bx0, c2 = bx0 + 135, c3 = bx0 + 265, c4 = bx0 + 395
     const yB = yTop - hA, yC = yTop - hA - hB
 
-    // Sombreado alternado (filas A y C sombreadas, B blanca)
-    doc.page.drawRectangle({ x: bx0, y: yB, width: bx1 - bx0, height: hA, color: LIGHT_GRAY })
-    doc.page.drawRectangle({ x: bx0, y: yBot, width: bx1 - bx0, height: hC, color: LIGHT_GRAY })
+    // Sombreado en damero (alterna por fila y columna) con el color de fondo de la app
+    const colX = [c1, c2, c3, c4, bx1]
+    const rows = [
+      { y0: yB, h: hA },
+      { y0: yC, h: hB },
+      { y0: yBot, h: hC },
+    ]
+    rows.forEach((row, ri) => {
+      colX.slice(0, -1).forEach((cx, ci) => {
+        if ((ri + ci) % 2 === 0) {
+          doc.page.drawRectangle({ x: cx, y: row.y0, width: colX[ci + 1] - cx, height: row.h, color: SHADE })
+        }
+      })
+    })
 
     // Bordes
     vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
+    vseg(c2, yTop, yBot); vseg(c3, yTop, yBot); vseg(c4, yTop, yBot)
     for (const y of [yTop, yB, yC, yBot]) hline(y)
 
-    // Celda: etiqueta (versalita gris) arriba y valor(es) apilados debajo
+    // Celda: etiqueta (versalita verde CETOX) arriba y valor(es) apilados debajo
     const cellV = (x: number, rowTop: number, label: string, values: (string | null | undefined)[], colW: number, size = 8) => {
-      doc.page.drawText(label, { x: x + 3, y: rowTop - 8, size: 6.3, font: fontBold, color: GRAY })
+      doc.page.drawText(label, { x: x + 3, y: rowTop - 8, size: 6.3, font: fontBold, color: GREEN })
       const maxCh = Math.max(6, Math.floor((colW - 5) / (size * 0.52)))
       const vals = values.filter(Boolean) as string[]
       ;(vals.length ? vals : ['—']).forEach((v, i) => {

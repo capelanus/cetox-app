@@ -255,8 +255,6 @@ export async function GET(
   doc.y = Math.min(ty, ny) - 14
 
   // ── 3. CONDICIONES Y RECEPCIÓN DE MUESTRAS ───────────────────────────────────
-  const labelW = 155
-  const valW = CW - labelW
   const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
   const observacionesTxt = [
     `La presente cotización está emitida en ${monedaTxt}.`,
@@ -265,46 +263,72 @@ export async function GET(
   ].filter(Boolean).join('\n')
 
   type FRow = { label: string | [string, string]; value: string | null; min: number }
-  const filasBase: FRow[] = [
+  const izqBase: FRow[] = [
     { label: 'Observaciones :', value: observacionesTxt, min: 20 },
     { label: 'Muestra :', value: muestrasNombres || null, min: 15 },
     { label: 'Cantidad de muestra :', value: null, min: 15 },
     { label: ['Datos y requisitos', 'necesarios :'], value: DATOS_REQUISITOS, min: 30 },
     { label: ['Lugar de recepción', 'de muestra :'], value: DIRECCION_CETOX, min: 22 },
     { label: 'Horario de atención :', value: HORARIO_ATENCION, min: 15 },
-    { label: 'Forma de pago :', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, min: 15 },
   ]
-  const filas = filasBase.map(r => {
+  const derBase: FRow[] = [
+    { label: 'Forma de pago :', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, min: 15 },
+    { label: 'Referencia :', value: null, min: 15 },
+    { label: 'Teléfono 2 :', value: cot.contactoTelefono2, min: 15 },
+    { label: 'Hora :', value: cot.horaContacto, min: 15 },
+  ]
+
+  const halfW = (bx1 - bx0) / 2, midX = bx0 + halfW
+  const labelW2 = 100, valW2 = halfW - labelW2 - 8
+  const buildFilas = (base: FRow[]) => base.map(r => {
     const labelLines = Array.isArray(r.label) ? r.label.length : 1
-    const valueLines = r.value ? wrapText(r.value, valW - 8, 8) : []
+    const valueLines = r.value ? wrapText(r.value, valW2 - 4, 8) : []
     const contentLines = Math.max(labelLines, valueLines.length)
     return { label: r.label, valueLines, h: Math.max(r.min, contentLines * 9.7 + 5) }
   })
-  const totalH = filas.reduce((a, r) => a + r.h, 0)
+  const filasIzq = buildFilas(izqBase), filasDer = buildFilas(derBase)
+  const nRows = Math.max(filasIzq.length, filasDer.length)
+  const rowH = Array.from({ length: nRows }, (_, i) => Math.max(filasIzq[i]?.h ?? 0, filasDer[i]?.h ?? 0))
+  const totalH = rowH.reduce((a, h) => a + h, 0)
+  const subH = 16
 
-  // Datos bancarios como bloque full-width debajo (ocupa menos que en una celda angosta)
+  // Datos bancarios como bloque full-width debajo (predeterminado, no editable)
   const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 6.8)
   const bancH = bancLines.length * 8.2 + 12
 
   // Reservar el título + cuadro + datos bancarios juntos (evita que se separen)
-  await doc.ensureSpace(totalH + bancH + 24)
+  await doc.ensureSpace(subH + totalH + bancH + 24)
   badge('3', 'CONDICIONES Y RECEPCIÓN DE MUESTRAS')
 
-  const fTop = doc.y, fBot = fTop - totalH
   const fhline = (y: number) => doc.page.drawLine({ start: { x: bx0, y }, end: { x: bx1, y }, thickness: 0.6, color: GREEN })
-  fhline(fTop)
-  vseg(bx0, fTop, fBot); vseg(bx1, fTop, fBot); vseg(bx0 + labelW, fTop, fBot)
+
+  // Sub-encabezados de columna
+  doc.page.drawRectangle({ x: bx0, y: doc.y - 4, width: bx1 - bx0, height: subH, color: GREEN })
+  doc.page.drawText('RECEPCIÓN Y LOGÍSTICA', { x: bx0 + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
+  doc.page.drawText('CONDICIONES COMERCIALES', { x: midX + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
+  doc.y -= subH
+
+  const fTop = doc.y, fBot = fTop - totalH
+  vseg(bx0, fTop, fBot); vseg(bx1, fTop, fBot); vseg(midX, fTop, fBot)
   let yr = fTop
-  for (const r of filas) {
-    const labs = Array.isArray(r.label) ? r.label : [r.label]
-    labs.forEach((ln, i) => doc.page.drawText(ln, { x: bx0 + 4, y: yr - 11 - i * 10, size: 8, font: fontBold, color: BLACK }))
-    r.valueLines.forEach((ln, i) => doc.page.drawText(ln, { x: bx0 + labelW + 4, y: yr - 11 - i * 9.7, size: 8, font, color: BLACK }))
-    yr -= r.h
+  for (let i = 0; i < nRows; i++) {
+    const li = filasIzq[i], ri = filasDer[i]
+    if (li) {
+      const labs = Array.isArray(li.label) ? li.label : [li.label]
+      labs.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + 4, y: yr - 11 - j * 10, size: 8, font: fontBold, color: BLACK }))
+      li.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: yr - 11 - j * 9.7, size: 8, font, color: BLACK }))
+    }
+    if (ri) {
+      const labs = Array.isArray(ri.label) ? ri.label : [ri.label]
+      labs.forEach((ln, j) => doc.page.drawText(ln, { x: midX + 4, y: yr - 11 - j * 10, size: 8, font: fontBold, color: BLACK }))
+      ri.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: midX + labelW2 + 4, y: yr - 11 - j * 9.7, size: 8, font, color: BLACK }))
+    }
+    yr -= rowH[i]
     fhline(yr)
   }
   doc.y = fBot - 12
 
-  // Datos bancarios (bloque full-width, texto pequeño)
+  // Datos bancarios (bloque full-width, texto pequeño, predeterminado)
   doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8, font: fontBold, color: GREEN })
   doc.y -= 10
   for (const ln of bancLines) {

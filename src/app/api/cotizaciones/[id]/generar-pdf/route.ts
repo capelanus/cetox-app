@@ -217,27 +217,44 @@ export async function GET(
     for (const it of cot.items) { await row(it.ensayo, it.costo, it.tiempoEntregaDias, i % 2 === 1); i++ }
   }
 
-  // ── Totales (derecha) + notas al pie (izquierda) ─────────────────────────────
+  // ── Totales (derecha, en caja) + notas de entrega (izquierda) ────────────────
   await doc.ensureSpace(76)
   doc.hr()
   const bandY = doc.y
   const totLabelX = PAGE_W - MR - 150, totValX = COL_COSTO
-  let ty = bandY
-  for (const [label, val] of [['Precio neto', cot.subtotal], ['Sub-total', cot.subtotal], ['I.G.V (18%)', cot.igv]] as [string, number][]) {
-    doc.page.drawText(label, { x: totLabelX, y: ty, size: 9, font, color: GRAY })
-    doc.page.drawText(formatMoneda(val, moneda), { x: totValX, y: ty, size: 9, font, color: BLACK })
-    ty -= 13
-  }
-  doc.page.drawText('TOTAL (S/.)', { x: totLabelX, y: ty, size: 10, font: fontBold, color: GREEN })
-  doc.page.drawText(formatMoneda(cot.total, moneda), { x: totValX, y: ty, size: 10, font: fontBold, color: GREEN })
-  ty -= 13
+  const drawRight = (text: string, x: number, y: number, size: number, f: typeof font, color: typeof BLACK) =>
+    doc.page.drawText(text, { x: x - f.widthOfTextAtSize(text, size), y, size, font: f, color })
 
+  const totBoxX0 = totLabelX - 8, totBoxW = bx1 - totBoxX0, totRowH = 16
+  const totRows: [string, number][] = [
+    ['Precio neto', cot.subtotal],
+    ['Sub-total', cot.subtotal],
+    ['I.G.V (18%)', cot.igv],
+  ]
+  const totRightEdge = bx1 - 6
+  const totBoxTop = bandY + 4
+  let rowTop = totBoxTop
+  totRows.forEach(([label, val], i) => {
+    const rowBot = rowTop - totRowH
+    if (i % 2 === 0) doc.page.drawRectangle({ x: totBoxX0, y: rowBot, width: totBoxW, height: totRowH, color: SHADE })
+    doc.page.drawText(label, { x: totLabelX, y: rowTop - 11, size: 8.5, font, color: BLACK })
+    drawRight(formatMoneda(val, moneda), totRightEdge, rowTop - 11, 8.5, font, BLACK)
+    rowTop = rowBot
+  })
+  const totalRowBot = rowTop - totRowH
+  doc.page.drawRectangle({ x: totBoxX0, y: totalRowBot, width: totBoxW, height: totRowH, color: GREEN })
+  doc.page.drawText('TOTAL (S/.)', { x: totLabelX, y: rowTop - 11, size: 9.5, font: fontBold, color: WHITE })
+  drawRight(formatMoneda(cot.total, moneda), totRightEdge, rowTop - 11, 9.5, fontBold, WHITE)
+  doc.page.drawRectangle({ x: totBoxX0, y: totalRowBot, width: totBoxW, height: totBoxTop - totalRowBot, borderColor: GREEN, borderWidth: 0.7 })
+  let ty = totalRowBot - 8
+
+  doc.page.drawText('Notas de entrega', { x: ML, y: bandY, size: 8.5, font: fontBold, color: GREEN })
+  let ny = bandY - 12
   const notas = [
     `La presente cotización está emitida en ${monedaTxt}.`,
     '*El tiempo de entrega de los informes de ensayo indicado es referencial, la fecha exacta se especificará en la Solicitud de Ensayo (con el ingreso de la muestra).',
     '** El Informe de ensayo se emitirá en idioma español, se ofrece servicio de traducción.',
   ]
-  let ny = bandY
   const notaW = totLabelX - ML - 14
   for (const nota of notas) {
     for (const ln of wrapText(nota, notaW, 6.8)) {
@@ -256,34 +273,34 @@ export async function GET(
     'El cliente debe verificar y confirmar si los ensayos cotizados son según sus requerimientos.',
   ].filter(Boolean).join('\n')
 
-  type FRow = { label: string | [string, string]; value: string | null; min: number }
-  const izqBase: FRow[] = [
-    { label: 'Observaciones :', value: observacionesTxt, min: 20 },
-    { label: 'Muestra :', value: muestrasNombres || null, min: 15 },
-    { label: 'Cantidad de muestra :', value: null, min: 15 },
-    { label: ['Datos y requisitos', 'necesarios :'], value: DATOS_REQUISITOS, min: 30 },
-    { label: ['Lugar de recepción', 'de muestra :'], value: DIRECCION_CETOX, min: 22 },
-    { label: 'Horario de atención :', value: HORARIO_ATENCION, min: 15 },
-  ]
-  const derBase: FRow[] = [
-    { label: 'Forma de pago :', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago, min: 15 },
-    { label: 'Referencia :', value: null, min: 15 },
-    { label: 'Teléfono 2 :', value: cot.contactoTelefono2, min: 15 },
-    { label: 'Hora :', value: cot.horaContacto, min: 15 },
-  ]
-
+  type FRow = { label: string; value: string | null }
   const halfW = (bx1 - bx0) / 2, midX = bx0 + halfW
-  const labelW2 = 100, valW2 = halfW - labelW2 - 8
+  const labelW2 = 118, valW2 = halfW - labelW2 - 8
+
+  // Solo se listan los campos con valor; los que quedan en blanco no se dibujan.
+  const izqBase: FRow[] = [
+    { label: 'Observaciones :', value: observacionesTxt },
+    { label: 'Muestra :', value: muestrasNombres || null },
+    { label: 'Datos y requisitos necesarios :', value: DATOS_REQUISITOS },
+    { label: 'Lugar de recepción de muestra :', value: DIRECCION_CETOX },
+    { label: 'Horario de atención :', value: HORARIO_ATENCION },
+  ].filter(r => r.value)
+  const derBase: FRow[] = [
+    { label: 'Forma de pago :', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago },
+    { label: 'Teléfono 2 :', value: cot.contactoTelefono2 },
+    { label: 'Hora :', value: cot.horaContacto },
+  ].filter(r => r.value)
+
   const buildFilas = (base: FRow[]) => base.map(r => {
-    const labelLines = Array.isArray(r.label) ? r.label.length : 1
-    const valueLines = r.value ? wrapText(r.value, valW2 - 4, 8) : []
-    const contentLines = Math.max(labelLines, valueLines.length)
-    return { label: r.label, valueLines, h: Math.max(r.min, contentLines * 9.7 + 5) }
+    const labelLines = wrapText(r.label, labelW2 - 4, 7.5)
+    const valueLines = wrapText(r.value as string, valW2 - 4, 8)
+    const lines = Math.max(labelLines.length, valueLines.length)
+    return { labelLines, valueLines, h: Math.max(14, lines * 9.7 + 4) }
   })
   const filasIzq = buildFilas(izqBase), filasDer = buildFilas(derBase)
-  const nRows = Math.max(filasIzq.length, filasDer.length)
-  const rowH = Array.from({ length: nRows }, (_, i) => Math.max(filasIzq[i]?.h ?? 0, filasDer[i]?.h ?? 0))
-  const totalH = rowH.reduce((a, h) => a + h, 0)
+  const colHIzq = filasIzq.reduce((a, r) => a + r.h, 0)
+  const colHDer = filasDer.reduce((a, r) => a + r.h, 0)
+  const totalH = Math.max(colHIzq, colHDer, 20)
   const subH = 16
 
   // Datos bancarios como bloque full-width debajo (predeterminado, no editable)
@@ -294,8 +311,6 @@ export async function GET(
   await doc.ensureSpace(subH + totalH + bancH + 24)
   badge('3', 'CONDICIONES Y RECEPCIÓN DE MUESTRAS')
 
-  const fhline = (y: number) => doc.page.drawLine({ start: { x: bx0, y }, end: { x: bx1, y }, thickness: 0.6, color: GREEN })
-
   // Sub-encabezados de columna
   doc.page.drawRectangle({ x: bx0, y: doc.y - 4, width: bx1 - bx0, height: subH, color: GREEN })
   doc.page.drawText('RECEPCIÓN Y LOGÍSTICA', { x: bx0 + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
@@ -304,21 +319,19 @@ export async function GET(
 
   const fTop = doc.y, fBot = fTop - totalH
   vseg(bx0, fTop, fBot); vseg(bx1, fTop, fBot); vseg(midX, fTop, fBot)
-  let yr = fTop
-  for (let i = 0; i < nRows; i++) {
-    const li = filasIzq[i], ri = filasDer[i]
-    if (li) {
-      const labs = Array.isArray(li.label) ? li.label : [li.label]
-      labs.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + 4, y: yr - 11 - j * 10, size: 8, font: fontBold, color: BLACK }))
-      li.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: yr - 11 - j * 9.7, size: 8, font, color: BLACK }))
-    }
-    if (ri) {
-      const labs = Array.isArray(ri.label) ? ri.label : [ri.label]
-      labs.forEach((ln, j) => doc.page.drawText(ln, { x: midX + 4, y: yr - 11 - j * 10, size: 8, font: fontBold, color: BLACK }))
-      ri.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: midX + labelW2 + 4, y: yr - 11 - j * 9.7, size: 8, font, color: BLACK }))
-    }
-    yr -= rowH[i]
-    fhline(yr)
+  hline(fTop); hline(fBot)
+
+  let yl = fTop
+  for (const r of filasIzq) {
+    r.labelLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + 4, y: yl - 9 - j * 9, size: 7.5, font: fontBold, color: BLACK }))
+    r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: yl - 9 - j * 9.7, size: 8, font, color: BLACK }))
+    yl -= r.h
+  }
+  let yrr = fTop
+  for (const r of filasDer) {
+    r.labelLines.forEach((ln, j) => doc.page.drawText(ln, { x: midX + 4, y: yrr - 9 - j * 9, size: 7.5, font: fontBold, color: BLACK }))
+    r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: midX + labelW2 + 4, y: yrr - 9 - j * 9.7, size: 8, font, color: BLACK }))
+    yrr -= r.h
   }
   doc.y = fBot - 12
 

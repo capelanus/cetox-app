@@ -118,20 +118,19 @@ export async function GET(
     const emails = [cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean) as string[]
     const maxA = Math.max(1, contactos.length, telefonos.length)
     const maxB = Math.max(1, emails.length)
-    const hA = 12 + maxA * 10, hB = 12 + maxB * 10, hC = 22
-    const total = hA + hB + hC
+    const hA = 12 + maxA * 10, hB = 12 + maxB * 10
+    const total = hA + hB
 
     await doc.ensureSpace(total + 8)
     const yTop = doc.y, yBot = yTop - total
     const c1 = bx0, c2 = bx0 + 135, c3 = bx0 + 265, c4 = bx0 + 395
-    const yB = yTop - hA, yC = yTop - hA - hB
+    const yB = yTop - hA
 
     // Sombreado en damero (alterna por fila y columna) con el color de fondo de la app
     const colX = [c1, c2, c3, c4, bx1]
     const rows = [
       { y0: yB, h: hA },
-      { y0: yC, h: hB },
-      { y0: yBot, h: hC },
+      { y0: yBot, h: hB },
     ]
     rows.forEach((row, ri) => {
       colX.slice(0, -1).forEach((cx, ci) => {
@@ -144,7 +143,7 @@ export async function GET(
     // Bordes
     vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
     vseg(c2, yTop, yBot); vseg(c3, yTop, yBot); vseg(c4, yTop, yBot)
-    for (const y of [yTop, yB, yC, yBot]) hline(y)
+    for (const y of [yTop, yB, yBot]) hline(y)
 
     // Celda: etiqueta (versalita verde CETOX) arriba y valor(es) apilados debajo
     const cellV = (x: number, rowTop: number, label: string, values: (string | null | undefined)[], colW: number, size = 8) => {
@@ -170,9 +169,6 @@ export async function GET(
     cellV(c2, yB, 'MONEDA', [monedaTxt], 130)
     cellV(c3, yB, 'EMAIL', emails, 130, 7)
     cellV(c4, yB, 'COMUNICACIÓN', [comLabel], bx1 - c4, 7)
-
-    // Fila C: Fecha de contacto
-    cellV(c1, yC, 'FECHA', [cot.fechaContacto], 135)
 
     doc.y = yBot - 14
   }

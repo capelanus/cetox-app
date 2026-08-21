@@ -162,19 +162,17 @@ export async function GET(
     cellV(c3, yTop, 'CONTACTO', contactos, 130)
     cellV(c4, yTop, 'TELÉFONO', telefonos, bx1 - c4)
 
-    // Fila B: Dirección · Moneda · Email · Preparado por
-    cellV(c1, yB, 'DIRECCIÓN', [cot.cliente.direccion], 135)
-    cellV(c2, yB, 'MONEDA', [monedaTxt], 130)
-    cellV(c3, yB, 'EMAIL', emails, 130, 7)
-    cellV(c4, yB, 'PREPARADO POR', [cot.creadoPor.nombre], bx1 - c4, 7)
-
-    // Fila C: Comunicación (solo la forma elegida) · Fecha · Hora
+    // Fila B: Dirección · Moneda · Email · Comunicación (solo la forma elegida)
     const FORMA_LABEL: Record<string, string> = { EMAIL: 'E-mail', WHATSAPP: 'WhatsApp', TELEFONICA: 'Telefónica', PERSONAL: 'Personal', OTROS: 'Otros' }
     const comBase = cot.formaContacto ? (FORMA_LABEL[cot.formaContacto] ?? cot.formaContacto) : ''
     const comLabel = comBase + (cot.formaContacto === 'OTROS' && cot.formaContactoOtro ? `: ${cot.formaContactoOtro}` : '')
-    cellV(c1, yC, 'COMUNICACIÓN', [comLabel], 135)
-    cellV(c2, yC, 'FECHA', [cot.fechaContacto], 130)
-    cellV(c3, yC, 'HORA', [cot.horaContacto], 130)
+    cellV(c1, yB, 'DIRECCIÓN', [cot.cliente.direccion], 135)
+    cellV(c2, yB, 'MONEDA', [monedaTxt], 130)
+    cellV(c3, yB, 'EMAIL', emails, 130, 7)
+    cellV(c4, yB, 'COMUNICACIÓN', [comLabel], bx1 - c4, 7)
+
+    // Fila C: Fecha de contacto
+    cellV(c1, yC, 'FECHA', [cot.fechaContacto], 135)
 
     doc.y = yBot - 14
   }

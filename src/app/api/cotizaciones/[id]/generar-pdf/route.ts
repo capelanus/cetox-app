@@ -274,8 +274,7 @@ export async function GET(
   ].filter(Boolean).join('\n')
 
   type FRow = { label: string; value: string | null }
-  const halfW = (bx1 - bx0) / 2, midX = bx0 + halfW
-  const labelW2 = 118, valW2 = halfW - labelW2 - 8
+  const labelW2 = 160, valW2 = CW - labelW2 - 8
 
   // Solo se listan los campos con valor; los que quedan en blanco no se dibujan.
   const izqBase: FRow[] = [
@@ -292,48 +291,48 @@ export async function GET(
   ].filter(r => r.value)
 
   const buildFilas = (base: FRow[]) => base.map(r => {
-    const labelLines = wrapText(r.label, labelW2 - 4, 7.5)
     const valueLines = wrapText(r.value as string, valW2 - 4, 8)
-    const lines = Math.max(labelLines.length, valueLines.length)
-    return { labelLines, valueLines, h: Math.max(14, lines * 9.7 + 4) }
+    return { label: r.label, valueLines, h: Math.max(13, valueLines.length * 9.7 + 4) }
   })
   const filasIzq = buildFilas(izqBase), filasDer = buildFilas(derBase)
-  const colHIzq = filasIzq.reduce((a, r) => a + r.h, 0)
-  const colHDer = filasDer.reduce((a, r) => a + r.h, 0)
-  const totalH = Math.max(colHIzq, colHDer, 20)
-  const subH = 16
+  const hIzq = filasIzq.reduce((a, r) => a + r.h, 0)
+  const hDer = filasDer.reduce((a, r) => a + r.h, 0)
+  const subH = 15
+  const totalH = subH + hIzq + (filasDer.length ? subH + hDer : 0)
 
   // Datos bancarios como bloque full-width debajo (predeterminado, no editable)
   const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 6.8)
   const bancH = bancLines.length * 8.2 + 12
 
   // Reservar el título + cuadro + datos bancarios juntos (evita que se separen)
-  await doc.ensureSpace(subH + totalH + bancH + 24)
+  await doc.ensureSpace(totalH + bancH + 24)
   badge('3', 'CONDICIONES Y RECEPCIÓN DE MUESTRAS')
 
-  // Sub-encabezados de columna
-  doc.page.drawRectangle({ x: bx0, y: doc.y - 4, width: bx1 - bx0, height: subH, color: GREEN })
-  doc.page.drawText('RECEPCIÓN Y LOGÍSTICA', { x: bx0 + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
-  doc.page.drawText('CONDICIONES COMERCIALES', { x: midX + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
-  doc.y -= subH
+  const boxTop = doc.y
 
-  const fTop = doc.y, fBot = fTop - totalH
-  vseg(bx0, fTop, fBot); vseg(bx1, fTop, fBot); vseg(midX, fTop, fBot)
-  hline(fTop); hline(fBot)
+  const subHeader = (titulo: string) => {
+    doc.page.drawRectangle({ x: bx0, y: doc.y - subH, width: bx1 - bx0, height: subH, color: GREEN })
+    doc.page.drawText(titulo, { x: bx0 + 4, y: doc.y - subH + 5, size: 8, font: fontBold, color: WHITE })
+    doc.y -= subH
+  }
+  const drawFilas = (filas: ReturnType<typeof buildFilas>) => {
+    for (const r of filas) {
+      doc.page.drawText(r.label, { x: bx0 + 4, y: doc.y - 9, size: 8, font: fontBold, color: BLACK })
+      r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: doc.y - 9 - j * 9.7, size: 8, font, color: BLACK }))
+      doc.y -= r.h
+    }
+  }
 
-  let yl = fTop
-  for (const r of filasIzq) {
-    r.labelLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + 4, y: yl - 9 - j * 9, size: 7.5, font: fontBold, color: BLACK }))
-    r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: yl - 9 - j * 9.7, size: 8, font, color: BLACK }))
-    yl -= r.h
+  subHeader('RECEPCIÓN Y LOGÍSTICA')
+  drawFilas(filasIzq)
+  if (filasDer.length) {
+    subHeader('CONDICIONES COMERCIALES')
+    drawFilas(filasDer)
   }
-  let yrr = fTop
-  for (const r of filasDer) {
-    r.labelLines.forEach((ln, j) => doc.page.drawText(ln, { x: midX + 4, y: yrr - 9 - j * 9, size: 7.5, font: fontBold, color: BLACK }))
-    r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: midX + labelW2 + 4, y: yrr - 9 - j * 9.7, size: 8, font, color: BLACK }))
-    yrr -= r.h
-  }
-  doc.y = fBot - 12
+
+  const boxBot = doc.y
+  doc.page.drawRectangle({ x: bx0, y: boxBot, width: bx1 - bx0, height: boxTop - boxBot, borderColor: GREEN, borderWidth: 0.7 })
+  doc.y = boxBot - 12
 
   // Datos bancarios (bloque full-width, texto pequeño, predeterminado)
   doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8, font: fontBold, color: GREEN })

@@ -170,7 +170,7 @@ export async function GET(
     cellV(c3, yB, 'EMAIL', emails, 130, 7)
     cellV(c4, yB, 'COMUNICACIÓN', [comLabel], bx1 - c4, 7)
 
-    doc.y = yBot - 14
+    doc.y = yBot - 10
   }
 
   // ── 2. ENSAYOS COTIZADOS ─────────────────────────────────────────────────────
@@ -200,32 +200,31 @@ export async function GET(
     doc.y -= h
   }
 
+  await tableHeader()
   if (hasMuestras) {
     for (const muestra of cot.muestras) {
-      await doc.ensureSpace(40)
-      doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 15, color: LIGHT_GRAY })
+      await doc.ensureSpace(30)
+      doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 13, color: LIGHT_GRAY })
       doc.page.drawText(`Muestra: ${muestra.nombre || '(sin nombre)'}`, { x: ML + 4, y: doc.y, size: 8.5, font: fontBold, color: GREEN })
-      doc.y -= 16
-      await tableHeader()
+      doc.y -= 14
       let i = 0
       for (const it of muestra.items) { await row(it.ensayo, it.costo, it.tiempoEntregaDias, i % 2 === 1); i++ }
-      doc.y -= 6
+      doc.y -= 4
     }
   } else {
-    await tableHeader()
     let i = 0
     for (const it of cot.items) { await row(it.ensayo, it.costo, it.tiempoEntregaDias, i % 2 === 1); i++ }
   }
 
   // ── Totales (derecha, en caja) + notas de entrega (izquierda) ────────────────
   await doc.ensureSpace(76)
-  doc.hr()
+  doc.hr(14)
   const bandY = doc.y
   const totLabelX = PAGE_W - MR - 150, totValX = COL_COSTO
   const drawRight = (text: string, x: number, y: number, size: number, f: typeof font, color: typeof BLACK) =>
     doc.page.drawText(text, { x: x - f.widthOfTextAtSize(text, size), y, size, font: f, color })
 
-  const totBoxX0 = totLabelX - 8, totBoxW = bx1 - totBoxX0, totRowH = 16
+  const totBoxX0 = totLabelX - 8, totBoxW = bx1 - totBoxX0, totRowH = 14
   const totRows: [string, number][] = [
     ['Precio neto', cot.subtotal],
     ['Sub-total', cot.subtotal],
@@ -263,7 +262,7 @@ export async function GET(
     }
     ny -= 2
   }
-  doc.y = Math.min(ty, ny) - 14
+  doc.y = Math.min(ty, ny) - 10
 
   // ── 3. CONDICIONES Y RECEPCIÓN DE MUESTRAS ───────────────────────────────────
   const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
@@ -290,35 +289,36 @@ export async function GET(
     { label: 'Hora :', value: cot.horaContacto },
   ].filter(r => r.value)
 
+  const lineH = 8.8
   const buildFilas = (base: FRow[]) => base.map(r => {
     const valueLines = wrapText(r.value as string, valW2 - 4, 8)
-    return { label: r.label, valueLines, h: Math.max(13, valueLines.length * 9.7 + 4) }
+    return { label: r.label, valueLines, h: Math.max(11, valueLines.length * lineH + 3) }
   })
   const filasIzq = buildFilas(izqBase), filasDer = buildFilas(derBase)
   const hIzq = filasIzq.reduce((a, r) => a + r.h, 0)
   const hDer = filasDer.reduce((a, r) => a + r.h, 0)
-  const subH = 15
+  const subH = 13
   const totalH = subH + hIzq + (filasDer.length ? subH + hDer : 0)
 
   // Datos bancarios como bloque full-width debajo (predeterminado, no editable)
-  const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 6.8)
-  const bancH = bancLines.length * 8.2 + 12
+  const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 6.6)
+  const bancH = bancLines.length * 7.4 + 8
 
   // Reservar el título + cuadro + datos bancarios juntos (evita que se separen)
-  await doc.ensureSpace(totalH + bancH + 24)
+  await doc.ensureSpace(totalH + bancH + 16)
   badge('3', 'CONDICIONES Y RECEPCIÓN DE MUESTRAS')
 
   const boxTop = doc.y
 
   const subHeader = (titulo: string) => {
     doc.page.drawRectangle({ x: bx0, y: doc.y - subH, width: bx1 - bx0, height: subH, color: GREEN })
-    doc.page.drawText(titulo, { x: bx0 + 4, y: doc.y - subH + 5, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText(titulo, { x: bx0 + 4, y: doc.y - subH + 4, size: 8, font: fontBold, color: WHITE })
     doc.y -= subH
   }
   const drawFilas = (filas: ReturnType<typeof buildFilas>) => {
     for (const r of filas) {
-      doc.page.drawText(r.label, { x: bx0 + 4, y: doc.y - 9, size: 8, font: fontBold, color: BLACK })
-      r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: doc.y - 9 - j * 9.7, size: 8, font, color: BLACK }))
+      doc.page.drawText(r.label, { x: bx0 + 4, y: doc.y - 8, size: 8, font: fontBold, color: BLACK })
+      r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: doc.y - 8 - j * lineH, size: 8, font, color: BLACK }))
       doc.y -= r.h
     }
   }
@@ -332,14 +332,14 @@ export async function GET(
 
   const boxBot = doc.y
   doc.page.drawRectangle({ x: bx0, y: boxBot, width: bx1 - bx0, height: boxTop - boxBot, borderColor: GREEN, borderWidth: 0.7 })
-  doc.y = boxBot - 12
+  doc.y = boxBot - 8
 
   // Datos bancarios (bloque full-width, texto pequeño, predeterminado)
   doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8, font: fontBold, color: GREEN })
-  doc.y -= 10
+  doc.y -= 9
   for (const ln of bancLines) {
-    doc.page.drawText(ln, { x: ML, y: doc.y, size: 6.8, font, color: BLACK })
-    doc.y -= 8.2
+    doc.page.drawText(ln, { x: ML, y: doc.y, size: 6.6, font, color: BLACK })
+    doc.y -= 7.4
   }
 
   // ── Pie de página: N° de formato + texto legal (verde CETOX, en todas las páginas) ─

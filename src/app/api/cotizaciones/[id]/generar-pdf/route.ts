@@ -32,7 +32,7 @@ const DATOS_BANCARIOS = [
   'Depósito o transferencia — Banco de Crédito del Perú, a nombre de CENTRO TOXICOLÓGICO S.A.C. (RUC 20506303746).',
   'Dólares americanos: Cta. cte. 1941427241185 // CCI 00219400142724118592',
   'Soles: Cta. cte. 1941778268001 // CCI 00219400177826800195',
-  'Presentar / escanear el voucher de depósito: 920008680 (WhatsApp) / servicios@cetox.com.pe',
+  'Enviar constancia de depósito o transferencia: 920008680 (WhatsApp) / servicios@cetox.com.pe',
   'Sistema de Detracción (empresa nacional) tasa 12%: Banco de la Nación (S/) Cta. N° 058-067458. Tipo de operación 01 · Bien/servicio 037 (Demás servicios gravados con el IGV).',
   'Empresas extranjeras: Swift Code BCPLPEPL — Banco de Crédito del Perú, Jr. Lampa N° 499, Lima. Los gastos bancarios los asume el cliente (cargo "OUR").',
 ].join('\n')
@@ -118,19 +118,22 @@ export async function GET(
     const emails = [cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean) as string[]
     const maxA = Math.max(1, contactos.length, telefonos.length)
     const maxB = Math.max(1, emails.length)
-    const hA = 12 + maxA * 10, hB = 12 + maxB * 10
-    const total = hA + hB
+    const fechaHoraLine = [cot.fechaContacto, cot.horaContacto].filter(Boolean).join('  —  ')
+    const hA = 12 + maxA * 10, hB = 12 + maxB * 10, hC = fechaHoraLine ? 16 : 0
+    const total = hA + hB + hC
 
     await doc.ensureSpace(total + 8)
-    const yTop = doc.y, yBot = yTop - total
+    const yTop = doc.y
     const c1 = bx0, c2 = bx0 + 135, c3 = bx0 + 265, c4 = bx0 + 395
     const yB = yTop - hA
+    const yRowBBottom = yB - hB
+    const yBot = yRowBBottom - hC
 
     // Sombreado en damero (alterna por fila y columna) con el color de fondo de la app
     const colX = [c1, c2, c3, c4, bx1]
     const rows = [
       { y0: yB, h: hA },
-      { y0: yBot, h: hB },
+      { y0: yRowBBottom, h: hB },
     ]
     rows.forEach((row, ri) => {
       colX.slice(0, -1).forEach((cx, ci) => {
@@ -139,11 +142,14 @@ export async function GET(
         }
       })
     })
+    if (hC > 0) doc.page.drawRectangle({ x: bx0, y: yBot, width: bx1 - bx0, height: hC, color: SHADE })
 
     // Bordes
     vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
-    vseg(c2, yTop, yBot); vseg(c3, yTop, yBot); vseg(c4, yTop, yBot)
-    for (const y of [yTop, yB, yBot]) hline(y)
+    vseg(c2, yTop, yRowBBottom); vseg(c3, yTop, yRowBBottom); vseg(c4, yTop, yRowBBottom)
+    const hlineYs = [yTop, yB, yRowBBottom]
+    if (hC > 0) hlineYs.push(yBot)
+    for (const y of hlineYs) hline(y)
 
     // Celda: etiqueta (versalita verde CETOX) arriba y valor(es) apilados debajo
     const cellV = (x: number, rowTop: number, label: string, values: (string | null | undefined)[], colW: number, size = 8) => {
@@ -170,7 +176,15 @@ export async function GET(
     cellV(c3, yB, 'EMAIL', emails, 130, 7)
     cellV(c4, yB, 'COMUNICACIÓN', [comLabel], bx1 - c4, 7)
 
-    doc.y = yBot - 10
+    // Fila C (opcional): fecha y hora en que el cliente solicitó la cotización
+    if (hC > 0) {
+      const label = 'FECHA Y HORA SOLICITADA POR EL CLIENTE :'
+      doc.page.drawText(label, { x: bx0 + 4, y: yRowBBottom - 11, size: 6.5, font: fontBold, color: GREEN })
+      const lw = fontBold.widthOfTextAtSize(label, 6.5)
+      doc.page.drawText(fechaHoraLine, { x: bx0 + 4 + lw + 6, y: yRowBBottom - 11, size: 8, font, color: BLACK })
+    }
+
+    doc.y = yBot - 16
   }
 
   // ── 2. ENSAYOS COTIZADOS ─────────────────────────────────────────────────────
@@ -250,7 +264,6 @@ export async function GET(
   doc.page.drawText('Notas de entrega', { x: ML, y: bandY, size: 8.5, font: fontBold, color: GREEN })
   let ny = bandY - 12
   const notas = [
-    `La presente cotización está emitida en ${monedaTxt}.`,
     '*El tiempo de entrega de los informes de ensayo indicado es referencial, la fecha exacta se especificará en la Solicitud de Ensayo (con el ingreso de la muestra).',
     '** El Informe de ensayo se emitirá en idioma español, se ofrece servicio de traducción.',
   ]
@@ -264,10 +277,15 @@ export async function GET(
   }
   doc.y = Math.min(ty, ny) - 10
 
+  // ── Aviso de moneda (destacado, separado de las demás notas) ─────────────────
+  await doc.ensureSpace(24)
+  doc.page.drawRectangle({ x: bx0, y: doc.y - 12, width: bx1 - bx0, height: 17, color: GREEN })
+  doc.page.drawText(`La presente cotización está emitida en ${monedaTxt}.`, { x: bx0 + 6, y: doc.y - 8, size: 8.5, font: fontBold, color: WHITE })
+  doc.y -= 26
+
   // ── 3. CONDICIONES Y RECEPCIÓN DE MUESTRAS ───────────────────────────────────
   const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
   const observacionesTxt = [
-    `La presente cotización está emitida en ${monedaTxt}.`,
     cot.observaciones,
     'El cliente debe verificar y confirmar si los ensayos cotizados son según sus requerimientos.',
   ].filter(Boolean).join('\n')
@@ -275,10 +293,12 @@ export async function GET(
   type FRow = { label: string; value: string | null }
   const labelW2 = 160, valW2 = CW - labelW2 - 8
 
-  // Solo se listan los campos con valor; los que quedan en blanco no se dibujan.
+  // Solo se listan los campos con valor; los que quedan en blanco no se dibujan
+  // (salvo "Cantidad de muestra", que se deja como línea en blanco para completar a mano).
   const izqBase: FRow[] = [
     { label: 'Observaciones :', value: observacionesTxt },
     { label: 'Muestra :', value: muestrasNombres || null },
+    { label: 'Cantidad de muestra :', value: '—' },
     { label: 'Datos y requisitos necesarios :', value: DATOS_REQUISITOS },
     { label: 'Lugar de recepción de muestra :', value: DIRECCION_CETOX },
     { label: 'Horario de atención :', value: HORARIO_ATENCION },
@@ -286,7 +306,6 @@ export async function GET(
   const derBase: FRow[] = [
     { label: 'Forma de pago :', value: MODALIDAD_LABELS[cot.modalidadPago] ?? cot.modalidadPago },
     { label: 'Teléfono 2 :', value: cot.contactoTelefono2 },
-    { label: 'Hora :', value: cot.horaContacto },
   ].filter(r => r.value)
 
   const lineH = 8.8
@@ -301,8 +320,8 @@ export async function GET(
   const totalH = subH + hIzq + (filasDer.length ? subH + hDer : 0)
 
   // Datos bancarios como bloque full-width debajo (predeterminado, no editable)
-  const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 6.6)
-  const bancH = bancLines.length * 7.4 + 8
+  const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 7.6)
+  const bancH = bancLines.length * 9.2 + 8
 
   // Reservar el título + cuadro + datos bancarios juntos (evita que se separen)
   await doc.ensureSpace(totalH + bancH + 16)
@@ -334,12 +353,12 @@ export async function GET(
   doc.page.drawRectangle({ x: bx0, y: boxBot, width: bx1 - bx0, height: boxTop - boxBot, borderColor: GREEN, borderWidth: 0.7 })
   doc.y = boxBot - 8
 
-  // Datos bancarios (bloque full-width, texto pequeño, predeterminado)
-  doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8, font: fontBold, color: GREEN })
-  doc.y -= 9
+  // Datos bancarios (bloque full-width, predeterminado, no editable)
+  doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8.5, font: fontBold, color: GREEN })
+  doc.y -= 10
   for (const ln of bancLines) {
-    doc.page.drawText(ln, { x: ML, y: doc.y, size: 6.6, font, color: BLACK })
-    doc.y -= 7.4
+    doc.page.drawText(ln, { x: ML, y: doc.y, size: 7.6, font, color: BLACK })
+    doc.y -= 9.2
   }
 
   // ── Pie de página: N° de formato + texto legal (verde CETOX, en todas las páginas) ─

@@ -8,10 +8,6 @@ import {
 } from '@/lib/pdf-membrete'
 
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
-const ESTADO_LABELS: Record<string, string> = {
-  EMITIDA: 'Emitida', RECIBIDA: 'Recibida', EN_EJECUCION: 'En ejecución',
-  CON_RESULTADO: 'Con resultado', INFORME_EMITIDO: 'Informe emitido', ANULADO: 'Anulado',
-}
 
 export async function GET(
   _req: NextRequest,
@@ -36,6 +32,21 @@ export async function GET(
   const doc = await crearMembrete('ORDEN DE ANÁLISIS (ODA)', numODA, { plantilla: 'letterhead-cotizacion.pdf' })
   const { font, fontBold } = doc
 
+  const wrapText = (text: string, maxW: number, size: number): string[] => {
+    const out: string[] = []
+    for (const para of text.split(/\r?\n/)) {
+      const words = para.split(/\s+/).filter(Boolean)
+      let cur = ''
+      for (const wd of words) {
+        const test = cur ? `${cur} ${wd}` : wd
+        if (font.widthOfTextAtSize(test, size) > maxW && cur) { out.push(cur); cur = wd }
+        else cur = test
+      }
+      out.push(cur || '')
+    }
+    return out
+  }
+
   // ── Área (destacada, para identificación rápida en el laboratorio) ───────────
   // Nota: el ODA es un documento de trabajo para el laboratorio; no debe exponer
   // el cliente, el nombre comercial de la muestra ni los costos de los ensayos.
@@ -51,14 +62,21 @@ export async function GET(
   doc.page.drawText(`ÁREA: ${areaLabel}`, { x: ML + 8, y: doc.y - 1, size: 12, font: fontBold, color: WHITE })
   doc.y -= 32
 
-  // ── Datos de la ODA ────────────────────────────────────────────────────────────
+  // ── Datos de la ODA (mismos campos que el formato físico) ────────────────────
+  const otraIndicacion = ({ Q: set.otraIndicacionQ, B: set.otraIndicacionB, M: set.otraIndicacionM } as Record<string, string | null>)[oda.area] ?? set.otraIndicacion
+
   await doc.section('DATOS DE LA ORDEN')
-  doc.field('SET asociado', formatNumSET(set.numero, set.anio))
-  doc.field('Estado', ESTADO_LABELS[oda.estado] ?? oda.estado)
-  doc.field('Código de muestra', set.codigoMuestra)
+  doc.field('SET N°', formatNumSET(set.numero, set.anio))
   doc.field('Fecha de recepción', oda.fechaRecepcion ? formatFecha(oda.fechaRecepcion) : formatFecha(set.fechaIngreso))
-  doc.field('Inicio de ejecución', oda.fechaInicioEjecucion ? formatFecha(oda.fechaInicioEjecucion) : '—')
+  doc.field('Tipo de muestra', set.tipoMuestra)
+  doc.field('Ingrediente activo', set.ingredienteActivo)
+  doc.field('Formulación', set.formulacion)
   doc.field('Edad del paciente', oda.edadPaciente)
+  doc.field('Condiciones ambientales', set.condicionesAmbientales)
+  doc.field('Número de muestras', set.numeroMuestras)
+  doc.field('Peso o volumen de muestra', set.pesoVolumen)
+  doc.field('Código de la muestra', set.codigoMuestra)
+  doc.field('Otra indicación', otraIndicacion)
   doc.y -= 4
 
   // ── Ensayos ──────────────────────────────────────────────────────────────────
@@ -67,9 +85,9 @@ export async function GET(
 
   await doc.ensureSpace(24)
   doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 16, color: GREEN })
-  doc.page.drawText('Ensayo', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
+  doc.page.drawText('Tipo de ensayo', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
   doc.page.drawText('Plazo', { x: COL_TIEMPO, y: doc.y, size: 8, font: fontBold, color: WHITE })
-  doc.page.drawText('Entrega', { x: COL_FECHA, y: doc.y, size: 8, font: fontBold, color: WHITE })
+  doc.page.drawText('Fecha de entrega', { x: COL_FECHA, y: doc.y, size: 8, font: fontBold, color: WHITE })
   doc.y -= 16
 
   let idx = 0
@@ -82,16 +100,29 @@ export async function GET(
     doc.y -= 14
     idx++
   }
-  doc.y -= 12
+  doc.y -= 8
 
-  // ── Firmas ─────────────────────────────────────────────────────────────────────
-  await doc.ensureSpace(70)
-  doc.y -= 26
-  const sigY = doc.y, sig1X = ML + 18, sig2X = PAGE_W - MR - 195
-  doc.page.drawLine({ start: { x: sig1X, y: sigY }, end: { x: sig1X + 160, y: sigY }, thickness: 0.75, color: BLACK })
-  doc.page.drawLine({ start: { x: sig2X, y: sigY }, end: { x: sig2X + 180, y: sigY }, thickness: 0.75, color: BLACK })
-  doc.page.drawText('Analista responsable', { x: sig1X + 30, y: sigY - 13, size: 8, font: fontBold, color: GRAY })
-  doc.page.drawText('Centro Toxicológico S.A.C. "CETOX"', { x: sig2X + 12, y: sigY - 13, size: 8, font: fontBold, color: GRAY })
+  // ── Observaciones ──────────────────────────────────────────────────────────────
+  if (set.observaciones) {
+    await doc.section('OBSERVACIONES')
+    const lineas = wrapText(set.observaciones, CW - 8, 8.5)
+    for (const ln of lineas) {
+      await doc.ensureSpace(13)
+      doc.page.drawText(ln, { x: ML + 2, y: doc.y, size: 8.5, font, color: BLACK })
+      doc.y -= 12
+    }
+    doc.y -= 4
+  }
+
+  // ── Conformidad de la recepción de la muestra ─────────────────────────────────
+  await doc.ensureSpace(30)
+  doc.page.drawText('Conformidad de la recepción de la muestra:', { x: ML, y: doc.y, size: 8.5, font: fontBold, color: GRAY })
+  const confLabelW = fontBold.widthOfTextAtSize('Conformidad de la recepción de la muestra:', 8.5)
+  doc.page.drawLine({ start: { x: ML + confLabelW + 8, y: doc.y - 2 }, end: { x: PAGE_W - MR - 110, y: doc.y - 2 }, thickness: 0.6, color: BLACK })
+  doc.page.drawText('Fecha:', { x: PAGE_W - MR - 95, y: doc.y, size: 8.5, font: fontBold, color: GRAY })
+  const fechaLabelW = fontBold.widthOfTextAtSize('Fecha:', 8.5)
+  doc.page.drawLine({ start: { x: PAGE_W - MR - 95 + fechaLabelW + 4, y: doc.y - 2 }, end: { x: PAGE_W - MR, y: doc.y - 2 }, thickness: 0.6, color: BLACK })
+  doc.y -= 16
 
   return doc.finish(`ODA-${numODA}.pdf`, 'attachment') as unknown as NextResponse
 }

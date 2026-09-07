@@ -28,14 +28,17 @@ const DATOS_REQUISITOS = [
   '- Tipo de formulación (Ej: polvo soluble, granulado, suspensión concentrada, etc.)',
   '- Fecha de fabricación, fecha de vencimiento y número de lote',
 ].join('\n')
-const DATOS_BANCARIOS = [
-  'Depósito o transferencia — Banco de Crédito del Perú, a nombre de CENTRO TOXICOLÓGICO S.A.C. (RUC 20506303746).',
-  'Dólares americanos: Cta. cte. 1941427241185 // CCI 00219400142724118592',
-  'Soles: Cta. cte. 1941778268001 // CCI 00219400177826800195',
-  'Enviar constancia de depósito o transferencia: 920008680 (WhatsApp) / servicios@cetox.com.pe',
-  'Sistema de Detracción (empresa nacional) tasa 12%: Banco de la Nación (S/) Cta. N° 058-067458. Tipo de operación 01 · Bien/servicio 037 (Demás servicios gravados con el IGV).',
-  'Empresas extranjeras: Swift Code BCPLPEPL — Banco de Crédito del Perú, Jr. Lampa N° 499, Lima. Los gastos bancarios los asume el cliente (cargo "OUR").',
-].join('\n')
+const DATOS_BANCARIOS_FILAS: { label: string; value: string }[] = [
+  { label: 'Titular de la cuenta', value: 'CENTRO TOXICOLÓGICO S.A.C. (RUC 20506303746)' },
+  { label: 'Banco', value: 'Banco de Crédito del Perú' },
+  { label: 'Dólares americanos', value: 'Cta. cte. 1941427241185  /  CCI 00219400142724118592' },
+  { label: 'Soles', value: 'Cta. cte. 1941778268001  /  CCI 00219400177826800195' },
+  { label: 'Envío de constancia', value: '920008680 (WhatsApp)  /  servicios@cetox.com.pe' },
+  { label: 'Sistema de detracción', value: 'Empresa nacional tasa 12%: Banco de la Nación (S/) Cta. N° 058-067458. Tipo de operación 01 - Bien/servicio 037 (Demás servicios gravados con el IGV).' },
+  { label: 'Transferencias del exterior', value: 'Swift Code BCPLPEPL — Banco de Crédito del Perú, Jr. Lampa N° 499, Lima.' },
+  { label: 'Gastos bancarios', value: 'Los gastos bancarios los asume el cliente (cargo "OUR").' },
+]
+const NOTA_CONSTANCIA = 'Agradeceremos remitir la constancia de pago al WhatsApp o correo indicado.'
 
 export async function GET(
   _req: NextRequest,
@@ -323,12 +326,40 @@ export async function GET(
   const subH = 13
   const totalH = subH + hIzq + (filasDer.length ? subH + hDer : 0)
 
-  // Datos bancarios como bloque full-width debajo (predeterminado, no editable)
-  const bancLines = wrapText(DATOS_BANCARIOS, CW - 4, 7.6)
-  const bancH = bancLines.length * 9.2 + 8
+  // Datos bancarios: tabla de filas (predeterminadas, no editables) + nota lateral
+  const bancGap = 12, bancRightW = 150
+  const bancLabelW = 148
+  const bancLeftW = (bx1 - bx0) - bancRightW - bancGap
+  const bancValW = bancLeftW - bancLabelW - 8
+  const bancSubH = 17
+  const bancFilas = DATOS_BANCARIOS_FILAS.map(r => {
+    const valueLines = wrapText(r.value, bancValW - 4, 7.6)
+    return { label: r.label, valueLines, h: Math.max(13, valueLines.length * 9.2 + 4) }
+  })
+  const bancTableH = bancFilas.reduce((a, r) => a + r.h, 0)
+  const bancBoxH = bancSubH + bancTableH
+  const bancNoteLines = wrapText(NOTA_CONSTANCIA, bancRightW - 18, 7.4)
+
+  const drawBankIcon = (x: number, y: number, color: typeof WHITE) => {
+    const w = 11, h = 9, ledgeY = y + h - 3
+    doc.page.drawLine({ start: { x, y: ledgeY }, end: { x: x + w / 2, y: y + h }, thickness: 0.8, color })
+    doc.page.drawLine({ start: { x: x + w / 2, y: y + h }, end: { x: x + w, y: ledgeY }, thickness: 0.8, color })
+    doc.page.drawLine({ start: { x, y: ledgeY }, end: { x: x + w, y: ledgeY }, thickness: 0.8, color })
+    doc.page.drawLine({ start: { x, y }, end: { x: x + w, y }, thickness: 0.8, color })
+    for (const cx of [x + 2, x + w / 2, x + w - 2]) {
+      doc.page.drawLine({ start: { x: cx, y: y + 1 }, end: { x: cx, y: ledgeY }, thickness: 0.8, color })
+    }
+  }
+  const drawDocIcon = (x: number, y: number, color: typeof GREEN) => {
+    const w = 9, h = 12
+    doc.page.drawRectangle({ x, y, width: w, height: h, borderColor: color, borderWidth: 0.8 })
+    for (const ly of [y + h - 3.5, y + h - 6.5, y + h - 9.5]) {
+      doc.page.drawLine({ start: { x: x + 1.5, y: ly }, end: { x: x + w - 1.5, y: ly }, thickness: 0.6, color })
+    }
+  }
 
   // Reservar el título + cuadro + datos bancarios juntos (evita que se separen)
-  await doc.ensureSpace(totalH + bancH + 16)
+  await doc.ensureSpace(totalH + bancBoxH + 16)
   badge('3', 'CONDICIONES Y RECEPCIÓN DE MUESTRAS')
 
   const boxTop = doc.y
@@ -358,13 +389,34 @@ export async function GET(
   doc.page.drawRectangle({ x: bx0, y: boxBot, width: bx1 - bx0, height: boxTop - boxBot, borderColor: GREEN, borderWidth: 0.7 })
   doc.y = boxBot - 14
 
-  // Datos bancarios (bloque full-width, predeterminado, no editable)
-  doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8.5, font: fontBold, color: GREEN })
-  doc.y -= 10
-  for (const ln of bancLines) {
-    doc.page.drawText(ln, { x: ML, y: doc.y, size: 7.6, font, color: BLACK })
-    doc.y -= 9.2
-  }
+  // Datos bancarios (tabla de filas predeterminadas + nota lateral)
+  const bancTop = doc.y
+  doc.page.drawRectangle({ x: bx0, y: bancTop - bancSubH, width: bancLeftW, height: bancSubH, color: GREEN })
+  drawBankIcon(bx0 + 7, bancTop - bancSubH + 4, WHITE)
+  doc.page.drawText('Datos bancarios', { x: bx0 + 24, y: bancTop - bancSubH + 5.5, size: 8.5, font: fontBold, color: WHITE })
+  doc.y -= bancSubH
+
+  let by = doc.y
+  bancFilas.forEach((r) => {
+    doc.page.drawText(r.label, { x: bx0 + 4, y: by - 9, size: 7.8, font: fontBold, color: BLACK })
+    r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + bancLabelW + 4, y: by - 9 - j * 9.2, size: 7.8, font, color: BLACK }))
+    by -= r.h
+    doc.page.drawLine({ start: { x: bx0, y: by }, end: { x: bx0 + bancLeftW, y: by }, thickness: 0.5, color: rgb(0.85, 0.85, 0.85) })
+  })
+  doc.page.drawRectangle({ x: bx0, y: by, width: bancLeftW, height: bancTop - by, borderColor: GREEN, borderWidth: 0.7 })
+
+  // Panel lateral: nota para remitir la constancia de pago
+  const noteX = bx0 + bancLeftW + bancGap
+  doc.page.drawRectangle({ x: noteX, y: by, width: bancRightW, height: bancTop - by, borderColor: GREEN, borderWidth: 0.7, color: SHADE })
+  drawDocIcon(noteX + bancRightW / 2 - 4.5, bancTop - 20, GREEN)
+  let noteY = bancTop - 34
+  bancNoteLines.forEach((ln) => {
+    const lw = font.widthOfTextAtSize(ln, 7.4)
+    doc.page.drawText(ln, { x: noteX + (bancRightW - lw) / 2, y: noteY, size: 7.4, font, color: BLACK })
+    noteY -= 9.5
+  })
+
+  doc.y = by - 14
 
   // ── Pie de página: N° de formato + texto legal (verde CETOX, en todas las páginas) ─
   const piePagina = [

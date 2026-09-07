@@ -187,17 +187,17 @@ export async function GET(
     doc.y = yBot - 16
   }
 
-  // ── 2. ENSAYOS COTIZADOS ─────────────────────────────────────────────────────
-  badge('2', 'ENSAYOS COTIZADOS')
+  // ── 2. SERVICIOS SOLICITADOS ──────────────────────────────────────────────────
+  badge('2', 'SERVICIOS SOLICITADOS')
   // Columna de ensayo más ancha; área/entrega/costo más delgadas y a la derecha
-  const COL_AREA = PAGE_W - MR - 178, COL_PLAZO = PAGE_W - MR - 128, COL_COSTO = PAGE_W - MR - 52
+  const COL_AREA = PAGE_W - MR - 178, COL_PLAZO = PAGE_W - MR - 138, COL_COSTO = PAGE_W - MR - 52
 
   async function tableHeader() {
     await doc.ensureSpace(24)
     doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 16, color: GREEN })
-    doc.page.drawText('Ensayo / método', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText('Muestra / Ensayos - Método', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.page.drawText('Área', { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: WHITE })
-    doc.page.drawText('Entrega*', { x: COL_PLAZO, y: doc.y, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText('Tiempo de entrega*', { x: COL_PLAZO, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.page.drawText('Costo', { x: COL_COSTO, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.y -= 16
   }
@@ -217,10 +217,14 @@ export async function GET(
   await tableHeader()
   if (hasMuestras) {
     for (const muestra of cot.muestras) {
-      await doc.ensureSpace(30)
-      doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 13, color: LIGHT_GRAY })
-      doc.page.drawText(`Muestra: ${muestra.nombre || '(sin nombre)'}`, { x: ML + 4, y: doc.y, size: 8.5, font: fontBold, color: GREEN })
-      doc.y -= 14
+      // El nombre de la muestra puede traer saltos de línea (varias líneas
+      // escritas por el usuario) — hay que envolverlo, no dibujarlo de un tirón.
+      const muestraLineas = wrapText(`Muestra: ${muestra.nombre || '(sin nombre)'}`, CW - 8, 8.5)
+      const muestraH = Math.max(13, muestraLineas.length * 10 + 4)
+      await doc.ensureSpace(muestraH + 20)
+      doc.page.drawRectangle({ x: ML, y: doc.y - muestraH + 10, width: CW, height: muestraH, color: LIGHT_GRAY })
+      muestraLineas.forEach((ln, i) => doc.page.drawText(ln, { x: ML + 4, y: doc.y - i * 10, size: 8.5, font: fontBold, color: GREEN }))
+      doc.y -= (muestraH + 1)
       let i = 0
       for (const it of muestra.items) { await row(it.ensayo, it.costo, it.tiempoEntregaDias, i % 2 === 1); i++ }
       doc.y -= 4
@@ -308,10 +312,10 @@ export async function GET(
     { label: 'Teléfono 2 :', value: cot.contactoTelefono2 },
   ].filter(r => r.value)
 
-  const lineH = 8.8
+  const lineH = 9.4
   const buildFilas = (base: FRow[]) => base.map(r => {
     const valueLines = wrapText(r.value as string, valW2 - 4, 8)
-    return { label: r.label, valueLines, h: Math.max(11, valueLines.length * lineH + 3) }
+    return { label: r.label, valueLines, h: Math.max(14, valueLines.length * lineH + 5) }
   })
   const filasIzq = buildFilas(izqBase), filasDer = buildFilas(derBase)
   const hIzq = filasIzq.reduce((a, r) => a + r.h, 0)
@@ -336,9 +340,10 @@ export async function GET(
   }
   const drawFilas = (filas: ReturnType<typeof buildFilas>) => {
     for (const r of filas) {
-      doc.page.drawText(r.label, { x: bx0 + 4, y: doc.y - 8, size: 8, font: fontBold, color: BLACK })
-      r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: doc.y - 8 - j * lineH, size: 8, font, color: BLACK }))
+      doc.page.drawText(r.label, { x: bx0 + 4, y: doc.y - 9, size: 8, font: fontBold, color: BLACK })
+      r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: doc.y - 9 - j * lineH, size: 8, font, color: BLACK }))
       doc.y -= r.h
+      hline(doc.y)
     }
   }
 
@@ -351,7 +356,7 @@ export async function GET(
 
   const boxBot = doc.y
   doc.page.drawRectangle({ x: bx0, y: boxBot, width: bx1 - bx0, height: boxTop - boxBot, borderColor: GREEN, borderWidth: 0.7 })
-  doc.y = boxBot - 8
+  doc.y = boxBot - 14
 
   // Datos bancarios (bloque full-width, predeterminado, no editable)
   doc.page.drawText('Datos bancarios:', { x: ML, y: doc.y, size: 8.5, font: fontBold, color: GREEN })

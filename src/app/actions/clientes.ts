@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireRol } from '@/lib/roles'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { hash } from 'bcryptjs'
 import z from 'zod'
 
 const ClienteSchema = z.object({
@@ -63,4 +64,28 @@ export async function eliminarCliente(id: string) {
   await prisma.cliente.delete({ where: { id } })
   revalidatePath('/clientes')
   redirect('/clientes')
+}
+
+function generarPasswordLegible(): string {
+  // Sin caracteres ambiguos (0/O, 1/l/I) para que sea fácil de dictar/transcribir.
+  const alfabeto = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  let out = ''
+  for (let i = 0; i < 10; i++) out += alfabeto[Math.floor(Math.random() * alfabeto.length)]
+  return out
+}
+
+/** Genera (o regenera) la contraseña del Portal del Cliente y activa el acceso. Devuelve la contraseña en texto plano — solo se muestra una vez. */
+export async function generarPasswordPortal(id: string): Promise<string> {
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
+  const password = generarPasswordLegible()
+  const portalPasswordHash = await hash(password, 10)
+  await prisma.cliente.update({ where: { id }, data: { portalPasswordHash, portalActivo: true } })
+  revalidatePath(`/clientes/${id}`)
+  return password
+}
+
+export async function desactivarPortalCliente(id: string) {
+  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
+  await prisma.cliente.update({ where: { id }, data: { portalActivo: false } })
+  revalidatePath(`/clientes/${id}`)
 }

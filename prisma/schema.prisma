@@ -164,6 +164,10 @@ model Cliente {
   activo        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
+  // Portal del cliente (acceso externo de solo lectura a sus muestras/informes)
+  portalPasswordHash String?
+  portalActivo       Boolean  @default(false)
+
   cotizaciones     Cotizacion[]
   sets             SET[]
   facturasCliente  FacturaCliente[]

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { ClienteForm } from '@/components/forms/cliente-form'
 import { EliminarClienteBtn } from '@/components/eliminar-cliente-btn'
+import { PortalAccessCard } from '@/components/portal-access-card'
 
 export default async function EditarClientePage({ params }: { params: Promise<{ id: string }> }) {
   await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])
@@ -32,6 +33,10 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
         </div>
       </div>
       <ClienteForm action={action} cliente={cliente} />
+
+      <div className="mt-6">
+        <PortalAccessCard clienteId={cliente.id} ruc={cliente.ruc} portalActivo={cliente.portalActivo} />
+      </div>
     </div>
   )
 }

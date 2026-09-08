@@ -97,17 +97,21 @@ export async function GET(
     doc.y -= 16
   }
 
-  // ── Área (destacada, para identificación rápida en el laboratorio) ───────────
+  // ── Área de laboratorio / Fecha de recepción (destacadas) ─────────────────────
   const areaColor = AREA_COLOR[oda.area] ?? GREEN
   const areaLabel = (AREA_LABELS[oda.area] ?? oda.area).toUpperCase()
+  const fechaRecepcionTxt = oda.fechaRecepcion ? formatFecha(oda.fechaRecepcion) : formatFecha(set.fechaIngreso)
   await doc.ensureSpace(30)
   doc.page.drawRectangle({ x: ML, y: doc.y - 8, width: CW, height: 24, color: areaColor })
-  doc.page.drawText(`ÁREA: ${areaLabel}`, { x: ML + 8, y: doc.y - 1, size: 12, font: fontBold, color: WHITE })
+  doc.page.drawText(`ÁREA DE LABORATORIO: ${areaLabel}`, { x: ML + 8, y: doc.y - 1, size: 12, font: fontBold, color: WHITE })
+  const fechaRecepcionLbl = `FECHA DE RECEPCIÓN: ${fechaRecepcionTxt}`
+  const fechaRecepcionLblW = fontBold.widthOfTextAtSize(fechaRecepcionLbl, 10)
+  doc.page.drawText(fechaRecepcionLbl, { x: bx1 - 8 - fechaRecepcionLblW, y: doc.y, size: 10, font: fontBold, color: WHITE })
   doc.y -= 32
 
   // ── 1. Datos de la muestra (mismos campos que el formato físico) ─────────────
   const otraIndicacion = ({ Q: set.otraIndicacionQ, B: set.otraIndicacionB, M: set.otraIndicacionM } as Record<string, string | null>)[oda.area] ?? set.otraIndicacion
-  const fechaRecepcionTxt = oda.fechaRecepcion ? formatFecha(oda.fechaRecepcion) : formatFecha(set.fechaIngreso)
+  const codigoMuestraTxt = (set.codigoMuestra ?? '').replace(/^MU[-\s]*/i, '')
 
   const filas: { label: string; sup?: string; value: string | null }[] = [
     { label: 'Tipo de muestra', sup: '1', value: set.tipoMuestra },
@@ -117,8 +121,7 @@ export async function GET(
     { label: 'Condiciones ambientales', sup: '3', value: set.condicionesAmbientales },
     { label: 'Número de muestras', value: set.numeroMuestras },
     { label: 'Peso o volumen de muestra', sup: '4', value: set.pesoVolumen },
-    { label: 'Código de la muestra', value: set.codigoMuestra },
-    { label: 'Fecha de recepción', value: fechaRecepcionTxt },
+    { label: 'Código de la muestra', value: codigoMuestraTxt },
     { label: 'Otra indicación', sup: '5', value: otraIndicacion },
   ]
   const labelW = 170, valW = CW - labelW - 8

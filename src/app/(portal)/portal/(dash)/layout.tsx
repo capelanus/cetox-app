@@ -26,6 +26,13 @@ export default async function PortalDashLayout({ children }: { children: React.R
         </div>
       </header>
       <main className="max-w-4xl mx-auto px-4 py-8">{children}</main>
+      <footer className="max-w-4xl mx-auto px-4 pb-8">
+        <p className="text-center text-xs text-slate-400">
+          <a href="/aviso-legal" className="underline hover:text-slate-600">Aviso legal</a>
+          {' · '}
+          <a href="/politica-privacidad" className="underline hover:text-slate-600">Política de privacidad</a>
+        </p>
+      </footer>
     </div>
   )
 }

@@ -92,6 +92,11 @@ export default function PortalLoginPage() {
         <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
           ¿No tienes acceso? Escríbenos a servicios@cetox.com.pe
         </p>
+        <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <a href="/aviso-legal" className="underline hover:text-white">Aviso legal</a>
+          {' · '}
+          <a href="/politica-privacidad" className="underline hover:text-white">Política de privacidad</a>
+        </p>
       </div>
     </div>
   )

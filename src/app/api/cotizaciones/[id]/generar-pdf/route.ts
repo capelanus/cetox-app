@@ -266,7 +266,7 @@ export async function GET(
   })
   const totalRowBot = rowTop - totRowH
   doc.page.drawRectangle({ x: totBoxX0, y: totalRowBot, width: totBoxW, height: totRowH, color: GREEN })
-  doc.page.drawText('TOTAL (S/.)', { x: totLabelX, y: rowTop - 11, size: 9.5, font: fontBold, color: WHITE })
+  doc.page.drawText(`TOTAL (${monedaCorta})`, { x: totLabelX, y: rowTop - 11, size: 9.5, font: fontBold, color: WHITE })
   drawRight(formatMoneda(cot.total, moneda), totRightEdge, rowTop - 11, 9.5, fontBold, WHITE)
   doc.page.drawRectangle({ x: totBoxX0, y: totalRowBot, width: totBoxW, height: totBoxTop - totalRowBot, borderColor: GREEN, borderWidth: 0.7 })
   let ty = totalRowBot - 8

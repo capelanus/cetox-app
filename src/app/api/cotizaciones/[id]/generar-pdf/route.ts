@@ -195,13 +195,16 @@ export async function GET(
   // Columna de ensayo más ancha; área/entrega/costo más delgadas y a la derecha
   const COL_AREA = PAGE_W - MR - 178, COL_PLAZO = PAGE_W - MR - 138, COL_COSTO = PAGE_W - MR - 52
 
+  const monedaCorta = moneda === 'USD' ? 'USD' : 'S/.'
+  const formatNum = (v: number) => new Intl.NumberFormat('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
+
   async function tableHeader() {
     await doc.ensureSpace(24)
     doc.page.drawRectangle({ x: ML, y: doc.y - 4, width: CW, height: 16, color: GREEN })
     doc.page.drawText('Muestra / Ensayos - Método', { x: ML + 4, y: doc.y, size: 8, font: fontBold, color: WHITE })
-    doc.page.drawText('Área', { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText('Dpto.', { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.page.drawText('Tiempo de entrega*', { x: COL_PLAZO, y: doc.y, size: 8, font: fontBold, color: WHITE })
-    doc.page.drawText('Costo', { x: COL_COSTO, y: doc.y, size: 8, font: fontBold, color: WHITE })
+    doc.page.drawText(`Costo (${monedaCorta})`, { x: COL_COSTO, y: doc.y, size: 8, font: fontBold, color: WHITE })
     doc.y -= 16
   }
 
@@ -213,7 +216,7 @@ export async function GET(
     lineas.forEach((ln, i) => doc.page.drawText(ln, { x: ML + 4, y: doc.y - i * 10, size: 8, font, color: BLACK }))
     doc.page.drawText(areaLetra(ensayo.area), { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: GRAY })
     doc.page.drawText(`${dias} días`, { x: COL_PLAZO, y: doc.y, size: 8, font, color: BLACK })
-    doc.page.drawText(formatMoneda(costo, moneda), { x: COL_COSTO, y: doc.y, size: 8, font, color: BLACK })
+    doc.page.drawText(formatNum(costo), { x: COL_COSTO, y: doc.y, size: 8, font, color: BLACK })
     doc.y -= h
   }
 

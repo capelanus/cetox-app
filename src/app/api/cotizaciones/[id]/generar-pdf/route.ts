@@ -31,8 +31,8 @@ const DATOS_REQUISITOS = [
 const DATOS_BANCARIOS_FILAS: { label: string; value: string }[] = [
   { label: 'Titular de la cuenta', value: 'CENTRO TOXICOLÓGICO S.A.C. (RUC 20506303746)' },
   { label: 'Banco', value: 'Banco de Crédito del Perú' },
-  { label: 'Dólares americanos', value: 'CCI 00219400142724118592  /  Cta. cte. 1941427241185' },
-  { label: 'Soles', value: 'CCI 00219400177826800195  /  Cta. cte. 1941778268001' },
+  { label: 'Dólares americanos', value: 'CCI 00219400142724118592 /\nCta. cte. 1941427241185' },
+  { label: 'Soles', value: 'CCI 00219400177826800195 /\nCta. cte. 1941778268001' },
   { label: 'Envío de constancia', value: '920008680 (WhatsApp)  /  servicios@cetox.com.pe' },
   { label: 'Sistema de detracción', value: 'Empresa nacional tasa 12%: Banco de la Nación (S/) Cta. N° 058-067458. Tipo de operación 01 - Bien/servicio 037 (Demás servicios gravados con el IGV).' },
   { label: 'Transferencias del exterior', value: 'Swift Code BCPLPEPL — Banco de Crédito del Perú, Jr. Lampa N° 499, Lima.' },

@@ -31,8 +31,8 @@ const DATOS_REQUISITOS = [
 const DATOS_BANCARIOS_FILAS: { label: string; value: string }[] = [
   { label: 'Titular de la cuenta', value: 'CENTRO TOXICOLÓGICO S.A.C. (RUC 20506303746)' },
   { label: 'Banco', value: 'Banco de Crédito del Perú' },
-  { label: 'Dólares americanos', value: 'Cta. cte. 1941427241185  /  CCI 00219400142724118592' },
-  { label: 'Soles', value: 'Cta. cte. 1941778268001  /  CCI 00219400177826800195' },
+  { label: 'Dólares americanos', value: 'CCI 00219400142724118592  /  Cta. cte. 1941427241185' },
+  { label: 'Soles', value: 'CCI 00219400177826800195  /  Cta. cte. 1941778268001' },
   { label: 'Envío de constancia', value: '920008680 (WhatsApp)  /  servicios@cetox.com.pe' },
   { label: 'Sistema de detracción', value: 'Empresa nacional tasa 12%: Banco de la Nación (S/) Cta. N° 058-067458. Tipo de operación 01 - Bien/servicio 037 (Demás servicios gravados con el IGV).' },
   { label: 'Transferencias del exterior', value: 'Swift Code BCPLPEPL — Banco de Crédito del Perú, Jr. Lampa N° 499, Lima.' },
@@ -294,11 +294,33 @@ export async function GET(
   doc.y -= 26
 
   // ── 3. CONDICIONES Y RECEPCIÓN DE MUESTRAS ───────────────────────────────────
-  const muestrasNombres = cot.muestras.map(m => m.nombre).filter(Boolean).join(', ')
   const observacionesTxt = [
     cot.observaciones,
     'El cliente debe verificar y confirmar si los ensayos cotizados son según sus requerimientos.',
   ].filter(Boolean).join('\n')
+
+  // Indicaciones al laboratorio, por departamento (cada muestra puede traer
+  // indicaciones distintas para Química/Biología/Microbiología a la vez).
+  // Si más de una muestra aporta indicación para el mismo departamento, se
+  // antepone el nombre de la muestra a cada una para no mezclarlas sin aclarar
+  // a cuál corresponde.
+  const indicacionesTxt = ([
+    ['Química', 'indicacionQ'],
+    ['Biología', 'indicacionB'],
+    ['Microbiología', 'indicacionM'],
+  ] as [string, 'indicacionQ' | 'indicacionB' | 'indicacionM'][])
+    .map(([label, campo]) => {
+      const entradas = cot.muestras
+        .map(m => ({ nombre: (m.nombre || '').split(/\r?\n/)[0].trim(), valor: m[campo] }))
+        .filter((e): e is { nombre: string; valor: string } => Boolean(e.valor))
+      if (!entradas.length) return null
+      const texto = entradas.length > 1
+        ? entradas.map(e => `${e.nombre || 'muestra'}: ${e.valor}`).join('; ')
+        : entradas[0].valor
+      return `${label}: ${texto}`
+    })
+    .filter(Boolean)
+    .join('\n')
 
   type FRow = { label: string; value: string | null }
   const labelW2 = 160, valW2 = CW - labelW2 - 8
@@ -307,7 +329,8 @@ export async function GET(
   // (salvo "Cantidad de muestra", que se deja como línea en blanco para completar a mano).
   const izqBase: FRow[] = [
     { label: 'Observaciones :', value: observacionesTxt },
-    { label: 'Muestra :', value: muestrasNombres || null },
+    { label: 'Indicaciones :', value: indicacionesTxt || null },
+    { label: 'Muestra :', value: 'Proporcionada por el cliente' },
     { label: 'Cantidad de muestra :', value: '—' },
     { label: 'Datos y requisitos necesarios :', value: DATOS_REQUISITOS },
     { label: 'Lugar de recepción de muestra :', value: DIRECCION_CETOX },
@@ -418,6 +441,12 @@ export async function GET(
     doc.page.drawText(ln, { x: noteX + (bancRightW - lw) / 2, y: noteY, size: 7.4, font, color: BLACK })
     noteY -= 9.5
   })
+  noteY -= 2
+  for (const ln of ['(+51 920 008 680)', '(servicios@cetox.com.pe)']) {
+    const lw = fontBold.widthOfTextAtSize(ln, 7.4)
+    doc.page.drawText(ln, { x: noteX + (bancRightW - lw) / 2, y: noteY, size: 7.4, font: fontBold, color: GREEN })
+    noteY -= 9.5
+  }
 
   doc.y = by - 14
 

@@ -38,7 +38,33 @@ export async function crearRecepcion(formData: FormData) {
   const oc = await prisma.ordenCompra.findUnique({ where: { id: ordenCompraId } })
   if (oc) await prisma.requerimiento.update({ where: { id: oc.requerimientoId }, data: { estado: 'RECEPCIONADO' } })
 
+  // Acumular lo recibido en los ítems de la OC (misma cantidad y orden con la que
+  // se prellenó el formulario, ver recepciones/nueva/page.tsx). No hay FK entre
+  // RecepcionItem y OrdenCompraItem, así que se emparejan por posición. Se usa
+  // { increment } dentro de una transacción para que dos recepciones concurrentes
+  // sobre la misma OC no se pisen (lectura-luego-escritura no es atómica).
+  const ocItems = await prisma.ordenCompraItem.findMany({ where: { ordenCompraId }, orderBy: { orden: 'asc' } })
+  await prisma.$transaction(
+    ocItems.slice(0, items.length).map((ocItem, i) =>
+      prisma.ordenCompraItem.update({
+        where: { id: ocItem.id },
+        data: { cantidadRecibida: { increment: items[i]?.cantidadRecibida || 0 } },
+      })
+    )
+  )
+
+  await prisma.ordenCompraHistorial.create({
+    data: {
+      ordenCompraId,
+      usuarioId: session.user.id,
+      descripcion: `Recepción ${estado === 'CONFORME' ? 'conforme' : 'no conforme'} registrada por ${session.user.name ?? session.user.email}`,
+    },
+  })
+
   revalidatePath('/operaciones/recepciones')
+  revalidatePath('/operaciones/ordenes-compra')
+  revalidatePath(`/operaciones/ordenes-compra/${ordenCompraId}`)
+  revalidatePath('/operaciones/seguimiento')
   redirect(`/operaciones/recepciones/${rec.id}`)
 }
 
@@ -60,4 +86,5 @@ export async function registrarEntregaArea(id: string, formData: FormData) {
   })
   revalidatePath('/operaciones/recepciones')
   revalidatePath(`/operaciones/recepciones/${id}`)
+  revalidatePath('/operaciones/seguimiento')
 }

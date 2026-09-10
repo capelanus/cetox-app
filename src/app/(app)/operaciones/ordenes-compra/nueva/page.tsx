@@ -181,6 +181,13 @@ export default function NuevaOrdenCompraPage() {
               </select>
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+              <select name="tipo" defaultValue="PRODUCTO" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]">
+                <option value="PRODUCTO">Producto</option>
+                <option value="SERVICIO">Servicio</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
               <select name="moneda" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]">
                 <option value="PEN">PEN (Soles)</option>

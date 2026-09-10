@@ -45,7 +45,18 @@ export async function registrarFactura(formData: FormData) {
     await prisma.requerimiento.update({ where: { id: oc.requerimientoId }, data: { estado: 'CERRADO' } })
   }
 
+  await prisma.ordenCompraHistorial.create({
+    data: {
+      ordenCompraId,
+      usuarioId: session.user.id,
+      descripcion: `Factura ${serie ? serie + '-' : ''}${numero} registrada por ${session.user.name ?? session.user.email}`,
+    },
+  })
+
   revalidatePath('/operaciones/facturas')
+  revalidatePath('/operaciones/ordenes-compra')
+  revalidatePath(`/operaciones/ordenes-compra/${ordenCompraId}`)
+  revalidatePath('/operaciones/seguimiento')
   redirect(`/operaciones/facturas/${factura.id}`)
 }
 
@@ -69,6 +80,15 @@ export async function crearProvisionPago(facturaId: string, formData: FormData) 
   })
 
   await prisma.factura.update({ where: { id: facturaId }, data: { estado: 'EN_PROVISION' } })
+  await prisma.ordenCompraHistorial.create({
+    data: {
+      ordenCompraId: factura.ordenCompraId,
+      usuarioId: session.user.id,
+      descripcion: `Provisión de pago aprobada por ${session.user.name ?? session.user.email}`,
+    },
+  })
   revalidatePath('/operaciones/facturas')
   revalidatePath(`/operaciones/facturas/${facturaId}`)
+  revalidatePath('/operaciones/ordenes-compra')
+  revalidatePath('/operaciones/seguimiento')
 }

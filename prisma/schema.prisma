@@ -50,6 +50,7 @@ model Usuario {
   aprobacionesVacACargo     UsuarioAprobadorVacaciones[] @relation("VacAprobador")
   empleado                  Empleado?
   historialOC               OrdenCompraHistorial[]       @relation("OCHistorialUsuario")
+  ordenesCompraResponsable  OrdenCompra[]                @relation("OCResponsableActual")
   movimientosInventario     InventarioMovimiento[]       @relation("InventarioMovimientoUsuario")
   auditorias                Auditoria[]                  @relation("AuditoriaCreadaPor")
   documentosCalidad         DocumentoCalidad[]            @relation("DocCalidadSubidoPor")
@@ -528,6 +529,7 @@ model OrdenCompra {
   lugarEntrega               String?
   fechaEntregaEstimada       DateTime?
   estado                     String               @default("EMITIDA")
+  tipo                       String               @default("PRODUCTO") // PRODUCTO | SERVICIO
   observaciones              String?
   archivoPdfUrl              String?
   facturaOcUrl               String?
@@ -535,6 +537,8 @@ model OrdenCompra {
   fechaConfirmacionProveedor DateTime?
   emitidoPorId               String
   emitidoPor                 Usuario              @relation("OCEmitidaPor", fields: [emitidoPorId], references: [id])
+  responsableActualId        String?
+  responsableActual          Usuario?             @relation("OCResponsableActual", fields: [responsableActualId], references: [id])
   createdAt                  DateTime             @default(now())
   updatedAt                  DateTime             @updatedAt
 

@@ -10,17 +10,33 @@ interface OC {
   id: string
   numero: number
   anio: number
-  items: { descripcion: string; cantidad: number; unidad: string }[]
+  items: { descripcion: string; cantidad: number; cantidadRecibida: number; unidad: string }[]
   proveedor: { razonSocial: string }
 }
 
 interface RecepcionItem {
   descripcion: string
   cantidadEsperada: number
+  yaRecibido: number
   cantidadRecibida: number
   unidad: string
   conforme: boolean
   observacion: string
+}
+
+function itemsDesdeOC(oc: OC): RecepcionItem[] {
+  return oc.items.map(item => {
+    const pendiente = Math.max(0, item.cantidad - item.cantidadRecibida)
+    return {
+      descripcion: item.descripcion,
+      cantidadEsperada: item.cantidad,
+      yaRecibido: item.cantidadRecibida,
+      cantidadRecibida: pendiente,
+      unidad: item.unidad,
+      conforme: true,
+      observacion: '',
+    }
+  })
 }
 
 export default function NuevaRecepcionPage() {
@@ -41,14 +57,7 @@ export default function NuevaRecepcionPage() {
         if (ocParam) {
           const oc = data.find((o: OC) => o.id === ocParam)
           if (oc?.items?.length) {
-            setItems(oc.items.map(item => ({
-              descripcion: item.descripcion,
-              cantidadEsperada: item.cantidad,
-              cantidadRecibida: item.cantidad,
-              unidad: item.unidad,
-              conforme: true,
-              observacion: '',
-            })))
+            setItems(itemsDesdeOC(oc))
           }
         }
       })
@@ -58,18 +67,7 @@ export default function NuevaRecepcionPage() {
   const handleOCChange = (ocId: string) => {
     setSelectedOC(ocId)
     const oc = ocs.find(o => o.id === ocId)
-    if (oc?.items?.length) {
-      setItems(oc.items.map(item => ({
-        descripcion: item.descripcion,
-        cantidadEsperada: item.cantidad,
-        cantidadRecibida: item.cantidad,
-        unidad: item.unidad,
-        conforme: true,
-        observacion: '',
-      })))
-    } else {
-      setItems([])
-    }
+    setItems(oc?.items?.length ? itemsDesdeOC(oc) : [])
   }
 
   const updateItem = (i: number, field: keyof RecepcionItem, value: string | number | boolean) => {
@@ -77,7 +75,9 @@ export default function NuevaRecepcionPage() {
   }
 
   async function handleSubmit(formData: FormData) {
-    formData.set('items', JSON.stringify(items))
+    const payload = items.map(({ descripcion, cantidadEsperada, cantidadRecibida, unidad, conforme, observacion }) =>
+      ({ descripcion, cantidadEsperada, cantidadRecibida, unidad, conforme, observacion }))
+    formData.set('items', JSON.stringify(payload))
     await crearRecepcion(formData)
   }
 
@@ -145,11 +145,14 @@ export default function NuevaRecepcionPage() {
                       <p className="text-sm font-medium">{item.descripcion}</p>
                     </div>
                     <div className="col-span-2">
-                      <p className="text-xs text-gray-500">Esperado</p>
-                      <p className="text-sm font-mono">{item.cantidadEsperada} {item.unidad}</p>
+                      <p className="text-xs text-gray-500">Esperado{item.yaRecibido > 0 ? ' / ya recibido' : ''}</p>
+                      <p className="text-sm font-mono">
+                        {item.cantidadEsperada} {item.unidad}
+                        {item.yaRecibido > 0 && <span className="text-gray-400"> / {item.yaRecibido}</span>}
+                      </p>
                     </div>
                     <div className="col-span-2">
-                      <label className="block text-xs text-gray-500 mb-1">Recibido</label>
+                      <label className="block text-xs text-gray-500 mb-1">Recibido ahora</label>
                       <input
                         type="number"
                         value={item.cantidadRecibida}

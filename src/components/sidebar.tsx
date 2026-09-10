@@ -50,6 +50,7 @@ import {
   ShieldAlert,
   Rocket,
   Goal,
+  Route,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -122,6 +123,7 @@ const allNavItems: NavItem[] = [
 
 const operacionesNavItems: NavItem[] = [
   { href: '/operaciones',                        label: 'Panel Operaciones', icon: LayoutDashboard, roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
+  { href: '/operaciones/seguimiento',             label: 'Seguimiento OC',    icon: Route,           roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
   { href: '/operaciones/requerimientos',          label: 'Requerimientos',    icon: ClipboardList,   roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/proveedores',             label: 'Proveedores',       icon: Building2,       roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'] },
   { href: '/operaciones/cotizaciones-proveedor',  label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'] },
@@ -218,6 +220,7 @@ const sectionesCoordinadorCalidad: NavSection[] = [
     label: 'Operaciones',
     items: [
       { href: '/operaciones',                        label: 'Panel Operaciones', icon: LayoutDashboard, roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/operaciones/seguimiento',            label: 'Seguimiento OC',    icon: Route,           roles: ['COORDINADOR_CALIDAD'] },
       { href: '/operaciones/cotizaciones-proveedor', label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['COORDINADOR_CALIDAD'] },
       { href: '/operaciones/facturas',               label: 'Facturas',          icon: Receipt,         roles: ['COORDINADOR_CALIDAD'] },
       { href: '/operaciones/pagos',                  label: 'Gestión de Pagos',  icon: CreditCard,      roles: ['COORDINADOR_CALIDAD'] },
@@ -346,6 +349,7 @@ const sectionesDirectorCalidad: NavSection[] = [
     label: 'Operaciones',
     items: [
       { href: '/operaciones',                       label: 'Panel Operaciones', icon: LayoutDashboard, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/operaciones/seguimiento',           label: 'Seguimiento OC',    icon: Route,           roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/cotizaciones-proveedor', label: 'Cotiz. Proveedor',  icon: FileText,        roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/ordenes-compra',        label: 'Órdenes de Compra', icon: ShoppingCart,    roles: ['DIRECTOR_CALIDAD'] },
       { href: '/operaciones/facturas',              label: 'Facturas',          icon: Receipt,         roles: ['DIRECTOR_CALIDAD'] },

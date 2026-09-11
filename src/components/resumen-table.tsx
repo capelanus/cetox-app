@@ -8,7 +8,8 @@ const ESTADO_LABELS: Record<string, string> = {
   BORRADOR: 'Borrador',
   EN_REVISION: 'En revisión',
   ENVIADA: 'Enviada',
-  ACEPTADA: 'Aceptada',
+  REVISADO: 'Revisado',
+  APROBADA: 'Aprobada',
   RECHAZADA: 'Rechazada',
   VENCIDA: 'Vencida',
 }
@@ -128,7 +129,7 @@ export function ResumenTable({ cotizaciones }: Props) {
                   <td className="px-3 py-2">
                     <Badge
                       className={
-                        c.estado === 'ACEPTADA' ? 'bg-green-100 text-green-700' :
+                        ['REVISADO', 'APROBADA'].includes(c.estado) ? 'bg-green-100 text-green-700' :
                         c.estado === 'RECHAZADA' ? 'bg-red-100 text-red-700' : ''
                       }
                       variant={c.estado === 'RECHAZADA' ? 'destructive' : c.estado === 'EN_REVISION' ? 'outline' : 'secondary'}
@@ -137,7 +138,7 @@ export function ResumenTable({ cotizaciones }: Props) {
                     </Badge>
                   </td>
                   <td className="px-3 py-2">
-                    {c.estado === 'ACEPTADA' ? (
+                    {['REVISADO', 'APROBADA'].includes(c.estado) ? (
                       <span className="text-green-700 font-medium text-xs">✓ Aprobada</span>
                     ) : c.estado === 'RECHAZADA' ? (
                       <span className="text-red-600 font-medium text-xs">✗ Rechazada</span>

@@ -9,7 +9,8 @@ const COT_STAGES = [
   { estado: 'BORRADOR',    label: 'Borrador',    color: '#94a3b8' },
   { estado: 'EN_REVISION', label: 'En revisión', color: '#4AC3B2' },
   { estado: 'ENVIADA',     label: 'Enviada',     color: '#13602C' },
-  { estado: 'ACEPTADA',    label: 'Aceptada',    color: '#0d4a20' },
+  { estado: 'REVISADO',    label: 'Revisado',    color: '#0d4a20' },
+  { estado: 'APROBADA',    label: 'Aprobada',    color: '#0a3d1a' },
   { estado: 'RECHAZADA',   label: 'Rechazada',   color: '#ef4444' },
 ]
 

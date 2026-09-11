@@ -32,7 +32,7 @@ export default async function NuevoSETPage({
       },
     },
   })
-  if (!cot || cot.estado !== 'ACEPTADA') notFound()
+  if (!cot || !['REVISADO', 'APROBADA'].includes(cot.estado)) notFound()
 
   const numCotizacion = formatNumCotizacion(cot.numero, cot.anio, cot.sufijo)
   const muestrasPendientes = cot.muestras.filter((m) => m.sets.length === 0)

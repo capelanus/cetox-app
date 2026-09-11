@@ -29,7 +29,7 @@ export default async function FacturarPage({
     },
   })
   if (!cot) notFound()
-  if (cot.estado !== 'ACEPTADA') notFound()
+  if (!['REVISADO', 'APROBADA'].includes(cot.estado)) notFound()
 
   // Construir lista de ítems facturables
   const moneda = (cot.moneda === 'PEN' ? 'PEN' : 'USD') as 'USD' | 'PEN'

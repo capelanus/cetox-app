@@ -10,7 +10,7 @@ export default async function NuevoSETConCostoPage() {
 
   // Solo cotizaciones ABIERTAS aceptadas — son las únicas disponibles para SETs con costo
   const cotizaciones = await prisma.cotizacion.findMany({
-    where: { tipo: 'ABIERTA', estado: 'ACEPTADA', deletedAt: null },
+    where: { tipo: 'ABIERTA', estado: { in: ['REVISADO', 'APROBADA'] }, deletedAt: null },
     include: {
       cliente: true,
       muestras: {

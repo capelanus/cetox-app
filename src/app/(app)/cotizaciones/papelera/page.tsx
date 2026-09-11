@@ -11,7 +11,8 @@ const ESTADO_LABELS: Record<string, string> = {
   BORRADOR: 'Borrador',
   EN_REVISION: 'En revisión',
   ENVIADA: 'Enviada',
-  ACEPTADA: 'Aceptada',
+  REVISADO: 'Revisado',
+  APROBADA: 'Aprobada',
   RECHAZADA: 'Rechazada',
 }
 

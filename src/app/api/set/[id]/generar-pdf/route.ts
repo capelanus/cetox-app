@@ -6,6 +6,9 @@ import {
   crearMembrete, GREEN, BLACK, GRAY, LIGHT_GRAY, WHITE, ML, MR, CW, PAGE_W,
 } from '@/lib/pdf-membrete'
 
+const NUM_FORMATO = 'SIG-FR-ADM-002'
+const VERSION_FORMATO = 'Versión: 01'
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -142,6 +145,16 @@ export async function GET(
   doc.page.drawLine({ start: { x: sig2X, y: sigY }, end: { x: sig2X + 180, y: sigY }, thickness: 0.75, color: BLACK })
   doc.page.drawText('Cliente', { x: sig1X + 60, y: sigY - 13, size: 8, font: fontBold, color: GRAY })
   doc.page.drawText('Centro Toxicológico S.A.C. "CETOX"', { x: sig2X + 12, y: sigY - 13, size: 8, font: fontBold, color: GRAY })
+
+  // ── Pie de página: código de formato (todas las páginas) ─────────────────────
+  // y=64/54: por encima de la franja decorativa verde del membrete (llega a ~46pt
+  // en el lado izquierdo de la página), para que el texto no quede ilegible sobre ella.
+  for (const p of doc.pdfDoc.getPages()) {
+    const fw1 = fontBold.widthOfTextAtSize(NUM_FORMATO, 7)
+    p.drawText(NUM_FORMATO, { x: PAGE_W - MR - fw1, y: 64, size: 7, font: fontBold, color: GREEN })
+    const fw2 = font.widthOfTextAtSize(VERSION_FORMATO, 7)
+    p.drawText(VERSION_FORMATO, { x: PAGE_W - MR - fw2, y: 54, size: 7, font, color: GREEN })
+  }
 
   return doc.finish(`SET-${numSET}.pdf`, 'attachment') as unknown as NextResponse
 }

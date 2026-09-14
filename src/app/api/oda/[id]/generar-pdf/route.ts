@@ -9,7 +9,7 @@ import {
 
 // El ODA es un documento de trabajo para el laboratorio; no debe exponer el
 // cliente, el nombre comercial de la muestra ni los costos de los ensayos.
-// El contenido sigue el formato oficial en papel (FR Nº 002-CETOX-V.07);
+// El contenido sigue el formato oficial en papel (SIG-FR-ADM-003);
 // el estilo visual es el mismo que usan las cotizaciones (membrete, verde
 // corporativo, cuadros con bordes).
 
@@ -19,7 +19,8 @@ const AREA_COLOR: Record<string, ReturnType<typeof rgb>> = {
   B: GREEN,
   M: rgb(0.62, 0.36, 0.06),
 }
-const FR_CODIGO = 'FR Nº 002-CETOX-V.07'
+const FR_CODIGO = 'SIG-FR-ADM-003'
+const VERSION_FORMATO = 'Versión: 01'
 const FOOTNOTES = [
   '1.- Biológicas (sangre, orina, suero, etc); Agua (pozo, residual, potable, etc); Productos químicos (Plaguicida, desinfectante, solvente, etc); Otros (si es posible especificar)',
   '2.- Indicar el tipo de formulación: polvo mojable, suspensión concentrada, granulado, etc.',
@@ -208,13 +209,15 @@ export async function GET(
   doc.page.drawLine({ start: { x: PAGE_W - MR - 95 + fechaLabelW + 4, y: doc.y - 2 }, end: { x: PAGE_W - MR, y: doc.y - 2 }, thickness: 0.6, color: BLACK })
   doc.y -= 16
 
-  // ── Pie de página: código de formato + N° de página (todas las páginas) ──────
+  // ── Pie de página: N° de página (izquierda) + código de formato (derecha) ────
   const pages = doc.pdfDoc.getPages()
   pages.forEach((p, i) => {
-    p.drawText(FR_CODIGO, { x: ML, y: 24, size: 7.5, font: fontBold, color: GREEN })
-    const numTxt = String(i + 1)
-    const numW = font.widthOfTextAtSize(numTxt, 7.5)
-    p.drawText(numTxt, { x: PAGE_W - MR - numW, y: 24, size: 7.5, font: fontBold, color: GREEN })
+    const numTxt = `Página ${i + 1} de ${pages.length}`
+    p.drawText(numTxt, { x: ML, y: 24, size: 7.5, font: fontBold, color: GREEN })
+    const fw1 = fontBold.widthOfTextAtSize(FR_CODIGO, 7.5)
+    p.drawText(FR_CODIGO, { x: PAGE_W - MR - fw1, y: 29, size: 7.5, font: fontBold, color: GREEN })
+    const fw2 = font.widthOfTextAtSize(VERSION_FORMATO, 7.5)
+    p.drawText(VERSION_FORMATO, { x: PAGE_W - MR - fw2, y: 19, size: 7.5, font, color: GREEN })
   })
 
   return doc.finish(`ODA-${numODA}.pdf`, 'attachment') as unknown as NextResponse

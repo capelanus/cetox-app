@@ -20,7 +20,8 @@ const areaLetra = (a: string | null | undefined): string =>
 
 const DIRECCION_CETOX = 'Av. Angamos Este N° 2668–2670, Urb. La Calera – Surquillo'
 const HORARIO_ATENCION = '9:00 am – 05:00 pm'
-const NUM_FORMATO = 'FR N° 019-CETOX-V.09'
+const NUM_FORMATO = 'SIG-FR-ADM-001'
+const VERSION_FORMATO = 'Versión: 01'
 const DATOS_REQUISITOS = [
   '- Muestra(s) debidamente cerrada(s) e identificada(s)',
   '- Nombre comercial del producto',
@@ -461,8 +462,10 @@ export async function GET(
       p.drawText(ln, { x: ML, y: fy, size: 7.5, font: fontBold, color: GREEN })
       fy -= 10
     }
-    const fw = font.widthOfTextAtSize(NUM_FORMATO, 7)
-    p.drawText(NUM_FORMATO, { x: PAGE_W - MR - fw, y: 32, size: 7, font: fontBold, color: GREEN })
+    const fw1 = fontBold.widthOfTextAtSize(NUM_FORMATO, 7)
+    p.drawText(NUM_FORMATO, { x: PAGE_W - MR - fw1, y: 38, size: 7, font: fontBold, color: GREEN })
+    const fw2 = font.widthOfTextAtSize(VERSION_FORMATO, 7)
+    p.drawText(VERSION_FORMATO, { x: PAGE_W - MR - fw2, y: 28, size: 7, font, color: GREEN })
   }
 
   return doc.finish(`Cotizacion-${numCot}.pdf`, 'attachment') as unknown as NextResponse

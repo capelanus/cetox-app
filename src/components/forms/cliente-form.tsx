@@ -7,7 +7,7 @@ import type { Cliente } from '@/generated/prisma/client'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { PAISES } from '@/lib/paises'
-import { Search } from 'lucide-react'
+import { Search, Loader2 } from 'lucide-react'
 
 /* ─── PaisSelector ─────────────────────────────────────────────────────────── */
 
@@ -140,6 +140,34 @@ interface ClienteFormProps {
 
 export function ClienteForm({ action, cliente }: ClienteFormProps) {
   const ref = useRef<HTMLFormElement>(null)
+  const rucRef = useRef<HTMLInputElement>(null)
+  const razonSocialRef = useRef<HTMLInputElement>(null)
+  const direccionRef = useRef<HTMLInputElement>(null)
+  const [buscandoRuc, setBuscandoRuc] = useState(false)
+
+  async function buscarEnSunat() {
+    const ruc = rucRef.current?.value.trim() ?? ''
+    if (!/^\d{11}$/.test(ruc)) {
+      toast.error('Ingresa un RUC válido de 11 dígitos')
+      return
+    }
+    setBuscandoRuc(true)
+    try {
+      const res = await fetch(`/api/sunat/ruc?ruc=${ruc}`)
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error ?? 'No se pudo consultar el RUC')
+        return
+      }
+      if (data.razonSocial && razonSocialRef.current) razonSocialRef.current.value = data.razonSocial
+      if (data.direccion && direccionRef.current) direccionRef.current.value = data.direccion
+      toast.success('Datos de SUNAT cargados')
+    } catch {
+      toast.error('No se pudo conectar con SUNAT')
+    } finally {
+      setBuscandoRuc(false)
+    }
+  }
 
   async function handleSubmit(formData: FormData) {
     try {
@@ -154,22 +182,36 @@ export function ClienteForm({ action, cliente }: ClienteFormProps) {
     <form ref={ref} action={handleSubmit} className="space-y-5 bg-white p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-2 gap-4">
 
-        {/* Razón social */}
-        <div className="col-span-2 space-y-2">
-          <Label htmlFor="razonSocial">Razón social *</Label>
-          <Input id="razonSocial" name="razonSocial" defaultValue={cliente?.razonSocial} required />
-        </div>
-
         {/* RUC */}
         <div className="col-span-2 space-y-2">
           <Label htmlFor="ruc">RUC *</Label>
-          <Input id="ruc" name="ruc" defaultValue={cliente?.ruc} required maxLength={11} />
+          <div className="flex gap-2">
+            <Input ref={rucRef} id="ruc" name="ruc" defaultValue={cliente?.ruc} required maxLength={11} className="flex-1" />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={buscarEnSunat}
+              disabled={buscandoRuc}
+              className="shrink-0"
+            >
+              {buscandoRuc
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Search className="h-4 w-4" />}
+              <span className="ml-1.5">Buscar en SUNAT</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Razón social */}
+        <div className="col-span-2 space-y-2">
+          <Label htmlFor="razonSocial">Razón social *</Label>
+          <Input ref={razonSocialRef} id="razonSocial" name="razonSocial" defaultValue={cliente?.razonSocial} required />
         </div>
 
         {/* Dirección */}
         <div className="col-span-2 space-y-2">
           <Label htmlFor="direccion">Dirección *</Label>
-          <Input id="direccion" name="direccion" defaultValue={cliente?.direccion} required />
+          <Input ref={direccionRef} id="direccion" name="direccion" defaultValue={cliente?.direccion} required />
         </div>
 
         {/* País */}

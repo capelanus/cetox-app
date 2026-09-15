@@ -21,8 +21,10 @@ export function EnsayoForm({ action, ensayo }: EnsayoFormProps) {
   async function handleSubmit(formData: FormData) {
     try {
       await action(formData)
-    } catch {
-      toast.error('Error al guardar el ensayo')
+    } catch (e) {
+      if ((e as { digest?: string })?.digest?.startsWith('NEXT_REDIRECT')) throw e
+      const msg = e instanceof Error && e.message ? e.message : 'Error al guardar el ensayo'
+      toast.error(msg)
     }
   }
 

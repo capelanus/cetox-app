@@ -1,10 +1,15 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@/generated/prisma/client'
 import { requireRol } from '@/lib/roles'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import z from 'zod'
+
+function esCodigoDuplicado(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002'
+}
 
 const EnsayoSchema = z.object({
   codigo: z.string().min(2),
@@ -41,7 +46,12 @@ function parseEnsayo(formData: FormData) {
 export async function crearEnsayo(formData: FormData) {
   await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
   const data = parseEnsayo(formData)
-  await prisma.ensayo.create({ data })
+  try {
+    await prisma.ensayo.create({ data })
+  } catch (e) {
+    if (esCodigoDuplicado(e)) throw new Error(`Ya existe un ensayo con el código "${data.codigo}". Usa otro código.`)
+    throw e
+  }
   revalidatePath('/ensayos')
   redirect('/ensayos')
 }
@@ -49,7 +59,12 @@ export async function crearEnsayo(formData: FormData) {
 export async function actualizarEnsayo(id: string, formData: FormData) {
   await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
   const data = parseEnsayo(formData)
-  await prisma.ensayo.update({ where: { id }, data })
+  try {
+    await prisma.ensayo.update({ where: { id }, data })
+  } catch (e) {
+    if (esCodigoDuplicado(e)) throw new Error(`Ya existe un ensayo con el código "${data.codigo}". Usa otro código.`)
+    throw e
+  }
   revalidatePath('/ensayos')
   redirect('/ensayos')
 }

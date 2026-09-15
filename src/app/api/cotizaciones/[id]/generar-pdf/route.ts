@@ -120,24 +120,29 @@ export async function GET(
     const contactos = [cot.contactoNombre, cot.contactoNombre2, cot.contactoNombre3].filter(Boolean) as string[]
     const telefonos = [cot.contactoTelefono, cot.contactoTelefono2, cot.contactoTelefono3].filter(Boolean) as string[]
     const emails = [cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean) as string[]
-    const maxA = Math.max(1, contactos.length, telefonos.length)
-    const maxB = Math.max(1, emails.length)
     const fechaHoraLine = [cot.fechaContacto, cot.horaContacto].filter(Boolean).join('  —  ')
-    const hA = 12 + maxA * 10, hB = 12 + maxB * 10, hC = fechaHoraLine ? 16 : 0
-    const total = hA + hB + hC
+
+    // 3 columnas × 3 filas (en vez de 4×2) para que los textos largos
+    // (razón social, dirección) entren sin solaparse con la celda vecina.
+    const h1 = 12 + Math.max(1, contactos.length) * 10
+    const h2 = 12 + Math.max(1, telefonos.length) * 10
+    const h3 = 12 + Math.max(1, emails.length) * 10
+    const total = h1 + h2 + h3
 
     await doc.ensureSpace(total + 8)
     const yTop = doc.y
-    const c1 = bx0, c2 = bx0 + 135, c3 = bx0 + 265, c4 = bx0 + 395
-    const yB = yTop - hA
-    const yRowBBottom = yB - hB
-    const yBot = yRowBBottom - hC
+    const colW = (bx1 - bx0) / 3
+    const c1 = bx0, c2 = bx0 + colW, c3 = bx0 + 2 * colW
+    const y1Bot = yTop - h1
+    const y2Bot = y1Bot - h2
+    const y3Bot = y2Bot - h3
 
     // Sombreado en damero (alterna por fila y columna) con el color de fondo de la app
-    const colX = [c1, c2, c3, c4, bx1]
+    const colX = [c1, c2, c3, bx1]
     const rows = [
-      { y0: yB, h: hA },
-      { y0: yRowBBottom, h: hB },
+      { y0: y1Bot, h: h1 },
+      { y0: y2Bot, h: h2 },
+      { y0: y3Bot, h: h3 },
     ]
     rows.forEach((row, ri) => {
       colX.slice(0, -1).forEach((cx, ci) => {
@@ -146,49 +151,46 @@ export async function GET(
         }
       })
     })
-    if (hC > 0) doc.page.drawRectangle({ x: bx0, y: yBot, width: bx1 - bx0, height: hC, color: SHADE })
 
     // Bordes
-    vseg(bx0, yTop, yBot); vseg(bx1, yTop, yBot)
-    vseg(c2, yTop, yRowBBottom); vseg(c3, yTop, yRowBBottom); vseg(c4, yTop, yRowBBottom)
-    const hlineYs = [yTop, yB, yRowBBottom]
-    if (hC > 0) hlineYs.push(yBot)
-    for (const y of hlineYs) hline(y)
+    vseg(bx0, yTop, y3Bot); vseg(bx1, yTop, y3Bot)
+    vseg(c2, yTop, y3Bot); vseg(c3, yTop, y3Bot)
+    for (const y of [yTop, y1Bot, y2Bot, y3Bot]) hline(y)
 
-    // Celda: etiqueta (versalita verde CETOX) arriba y valor(es) apilados debajo
+    // Celda: etiqueta (versalita verde CETOX) arriba y valor(es) apilados debajo.
+    // El truncado mide el ancho real de la fuente (no un promedio por carácter)
+    // porque texto en mayúsculas es más ancho que el promedio y desbordaba la
+    // columna igual, aun ya truncado.
     const cellV = (x: number, rowTop: number, label: string, values: (string | null | undefined)[], colW: number, size = 8) => {
       doc.page.drawText(label, { x: x + 3, y: rowTop - 8, size: 6.3, font: fontBold, color: GREEN })
-      const maxCh = Math.max(6, Math.floor((colW - 5) / (size * 0.52)))
+      const maxW = colW - 6
       const vals = values.filter(Boolean) as string[]
       ;(vals.length ? vals : ['—']).forEach((v, i) => {
-        doc.page.drawText(v.substring(0, maxCh), { x: x + 3, y: rowTop - 18 - i * 9.5, size, font, color: vals.length ? BLACK : GRAY })
+        let texto = v
+        while (texto.length > 1 && font.widthOfTextAtSize(texto, size) > maxW) texto = texto.slice(0, -1)
+        doc.page.drawText(texto, { x: x + 3, y: rowTop - 18 - i * 9.5, size, font, color: vals.length ? BLACK : GRAY })
       })
     }
 
-    // Fila A: Solicitante · R.U.C. · Contacto · Teléfono
-    cellV(c1, yTop, 'SOLICITANTE', [cot.cliente.razonSocial], 135)
-    cellV(c2, yTop, 'R.U.C.', [cot.cliente.ruc], 130)
-    cellV(c3, yTop, 'CONTACTO', contactos, 130)
-    cellV(c4, yTop, 'TELÉFONO', telefonos, bx1 - c4)
+    // Fila 1: Solicitante · R.U.C. · Contacto
+    cellV(c1, yTop, 'SOLICITANTE', [cot.cliente.razonSocial], colW)
+    cellV(c2, yTop, 'R.U.C.', [cot.cliente.ruc], colW)
+    cellV(c3, yTop, 'CONTACTO', contactos, bx1 - c3)
 
-    // Fila B: Dirección · Moneda · Email · Comunicación (solo la forma elegida)
+    // Fila 2: Teléfono · Dirección · Moneda
+    cellV(c1, y1Bot, 'TELÉFONO', telefonos, colW)
+    cellV(c2, y1Bot, 'DIRECCIÓN', [cot.cliente.direccion], colW)
+    cellV(c3, y1Bot, 'MONEDA', [monedaTxt], bx1 - c3)
+
+    // Fila 3: Email · Comunicación (solo la forma elegida) · Fecha/hora solicitada
     const FORMA_LABEL: Record<string, string> = { EMAIL: 'E-mail', WHATSAPP: 'WhatsApp', TELEFONICA: 'Telefónica', PERSONAL: 'Personal', OTROS: 'Otros' }
     const comBase = cot.formaContacto ? (FORMA_LABEL[cot.formaContacto] ?? cot.formaContacto) : ''
     const comLabel = comBase + (cot.formaContacto === 'OTROS' && cot.formaContactoOtro ? `: ${cot.formaContactoOtro}` : '')
-    cellV(c1, yB, 'DIRECCIÓN', [cot.cliente.direccion], 135)
-    cellV(c2, yB, 'MONEDA', [monedaTxt], 130)
-    cellV(c3, yB, 'EMAIL', emails, 130, 7)
-    cellV(c4, yB, 'COMUNICACIÓN', [comLabel], bx1 - c4, 7)
+    cellV(c1, y2Bot, 'EMAIL', emails, colW, 7)
+    cellV(c2, y2Bot, 'COMUNICACIÓN', [comLabel], colW, 7)
+    cellV(c3, y2Bot, 'FECHA/HORA SOLICITUD', [fechaHoraLine], bx1 - c3, 7)
 
-    // Fila C (opcional): fecha y hora en que el cliente solicitó la cotización
-    if (hC > 0) {
-      const label = 'FECHA Y HORA SOLICITADA POR EL CLIENTE :'
-      doc.page.drawText(label, { x: bx0 + 4, y: yRowBBottom - 11, size: 6.5, font: fontBold, color: GREEN })
-      const lw = fontBold.widthOfTextAtSize(label, 6.5)
-      doc.page.drawText(fechaHoraLine, { x: bx0 + 4 + lw + 6, y: yRowBBottom - 11, size: 8, font, color: BLACK })
-    }
-
-    doc.y = yBot - 16
+    doc.y = y3Bot - 16
   }
 
   // ── 2. SERVICIOS SOLICITADOS ──────────────────────────────────────────────────
@@ -209,13 +211,13 @@ export async function GET(
     doc.y -= 16
   }
 
-  async function row(ensayo: { nombre: string; area: string }, costo: number, dias: number, shade: boolean) {
+  async function row(ensayo: { nombre: string; area: string; tercerizado: boolean }, costo: number, dias: number, shade: boolean) {
     const lineas = wrapText(ensayo.nombre, COL_AREA - ML - 8, 8)
     const h = Math.max(14, lineas.length * 10 + 3)
     await doc.ensureSpace(h + 2)
     if (shade) doc.page.drawRectangle({ x: ML, y: doc.y - h + 10, width: CW, height: h, color: LIGHT_GRAY })
     lineas.forEach((ln, i) => doc.page.drawText(ln, { x: ML + 4, y: doc.y - i * 10, size: 8, font, color: BLACK }))
-    doc.page.drawText(areaLetra(ensayo.area), { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: GRAY })
+    doc.page.drawText(`${areaLetra(ensayo.area)}${ensayo.tercerizado ? 'T' : ''}`, { x: COL_AREA, y: doc.y, size: 8, font: fontBold, color: GRAY })
     doc.page.drawText(`${dias} días`, { x: COL_PLAZO, y: doc.y, size: 8, font, color: BLACK })
     doc.page.drawText(formatNum(costo), { x: COL_COSTO, y: doc.y, size: 8, font, color: BLACK })
     doc.y -= h

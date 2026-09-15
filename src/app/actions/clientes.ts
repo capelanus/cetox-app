@@ -5,17 +5,7 @@ import { requireRol } from '@/lib/roles'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { hash } from 'bcryptjs'
-import z from 'zod'
-
-const ClienteSchema = z.object({
-  razonSocial: z.string().min(2),
-  ruc:         z.string().min(8).max(11),
-  direccion:   z.string().min(2),
-  pais:        z.string().default('PE'),
-  contacto:    z.string().optional(),
-  email:       z.string().optional(),
-  telefono:    z.string().optional(),
-})
+import { ClienteSchema } from '@/lib/cliente-schema'
 
 export async function crearCliente(formData: FormData) {
   await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'ADMINISTRACION'])

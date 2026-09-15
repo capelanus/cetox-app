@@ -1,11 +1,48 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@/generated/prisma/client'
 import { requireRol } from '@/lib/roles'
 import { siguienteCorrelativo } from '@/lib/correlativo'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { addDays } from 'date-fns'
+import { ClienteSchema } from '@/lib/cliente-schema'
+
+// Devuelve el id de un Cliente existente (por RUC) o crea uno nuevo si no existe
+// todavía — usado cuando la cotización se genera con datos de SUNAT en vez de
+// seleccionar un cliente ya registrado. Tolera la carrera entre el findUnique
+// y el create (dos personas registrando el mismo RUC casi al mismo tiempo).
+async function resolverOClienteCrearPorRuc(formData: FormData): Promise<string> {
+  const ruc = (formData.get('clienteRucNuevo') as string)?.trim()
+  const datos = ClienteSchema.parse({
+    razonSocial: formData.get('clienteRazonSocialNuevo'),
+    ruc,
+    direccion: formData.get('clienteDireccionNuevo'),
+  })
+
+  const existente = await prisma.cliente.findUnique({ where: { ruc: datos.ruc } })
+  if (existente) {
+    // No reactivar en silencio: si el RUC pertenece a un cliente desactivado,
+    // que sea una decisión explícita del usuario desde Clientes, no un efecto
+    // colateral de crear una cotización.
+    if (!existente.activo) {
+      throw new Error(`El RUC ${datos.ruc} pertenece a un cliente desactivado (${existente.razonSocial}). Reactívalo desde Clientes antes de usarlo en una cotización.`)
+    }
+    return existente.id
+  }
+
+  try {
+    const nuevo = await prisma.cliente.create({ data: datos })
+    return nuevo.id
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      const otraVez = await prisma.cliente.findUnique({ where: { ruc: datos.ruc } })
+      if (otraVez) return otraVez.id
+    }
+    throw e
+  }
+}
 
 interface ItemRaw { ensayoId: string; costo: number; tiempoEntregaDias: number }
 interface MuestraRaw {
@@ -101,7 +138,11 @@ export async function crearCotizacion(formData: FormData) {
   const igv = subtotal * 0.18
   const total = subtotal + igv
 
-  const clienteId = formData.get('clienteId') as string
+  let clienteId = formData.get('clienteId') as string
+  if (!clienteId) {
+    if (!formData.get('clienteRucNuevo')) throw new Error('Selecciona un cliente o ingresa los datos de un cliente nuevo')
+    clienteId = await resolverOClienteCrearPorRuc(formData)
+  }
   const tipo = (formData.get('tipo') as string) || 'NORMAL'
   const estado = 'BORRADOR'
 
@@ -148,6 +189,7 @@ export async function crearCotizacion(formData: FormData) {
   }
 
   revalidatePath('/cotizaciones')
+  revalidatePath('/clientes')
   redirect(`/cotizaciones/${cot.id}`)
 }
 

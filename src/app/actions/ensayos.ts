@@ -44,7 +44,7 @@ function parseEnsayo(formData: FormData) {
 }
 
 export async function crearEnsayo(formData: FormData) {
-  await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
+  await requireRol(['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
   const data = parseEnsayo(formData)
   try {
     await prisma.ensayo.create({ data })
@@ -57,7 +57,7 @@ export async function crearEnsayo(formData: FormData) {
 }
 
 export async function actualizarEnsayo(id: string, formData: FormData) {
-  await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
+  await requireRol(['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
   const data = parseEnsayo(formData)
   try {
     await prisma.ensayo.update({ where: { id }, data })
@@ -70,7 +70,7 @@ export async function actualizarEnsayo(id: string, formData: FormData) {
 }
 
 export async function toggleEnsayoActivo(id: string, activo: boolean) {
-  await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
+  await requireRol(['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
   await prisma.ensayo.update({ where: { id }, data: { activo } })
   revalidatePath('/ensayos')
 }

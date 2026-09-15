@@ -8,7 +8,7 @@ import { EnsayosTable } from '@/components/ensayos-table'
 export default async function EnsayosPage() {
   const session = await requireNotAnalista()
   const ensayos = await prisma.ensayo.findMany({ orderBy: [{ area: 'asc' }, { nombre: 'asc' }] })
-  const canEdit = hasRol(session?.user.rol ?? '', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION')
+  const canEdit = hasRol(session?.user.rol ?? '', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD')
 
   return (
     <div>

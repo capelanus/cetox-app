@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { EnsayoForm } from '@/components/forms/ensayo-form'
 
 export default async function NuevoEnsayoPage() {
-  await requireRol(['DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'ADMINISTRACION'])
+  await requireRol(['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">

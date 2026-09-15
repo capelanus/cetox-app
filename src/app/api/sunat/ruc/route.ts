@@ -31,10 +31,9 @@ export async function GET(req: NextRequest) {
 
   const data = await res.json()
 
-  const direccionPartes = [
-    data.via_tipo, data.via_nombre, data.numero, data.zona_tipo, data.zona_codigo,
-  ].filter(Boolean).join(' ')
-  const direccion = direccionPartes || data.direccion || null
+  // La API ya entrega "direccion" formateada (vía + número + zona); solo se
+  // le agrega distrito/provincia/departamento, que no vienen incluidos ahí.
+  const direccion = (data.direccion as string | undefined)?.trim() || null
   const ubicacion = [data.distrito, data.provincia, data.departamento].filter(Boolean).join(', ')
 
   return NextResponse.json({

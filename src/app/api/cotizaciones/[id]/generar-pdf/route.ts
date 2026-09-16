@@ -122,12 +122,15 @@ export async function GET(
     const emails = [cot.contactoEmail, cot.contactoEmail2, cot.contactoEmail3].filter(Boolean) as string[]
     const fechaHoraLine = [cot.fechaContacto, cot.horaContacto].filter(Boolean).join('  —  ')
 
-    // 3 columnas × 3 filas (en vez de 4×2) para que los textos largos
-    // (razón social, dirección) entren sin solaparse con la celda vecina.
-    const h1 = 12 + Math.max(1, contactos.length) * 10
-    const h2 = 12 + Math.max(1, telefonos.length) * 10
-    const h3 = 12 + Math.max(1, emails.length) * 10
-    const total = h1 + h2 + h3
+    // Formato en 4 filas: Solicitante (2 columnas) + R.U.C.; Dirección a todo
+    // el ancho; Contacto/Teléfono/Email; Comunicación/Fecha-hora/Moneda.
+    // Mismo grid de 3 columnas iguales que antes, solo que las filas 1 y 2
+    // combinan celdas para dar más espacio a los campos que suelen ser largos.
+    const h1 = 22
+    const h2 = 22
+    const h3 = 12 + Math.max(1, contactos.length, telefonos.length, emails.length) * 10
+    const h4 = 22
+    const total = h1 + h2 + h3 + h4
 
     await doc.ensureSpace(total + 8)
     const yTop = doc.y
@@ -136,26 +139,19 @@ export async function GET(
     const y1Bot = yTop - h1
     const y2Bot = y1Bot - h2
     const y3Bot = y2Bot - h3
+    const y4Bot = y3Bot - h4
 
-    // Sombreado en damero (alterna por fila y columna) con el color de fondo de la app
-    const colX = [c1, c2, c3, bx1]
-    const rows = [
-      { y0: y1Bot, h: h1 },
-      { y0: y2Bot, h: h2 },
-      { y0: y3Bot, h: h3 },
-    ]
-    rows.forEach((row, ri) => {
-      colX.slice(0, -1).forEach((cx, ci) => {
-        if ((ri + ci) % 2 === 0) {
-          doc.page.drawRectangle({ x: cx, y: row.y0, width: colX[ci + 1] - cx, height: row.h, color: SHADE })
-        }
-      })
-    })
+    // Sombreado alterno por fila completa (las filas 1 y 2 combinan celdas,
+    // así que se sombrea la fila entera en vez de un damero por celda).
+    doc.page.drawRectangle({ x: bx0, y: y1Bot, width: bx1 - bx0, height: h1, color: SHADE })
+    doc.page.drawRectangle({ x: bx0, y: y3Bot, width: bx1 - bx0, height: h3, color: SHADE })
 
     // Bordes
-    vseg(bx0, yTop, y3Bot); vseg(bx1, yTop, y3Bot)
-    vseg(c2, yTop, y3Bot); vseg(c3, yTop, y3Bot)
-    for (const y of [yTop, y1Bot, y2Bot, y3Bot]) hline(y)
+    vseg(bx0, yTop, y4Bot); vseg(bx1, yTop, y4Bot)
+    vseg(c3, yTop, y1Bot)         // Solicitante | R.U.C.
+    vseg(c2, y2Bot, y4Bot)        // columnas de las filas 3 y 4
+    vseg(c3, y2Bot, y4Bot)
+    for (const y of [yTop, y1Bot, y2Bot, y3Bot, y4Bot]) hline(y)
 
     // Celda: etiqueta (versalita verde CETOX) arriba y valor(es) apilados debajo.
     // El truncado mide el ancho real de la fuente (no un promedio por carácter)
@@ -172,25 +168,27 @@ export async function GET(
       })
     }
 
-    // Fila 1: Solicitante · R.U.C. · Contacto
-    cellV(c1, yTop, 'SOLICITANTE', [cot.cliente.razonSocial], colW)
-    cellV(c2, yTop, 'R.U.C.', [cot.cliente.ruc], colW)
-    cellV(c3, yTop, 'CONTACTO', contactos, bx1 - c3)
+    // Fila 1: Solicitante (2 columnas) · R.U.C.
+    cellV(c1, yTop, 'SOLICITANTE', [cot.cliente.razonSocial], c3 - c1)
+    cellV(c3, yTop, 'R.U.C.', [cot.cliente.ruc], bx1 - c3)
 
-    // Fila 2: Teléfono · Dirección · Moneda
-    cellV(c1, y1Bot, 'TELÉFONO', telefonos, colW)
-    cellV(c2, y1Bot, 'DIRECCIÓN', [cot.cliente.direccion], colW)
-    cellV(c3, y1Bot, 'MONEDA', [monedaTxt], bx1 - c3)
+    // Fila 2: Dirección (todo el ancho)
+    cellV(c1, y1Bot, 'DIRECCIÓN', [cot.cliente.direccion], bx1 - c1)
 
-    // Fila 3: Email · Comunicación (solo la forma elegida) · Fecha/hora solicitada
+    // Fila 3: Contacto · Teléfono · Email
+    cellV(c1, y2Bot, 'CONTACTO', contactos, colW)
+    cellV(c2, y2Bot, 'TELÉFONO', telefonos, colW)
+    cellV(c3, y2Bot, 'EMAIL', emails, bx1 - c3, 7)
+
+    // Fila 4: Comunicación (solo la forma elegida) · Fecha/hora solicitada · Moneda
     const FORMA_LABEL: Record<string, string> = { EMAIL: 'E-mail', WHATSAPP: 'WhatsApp', TELEFONICA: 'Telefónica', PERSONAL: 'Personal', OTROS: 'Otros' }
     const comBase = cot.formaContacto ? (FORMA_LABEL[cot.formaContacto] ?? cot.formaContacto) : ''
     const comLabel = comBase + (cot.formaContacto === 'OTROS' && cot.formaContactoOtro ? `: ${cot.formaContactoOtro}` : '')
-    cellV(c1, y2Bot, 'EMAIL', emails, colW, 7)
-    cellV(c2, y2Bot, 'COMUNICACIÓN', [comLabel], colW, 7)
-    cellV(c3, y2Bot, 'FECHA/HORA SOLICITUD', [fechaHoraLine], bx1 - c3, 7)
+    cellV(c1, y3Bot, 'COMUNICACIÓN', [comLabel], colW, 7)
+    cellV(c2, y3Bot, 'FECHA/HORA SOLICITUD', [fechaHoraLine], colW, 7)
+    cellV(c3, y3Bot, 'MONEDA', [monedaTxt], bx1 - c3)
 
-    doc.y = y3Bot - 16
+    doc.y = y4Bot - 16
   }
 
   // ── 2. SERVICIOS SOLICITADOS ──────────────────────────────────────────────────

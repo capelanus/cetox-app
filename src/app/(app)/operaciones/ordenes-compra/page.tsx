@@ -22,6 +22,7 @@ export default async function OrdenesCompraPage() {
       requerimiento: true,
       emitidoPor: true,
       items: true,
+      facturas: { orderBy: { createdAt: 'asc' } },
     },
   })
 
@@ -34,6 +35,7 @@ export default async function OrdenesCompraPage() {
     estado: oc.estado,
     fecha: formatFecha(oc.createdAt),
     productos: oc.items.map(i => i.descripcion).join(' '),
+    facturas: oc.facturas.map(f => ({ id: f.id, label: f.serie ? `${f.serie}-${f.numero}` : f.numero })),
   }))
 
   return (

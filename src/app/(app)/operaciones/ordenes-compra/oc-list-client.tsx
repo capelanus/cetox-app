@@ -13,6 +13,7 @@ interface Row {
   estado: string
   fecha: string
   productos: string
+  facturas: { id: string; label: string }[]
 }
 
 interface Props {
@@ -57,6 +58,7 @@ export default function OCListClient({ rows, estadoLabels }: Props) {
               <th className="text-left px-4 py-3 font-medium text-gray-600">Requerimiento</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600">Total</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Estado</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Factura</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Fecha</th>
             </tr>
           </thead>
@@ -82,12 +84,29 @@ export default function OCListClient({ rows, estadoLabels }: Props) {
                     {estadoLabels[oc.estado] || oc.estado}
                   </span>
                 </td>
+                <td className="px-4 py-3">
+                  {oc.facturas.length === 0 ? (
+                    <span className="text-xs text-gray-400">Sin factura</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {oc.facturas.map(f => (
+                        <Link
+                          key={f.id}
+                          href={`/operaciones/facturas/${f.id}`}
+                          className="font-mono text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 hover:underline"
+                        >
+                          {f.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-gray-500">{oc.fecha}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-400">
+                <td colSpan={7} className="text-center py-8 text-gray-400">
                   {query ? `Sin resultados para "${query}"` : 'No hay órdenes de compra'}
                 </td>
               </tr>

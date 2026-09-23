@@ -1,6 +1,6 @@
 import { requireRol, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
-import { formatFecha } from '@/lib/format'
+import { formatFecha, formatNumOrdenCompra } from '@/lib/format'
 import { ESTADO_FACTURA_LABELS } from '@/lib/constants'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -54,6 +54,7 @@ export default async function FacturasPage() {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Factura</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Orden de Compra</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Proveedor</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Fecha emisión</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Vencimiento</th>
@@ -67,6 +68,11 @@ export default async function FacturasPage() {
                 <td className="px-4 py-3">
                   <Link href={`/operaciones/facturas/${fac.id}`} className="font-medium text-[#13602C] hover:underline">
                     {fac.serie ? `${fac.serie}-${fac.numero}` : fac.numero}
+                  </Link>
+                </td>
+                <td className="px-4 py-3">
+                  <Link href={`/operaciones/ordenes-compra/${fac.ordenCompraId}`} className="font-mono text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 hover:underline">
+                    {formatNumOrdenCompra(fac.ordenCompra.numero, fac.ordenCompra.anio)}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-700">{fac.ordenCompra.proveedor.razonSocial}</td>
@@ -86,7 +92,7 @@ export default async function FacturasPage() {
             ))}
             {facturas.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-400">No hay facturas registradas</td>
+                <td colSpan={7} className="text-center py-8 text-gray-400">No hay facturas registradas</td>
               </tr>
             )}
           </tbody>

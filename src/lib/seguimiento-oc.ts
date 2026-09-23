@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { obtenerEgresosLogistica } from '@/lib/egresos-logistica'
 import { ESTADO_RECEPCION_LABELS } from '@/lib/constants'
+import { formatNumRequerimiento } from '@/lib/format'
 
 // Capa de lectura para el módulo de Seguimiento de Órdenes de Compra.
 // No introduce una nueva máquina de estados: el "estado de seguimiento" se
@@ -16,7 +17,18 @@ export async function obtenerOrdenesSeguimiento() {
     orderBy: { createdAt: 'desc' },
     include: {
       proveedor: true,
-      requerimiento: { select: { areaSolicitante: true, estado: true } },
+      requerimiento: {
+        select: {
+          id: true,
+          numero: true,
+          anio: true,
+          areaSolicitante: true,
+          estado: true,
+          fechaRequerida: true,
+          createdAt: true,
+          creadoPor: { select: { nombre: true } },
+        },
+      },
       responsableActual: { select: { id: true, nombre: true } },
       emitidoPor: { select: { nombre: true } },
       items: { orderBy: { orden: 'asc' } },
@@ -42,6 +54,7 @@ export async function obtenerOrdenesSeguimiento() {
         include: { usuario: { select: { nombre: true } } },
         orderBy: { createdAt: 'desc' },
       },
+      documentos: { orderBy: { createdAt: 'asc' } },
     },
   })
 }
@@ -56,6 +69,7 @@ export type EstadoSeguimiento =
   | 'ENTREGADA'
   | 'FACTURADA'
   | 'PAGADA'
+  | 'CERRADA'
   | 'CANCELADA'
 
 export const ESTADO_SEGUIMIENTO_LABELS: Record<EstadoSeguimiento, string> = {
@@ -65,7 +79,8 @@ export const ESTADO_SEGUIMIENTO_LABELS: Record<EstadoSeguimiento, string> = {
   ENTREGA_PARCIAL: 'Entrega parcial',
   ENTREGADA: 'Entregada',
   FACTURADA: 'Facturada — pendiente de pago',
-  PAGADA: 'Pagada / cerrada',
+  PAGADA: 'Pagada',
+  CERRADA: 'Cerrada',
   CANCELADA: 'Cancelada',
 }
 
@@ -79,6 +94,7 @@ export const ESTADO_SEGUIMIENTO_BADGE: Record<EstadoSeguimiento, string> = {
   ENTREGADA: 'bg-blue-100 text-blue-700',
   FACTURADA: 'bg-amber-100 text-amber-700',
   PAGADA: 'bg-green-100 text-green-700',
+  CERRADA: 'bg-green-100 text-green-700',
   CANCELADA: 'bg-red-100 text-red-700',
 }
 
@@ -101,6 +117,10 @@ export function calcularAvanceEntrega(oc: OrdenCompraSeguimiento): number {
 
 export function calcularEstadoSeguimiento(oc: OrdenCompraSeguimiento): EstadoSeguimiento {
   if (oc.estado === 'CANCELADA') return 'CANCELADA'
+  // Cierre formal: lo marca logística a mano desde la OC y es terminal, por eso
+  // gana sobre las señales derivadas (una OC puede cerrarse sin haberse pagado
+  // por este sistema, p.ej. si el pago se gestionó fuera).
+  if (oc.estado === 'CERRADA') return 'CERRADA'
 
   if (haySenalDePago(oc)) return 'PAGADA'
 
@@ -116,17 +136,61 @@ export function calcularEstadoSeguimiento(oc: OrdenCompraSeguimiento): EstadoSeg
   return 'EMITIDA'
 }
 
+const ESTADOS_TERMINALES: EstadoSeguimiento[] = ['PAGADA', 'CERRADA', 'CANCELADA']
+
+// Preaviso: una OC pasa a "por vencer" (ámbar) estos días antes de la fecha
+// comprometida, para que logística actúe antes de que se ponga en rojo.
+export const DIAS_PREAVISO_VENCIMIENTO = 7
+
+// Fechas que la OC todavía debe cumplir: la de entrega solo cuenta mientras no
+// se haya recibido, y la de cada factura mientras siga impaga.
+function fechasCompromisoPendientes(oc: OrdenCompraSeguimiento, estado: EstadoSeguimiento): Date[] {
+  const fechas: Date[] = []
+  if (oc.fechaEntregaEstimada && !['ENTREGADA', 'FACTURADA'].includes(estado)) {
+    fechas.push(oc.fechaEntregaEstimada)
+  }
+  for (const f of oc.facturas) {
+    if (f.fechaVencimiento && f.estado !== 'PAGADA') fechas.push(f.fechaVencimiento)
+  }
+  return fechas
+}
+
 export function estaVencida(oc: OrdenCompraSeguimiento): boolean {
   const estado = calcularEstadoSeguimiento(oc)
-  if (estado === 'PAGADA' || estado === 'CANCELADA') return false
+  if (ESTADOS_TERMINALES.includes(estado)) return false
   const hoy = new Date()
-  const entregaVencida = Boolean(
-    oc.fechaEntregaEstimada &&
-    oc.fechaEntregaEstimada < hoy &&
-    !['ENTREGADA', 'FACTURADA', 'PAGADA'].includes(estado)
-  )
-  const facturaVencida = oc.facturas.some(f => f.fechaVencimiento && f.fechaVencimiento < hoy && f.estado !== 'PAGADA')
-  return entregaVencida || facturaVencida
+  return fechasCompromisoPendientes(oc, estado).some(f => f < hoy)
+}
+
+export function estaPorVencer(oc: OrdenCompraSeguimiento): boolean {
+  const estado = calcularEstadoSeguimiento(oc)
+  if (ESTADOS_TERMINALES.includes(estado)) return false
+  const hoy = new Date()
+  const limite = new Date(hoy)
+  limite.setDate(limite.getDate() + DIAS_PREAVISO_VENCIMIENTO)
+  const fechas = fechasCompromisoPendientes(oc, estado)
+  // Si ya hay algo vencido manda el rojo, no el ámbar.
+  if (fechas.some(f => f < hoy)) return false
+  return fechas.some(f => f <= limite)
+}
+
+// Qué falta por hacer, en términos de la acción concreta que destraba la orden.
+export function proximaAccion(oc: OrdenCompraSeguimiento): string {
+  const estado = calcularEstadoSeguimiento(oc)
+  switch (estado) {
+    case 'CANCELADA': return 'Ninguna — orden cancelada'
+    case 'CERRADA':   return 'Ninguna — orden cerrada'
+    case 'PAGADA':    return 'Cerrar la orden'
+    case 'FACTURADA': return 'Gestionar el pago al proveedor'
+    case 'ENTREGADA': return 'Registrar la factura del proveedor'
+    case 'ENTREGA_PARCIAL': {
+      const faltan = oc.items.filter(i => i.cantidadRecibida < i.cantidad).length
+      return `Completar la recepción — ${faltan} ítem(s) pendiente(s)`
+    }
+    case 'EN_TRANSITO': return 'Recibir la mercadería y registrar la recepción'
+    case 'CONFIRMADA':  return 'Hacer seguimiento del despacho del proveedor'
+    default:            return 'Confirmar la orden con el proveedor'
+  }
 }
 
 export type EstadoItem = 'PENDIENTE' | 'PARCIAL' | 'ENTREGADO'
@@ -157,6 +221,11 @@ export interface EventoTimeline {
 
 export function construirTimeline(oc: OrdenCompraSeguimiento): EventoTimeline[] {
   const eventos: EventoTimeline[] = [
+    {
+      fecha: oc.requerimiento.createdAt,
+      texto: `Solicitud ${formatNumRequerimiento(oc.requerimiento.numero, oc.requerimiento.anio)} registrada`,
+      usuario: oc.requerimiento.creadoPor?.nombre,
+    },
     { fecha: oc.createdAt, texto: `OC emitida a ${oc.proveedor.razonSocial}`, usuario: oc.emitidoPor?.nombre },
   ]
 
@@ -206,6 +275,7 @@ export interface KpisSeguimiento {
   abiertas: number
   cerradas: number
   vencidas: number
+  porVencer: number
   pendientesEntrega: number
   pendientesFactura: number
   pendientesPago: number
@@ -221,15 +291,18 @@ export async function calcularKpisSeguimiento(ordenes: OrdenCompraSeguimiento[])
   const anio = new Date().getFullYear()
   const egresos = await obtenerEgresosLogistica(anio)
 
-  let abiertas = 0, cerradas = 0, vencidas = 0, pendientesEntrega = 0, pendientesFactura = 0, pendientesPago = 0
+  let abiertas = 0, cerradas = 0, vencidas = 0, porVencer = 0, pendientesEntrega = 0, pendientesFactura = 0, pendientesPago = 0
   const porProveedorMap = new Map<string, number>()
 
   for (const oc of ordenes) {
     const estado = calcularEstadoSeguimiento(oc)
     if (estado === 'CANCELADA') continue
-    if (estado === 'PAGADA') cerradas++
+    // Una OC pagada ya no exige acción de logística, así que cuenta como cerrada
+    // aunque todavía no tenga el cierre formal marcado sobre la orden.
+    if (estado === 'PAGADA' || estado === 'CERRADA') cerradas++
     else abiertas++
     if (estaVencida(oc)) vencidas++
+    if (estaPorVencer(oc)) porVencer++
     if (['EMITIDA', 'CONFIRMADA', 'EN_TRANSITO', 'ENTREGA_PARCIAL'].includes(estado)) pendientesEntrega++
     if (estado === 'ENTREGADA') pendientesFactura++
     if (estado === 'FACTURADA') pendientesPago++
@@ -250,6 +323,7 @@ export async function calcularKpisSeguimiento(ordenes: OrdenCompraSeguimiento[])
     abiertas,
     cerradas,
     vencidas,
+    porVencer,
     pendientesEntrega,
     pendientesFactura,
     pendientesPago,

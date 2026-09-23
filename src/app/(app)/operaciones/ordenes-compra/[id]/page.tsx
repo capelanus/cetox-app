@@ -9,6 +9,7 @@ import { ESTADO_OC_LABELS } from '@/lib/constants'
 import { actualizarEstadoOC, enviarOCaCalidad } from '@/app/actions/ordenes-compra'
 import FacturaAdjuntos from './factura-adjuntos'
 import ComprobantePago from './comprobante-pago'
+import DocumentosOC from './documentos-oc'
 
 export default async function OrdenCompraDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD'])
@@ -30,6 +31,10 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
         orderBy: { fechaRecepcion: 'desc' },
       },
       facturas: {
+        orderBy: { createdAt: 'desc' },
+      },
+      documentos: {
+        include: { subidoPor: { select: { nombre: true } } },
         orderBy: { createdAt: 'desc' },
       },
     },
@@ -321,6 +326,19 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
           moneda={oc.moneda}
         />
       )}
+
+      <DocumentosOC
+        ocId={oc.id}
+        puedeEditar={!esCalidad}
+        documentos={oc.documentos.map(d => ({
+          id: d.id,
+          tipo: d.tipo,
+          nombre: d.nombre,
+          url: d.url,
+          subidoPor: d.subidoPor.nombre,
+          fecha: formatFecha(d.createdAt),
+        }))}
+      />
 
       {/* Historial de modificaciones */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">

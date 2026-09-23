@@ -74,6 +74,14 @@ export const ESTADO_OC_LABELS: Record<string, string> = {
   CANCELADA: 'Cancelada',
 }
 
+export const TIPO_DOCUMENTO_OC_LABELS: Record<string, string> = {
+  CONTRATO: 'Contrato',
+  GUIA_REMISION: 'Guía de remisión',
+  COTIZACION: 'Cotización',
+  ORDEN_COMPRA: 'Orden de compra',
+  OTRO: 'Otro',
+}
+
 export const ESTADO_RECEPCION_LABELS: Record<string, string> = {
   PENDIENTE: 'Pendiente',
   CONFORME: 'Conforme',

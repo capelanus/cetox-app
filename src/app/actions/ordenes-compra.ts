@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { requireRol } from '@/lib/roles'
 import { siguienteCorrelativo } from '@/lib/correlativo'
-import { ESTADO_OC_LABELS } from '@/lib/constants'
+import { ESTADO_OC_LABELS, TIPO_DOCUMENTO_OC_LABELS } from '@/lib/constants'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -202,6 +202,38 @@ export async function subirComprobantePago(ocId: string, comprobanteUrl: string)
     },
   })
   revalidatePath(`/operaciones/ordenes-compra/${ocId}`)
+  revalidatePath('/operaciones/seguimiento')
+}
+
+export async function adjuntarDocumentoOC(ocId: string, tipo: string, nombre: string, url: string) {
+  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  if (!TIPO_DOCUMENTO_OC_LABELS[tipo]) throw new Error('Tipo de documento no válido.')
+
+  await prisma.ordenCompraDocumento.create({
+    data: { ordenCompraId: ocId, tipo, nombre, url, subidoPorId: session.user.id },
+  })
+  await prisma.ordenCompraHistorial.create({
+    data: {
+      ordenCompraId: ocId,
+      usuarioId: session.user.id,
+      descripcion: `${TIPO_DOCUMENTO_OC_LABELS[tipo]} "${nombre}" adjuntado por ${session.user.name ?? session.user.email}`,
+    },
+  })
+  revalidatePath(`/operaciones/ordenes-compra/${ocId}`)
+  revalidatePath('/operaciones/seguimiento')
+}
+
+export async function eliminarDocumentoOC(documentoId: string) {
+  const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
+  const doc = await prisma.ordenCompraDocumento.delete({ where: { id: documentoId } })
+  await prisma.ordenCompraHistorial.create({
+    data: {
+      ordenCompraId: doc.ordenCompraId,
+      usuarioId: session.user.id,
+      descripcion: `Documento "${doc.nombre}" eliminado por ${session.user.name ?? session.user.email}`,
+    },
+  })
+  revalidatePath(`/operaciones/ordenes-compra/${doc.ordenCompraId}`)
   revalidatePath('/operaciones/seguimiento')
 }
 

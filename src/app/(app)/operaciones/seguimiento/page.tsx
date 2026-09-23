@@ -1,7 +1,7 @@
 import { requireOperaciones, hasRol } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
-import { formatFecha, formatNumOrdenCompra } from '@/lib/format'
-import { AREA_SOLICITANTE_LABELS } from '@/lib/constants'
+import { formatFecha, formatNumOrdenCompra, formatNumRecepcion, formatNumRequerimiento } from '@/lib/format'
+import { AREA_SOLICITANTE_LABELS, TIPO_DOCUMENTO_OC_LABELS } from '@/lib/constants'
 import {
   obtenerOrdenesSeguimiento,
   calcularKpisSeguimiento,
@@ -10,6 +10,8 @@ import {
   calcularEstadoItem,
   construirTimeline,
   estaVencida,
+  estaPorVencer,
+  proximaAccion,
   ESTADO_SEGUIMIENTO_LABELS,
   ESTADO_SEGUIMIENTO_BADGE,
   ESTADO_ITEM_LABELS,
@@ -38,11 +40,20 @@ export default async function SeguimientoPage() {
   const filas = ordenes.map(oc => {
     const estado = calcularEstadoSeguimiento(oc)
     const documentos: { label: string; url: string }[] = []
+    if (oc.archivoPdfUrl) documentos.push({ label: 'Orden de compra (PDF)', url: oc.archivoPdfUrl })
     if (oc.facturaOcUrl) documentos.push({ label: 'Factura de la OC', url: oc.facturaOcUrl })
     if (esCalidad && oc.comprobantePagoUrl) documentos.push({ label: 'Comprobante de pago', url: oc.comprobantePagoUrl })
+    for (const r of oc.recepciones) {
+      if (r.documentoUrl) {
+        documentos.push({ label: `Guía de ${formatNumRecepcion(r.numero, r.anio)}`, url: r.documentoUrl })
+      }
+    }
     for (const f of oc.facturas) {
       if (f.archivoUrl) documentos.push({ label: `Factura ${f.serie ? f.serie + '-' : ''}${f.numero}`, url: f.archivoUrl })
       if (esCalidad && f.provision?.pago?.voucherUrl) documentos.push({ label: 'Voucher de pago', url: f.provision.pago.voucherUrl })
+    }
+    for (const d of oc.documentos) {
+      documentos.push({ label: `${TIPO_DOCUMENTO_OC_LABELS[d.tipo] ?? d.tipo}: ${d.nombre}`, url: d.url })
     }
     for (const c of oc.cotizacionesProveedor) {
       if (c.cotizacionProveedor.archivoUrl) {
@@ -64,6 +75,14 @@ export default async function SeguimientoPage() {
       estadoLabel: ESTADO_SEGUIMIENTO_LABELS[estado],
       estadoBadge: ESTADO_SEGUIMIENTO_BADGE[estado],
       vencida: estaVencida(oc),
+      porVencer: estaPorVencer(oc),
+      proximaAccion: proximaAccion(oc),
+      solicitud: {
+        id: oc.requerimiento.id,
+        numero: formatNumRequerimiento(oc.requerimiento.numero, oc.requerimiento.anio),
+        solicitante: oc.requerimiento.creadoPor?.nombre ?? '—',
+        fechaRequerida: oc.requerimiento.fechaRequerida ? formatFecha(oc.requerimiento.fechaRequerida) : null,
+      },
       avance: calcularAvanceEntrega(oc),
       moneda: oc.moneda,
       total: oc.total,

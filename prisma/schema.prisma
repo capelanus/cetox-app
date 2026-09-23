@@ -51,6 +51,7 @@ model Usuario {
   empleado                  Empleado?
   historialOC               OrdenCompraHistorial[]       @relation("OCHistorialUsuario")
   ordenesCompraResponsable  OrdenCompra[]                @relation("OCResponsableActual")
+  documentosOC              OrdenCompraDocumento[]       @relation("OCDocumentoSubidoPor")
   movimientosInventario     InventarioMovimiento[]       @relation("InventarioMovimientoUsuario")
   auditorias                Auditoria[]                  @relation("AuditoriaCreadaPor")
   documentosCalidad         DocumentoCalidad[]            @relation("DocCalidadSubidoPor")
@@ -547,8 +548,21 @@ model OrdenCompra {
   facturas              Factura[]
   cotizacionesProveedor OrdenCompraCotizacion[]
   historial             OrdenCompraHistorial[]
+  documentos            OrdenCompraDocumento[]
 
   @@unique([numero, anio])
+}
+
+model OrdenCompraDocumento {
+  id            String      @id @default(cuid())
+  ordenCompraId String
+  ordenCompra   OrdenCompra @relation(fields: [ordenCompraId], references: [id], onDelete: Cascade)
+  tipo          String      @default("OTRO")
+  nombre        String
+  url           String
+  subidoPorId   String
+  subidoPor     Usuario     @relation("OCDocumentoSubidoPor", fields: [subidoPorId], references: [id])
+  createdAt     DateTime    @default(now())
 }
 
 model OrdenCompraCotizacion {

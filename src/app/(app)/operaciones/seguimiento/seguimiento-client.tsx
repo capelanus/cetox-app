@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   ChevronDown,
   ChevronRight,
@@ -50,6 +51,14 @@ interface OrdenVM {
   estadoLabel: string
   estadoBadge: string
   vencida: boolean
+  porVencer: boolean
+  proximaAccion: string
+  solicitud: {
+    id: string
+    numero: string
+    solicitante: string
+    fechaRequerida: string | null
+  }
   avance: number
   moneda: string
   total: number
@@ -66,6 +75,7 @@ interface Kpis {
   abiertas: number
   cerradas: number
   vencidas: number
+  porVencer: number
   pendientesEntrega: number
   pendientesFactura: number
   pendientesPago: number
@@ -105,6 +115,8 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
   const [estatus, setEstatus] = useState('')
   const [empresa, setEmpresa] = useState('')
   const [tipo, setTipo] = useState('')
+  const [area, setArea] = useState('')
+  const [alerta, setAlerta] = useState('')
   const [abiertas, setAbiertas] = useState<Set<string>>(new Set())
 
   const estadosPresentes = useMemo(() => {
@@ -114,6 +126,7 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
   }, [ordenes])
 
   const empresas = useMemo(() => [...new Set(ordenes.map(o => o.proveedor))].sort(), [ordenes])
+  const areas = useMemo(() => [...new Set(ordenes.map(o => o.area))].sort(), [ordenes])
 
   const filtradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
@@ -121,13 +134,27 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
       if (estatus && o.estado !== estatus) return false
       if (empresa && o.proveedor !== empresa) return false
       if (tipo && o.tipo !== tipo) return false
-      if (q && !`${o.numero} ${o.proveedor}`.toLowerCase().includes(q)) return false
+      if (area && o.area !== area) return false
+      if (alerta === 'VENCIDA' && !o.vencida) return false
+      if (alerta === 'POR_VENCER' && !o.porVencer) return false
+      if (q) {
+        const texto = [
+          o.numero,
+          o.proveedor,
+          o.area,
+          o.solicitud.numero,
+          o.solicitud.solicitante,
+          o.responsable?.nombre ?? '',
+          ...o.items.map(i => i.descripcion),
+        ].join(' ').toLowerCase()
+        if (!texto.includes(q)) return false
+      }
       return true
     })
-  }, [ordenes, busqueda, estatus, empresa, tipo])
+  }, [ordenes, busqueda, estatus, empresa, tipo, area, alerta])
 
-  const limpiarFiltros = () => { setBusqueda(''); setEstatus(''); setEmpresa(''); setTipo('') }
-  const hayFiltros = Boolean(busqueda || estatus || empresa || tipo)
+  const limpiarFiltros = () => { setBusqueda(''); setEstatus(''); setEmpresa(''); setTipo(''); setArea(''); setAlerta('') }
+  const hayFiltros = Boolean(busqueda || estatus || empresa || tipo || area || alerta)
 
   const toggle = (id: string) => {
     setAbiertas(prev => {
@@ -144,7 +171,13 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         <Kpi icon={<PackageOpen className="w-4 h-4" />} label="Abiertas" value={kpis.abiertas} color="#2563eb" />
         <Kpi icon={<CheckCircle2 className="w-4 h-4" />} label="Cerradas" value={kpis.cerradas} color="#16a34a" />
-        <Kpi icon={<AlertTriangle className="w-4 h-4" />} label="Vencidas" value={kpis.vencidas} color="#dc2626" />
+        <Kpi
+          icon={<AlertTriangle className="w-4 h-4" />}
+          label="Vencidas"
+          value={kpis.vencidas}
+          sub={kpis.porVencer > 0 ? `${kpis.porVencer} por vencer en 7 días` : undefined}
+          color="#dc2626"
+        />
         <Kpi icon={<Truck className="w-4 h-4" />} label="Pend. entrega" value={kpis.pendientesEntrega} color="#d97706" />
         <Kpi icon={<Receipt className="w-4 h-4" />} label="Pend. factura" value={kpis.pendientesFactura} color="#d97706" />
         <Kpi icon={<Wallet className="w-4 h-4" />} label="Pend. pago" value={kpis.pendientesPago} color="#d97706" />
@@ -193,7 +226,7 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
           <input
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
-            placeholder="Buscar OC o proveedor..."
+            placeholder="Buscar OC, producto, solicitante..."
             className={`${selectClass} w-56`}
           />
           <select value={estatus} onChange={e => setEstatus(e.target.value)} className={selectClass}>
@@ -208,6 +241,15 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
             <option value="">Tipo: todos</option>
             <option value="PRODUCTO">Producto</option>
             <option value="SERVICIO">Servicio</option>
+          </select>
+          <select value={area} onChange={e => setArea(e.target.value)} className={selectClass}>
+            <option value="">Área: todas</option>
+            {areas.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+          <select value={alerta} onChange={e => setAlerta(e.target.value)} className={selectClass}>
+            <option value="">Alertas: todas</option>
+            <option value="VENCIDA">Solo vencidas</option>
+            <option value="POR_VENCER">Solo por vencer</option>
           </select>
           {hayFiltros && (
             <button onClick={limpiarFiltros} className="text-sm text-gray-500 hover:text-gray-800 underline">Limpiar</button>
@@ -253,9 +295,13 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
                       {responsables.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
                     </select>
                   </form>
-                  <div className="col-span-6 lg:col-span-2 flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${oc.estadoBadge}`}>{oc.estadoLabel}</span>
-                    {oc.vencida && <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700">Vencida</span>}
+                  <div className="col-span-6 lg:col-span-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${oc.estadoBadge}`}>{oc.estadoLabel}</span>
+                      {oc.vencida && <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700">Vencida</span>}
+                      {!oc.vencida && oc.porVencer && <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">Por vencer</span>}
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-0.5 truncate" title={oc.proximaAccion}>{oc.proximaAccion}</p>
                   </div>
                   <div className="col-span-8 lg:col-span-2">
                     <div className="flex items-center gap-2">
@@ -278,9 +324,22 @@ export default function SeguimientoClient({ ordenes, kpis, responsables }: {
               {abierta && (
                 <div className="border-t border-gray-100 bg-gray-50/60 px-4 py-4 space-y-4">
                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
+                    <span>
+                      Solicitud:{' '}
+                      <Link href={`/operaciones/requerimientos/${oc.solicitud.id}`} className="font-mono text-[#13602C] hover:underline">
+                        {oc.solicitud.numero}
+                      </Link>
+                    </span>
+                    <span>Solicitado por: <span className="text-gray-700 font-medium">{oc.solicitud.solicitante}</span></span>
                     <span>Área: <span className="text-gray-700 font-medium">{oc.area}</span></span>
                     <span>Emitido por: <span className="text-gray-700 font-medium">{oc.emitidoPor}</span></span>
+                    {oc.solicitud.fechaRequerida && (
+                      <span>Requerido para: <span className="text-gray-700 font-medium">{oc.solicitud.fechaRequerida}</span></span>
+                    )}
                     {oc.observaciones && <span>Obs.: <span className="text-gray-700">{oc.observaciones}</span></span>}
+                    <Link href={`/operaciones/ordenes-compra/${oc.id}`} className="ml-auto text-[#13602C] font-medium hover:underline">
+                      Ver orden completa →
+                    </Link>
                   </div>
 
                   {/* Items */}

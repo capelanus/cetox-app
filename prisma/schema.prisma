@@ -532,6 +532,7 @@ model OrdenCompra {
   estado                     String               @default("EMITIDA")
   tipo                       String               @default("PRODUCTO") // PRODUCTO | SERVICIO
   observaciones              String?
+  observacionesSeguimiento   String?
   archivoPdfUrl              String?
   facturaOcUrl               String?
   comprobantePagoUrl         String?
@@ -596,6 +597,10 @@ model OrdenCompraItem {
   subtotal         Float
   orden            Int         @default(0)
   facturaUrl       String?
+  fechaEntregado   DateTime?
+  fechaProgramada  DateTime?
+  fechaRealizada   DateTime?
+  observaciones    String?
 }
 
 model Recepcion {

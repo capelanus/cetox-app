@@ -45,12 +45,19 @@ export async function crearRecepcion(formData: FormData) {
   // sobre la misma OC no se pisen (lectura-luego-escritura no es atómica).
   const ocItems = await prisma.ordenCompraItem.findMany({ where: { ordenCompraId }, orderBy: { orden: 'asc' } })
   await prisma.$transaction(
-    ocItems.slice(0, items.length).map((ocItem, i) =>
-      prisma.ordenCompraItem.update({
+    ocItems.slice(0, items.length).map((ocItem, i) => {
+      const recibidoAhora = items[i]?.cantidadRecibida || 0
+      // La fecha de entrega se sella cuando el ítem queda completo, para que el
+      // seguimiento muestre cuándo se cerró la entrega y no cada parcial.
+      const quedaCompleto = ocItem.cantidadRecibida + recibidoAhora >= ocItem.cantidad
+      return prisma.ordenCompraItem.update({
         where: { id: ocItem.id },
-        data: { cantidadRecibida: { increment: items[i]?.cantidadRecibida || 0 } },
+        data: {
+          cantidadRecibida: { increment: recibidoAhora },
+          ...(quedaCompleto && !ocItem.fechaEntregado ? { fechaEntregado: rec.fechaRecepcion } : {}),
+        },
       })
-    )
+    })
   )
 
   await prisma.ordenCompraHistorial.create({

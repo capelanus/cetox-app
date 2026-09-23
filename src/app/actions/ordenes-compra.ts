@@ -205,6 +205,33 @@ export async function subirComprobantePago(ocId: string, comprobanteUrl: string)
   revalidatePath('/operaciones/seguimiento')
 }
 
+export async function guardarObservacionSeguimiento(ocId: string, formData: FormData) {
+  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
+  const texto = ((formData.get('observacionesSeguimiento') as string) || '').trim()
+  await prisma.ordenCompra.update({
+    where: { id: ocId },
+    data: { observacionesSeguimiento: texto || null },
+  })
+  revalidatePath('/operaciones/seguimiento')
+}
+
+export async function guardarSeguimientoItem(itemId: string, formData: FormData) {
+  await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'])
+  const observaciones   = ((formData.get('observaciones') as string) || '').trim()
+  const fechaProgramada = formData.get('fechaProgramada') as string
+  const fechaRealizada  = formData.get('fechaRealizada') as string
+
+  await prisma.ordenCompraItem.update({
+    where: { id: itemId },
+    data: {
+      observaciones: observaciones || null,
+      fechaProgramada: fechaProgramada ? new Date(fechaProgramada) : null,
+      fechaRealizada: fechaRealizada ? new Date(fechaRealizada) : null,
+    },
+  })
+  revalidatePath('/operaciones/seguimiento')
+}
+
 export async function adjuntarDocumentoOC(ocId: string, tipo: string, nombre: string, url: string) {
   const session = await requireRol(['JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA'])
   if (!TIPO_DOCUMENTO_OC_LABELS[tipo]) throw new Error('Tipo de documento no válido.')

@@ -115,6 +115,20 @@ export function calcularAvanceEntrega(oc: OrdenCompraSeguimiento): number {
   return Math.round((valorRecibido / valorTotal) * 100)
 }
 
+// Avance sobre el ciclo completo de la orden, no solo la entrega: una OC
+// entregada pero sin factura ni pago no está terminada, y la grilla debe
+// mostrarlo. La entrega pesa más porque es la etapa con avance granular.
+const PESO_EMITIDA = 25, PESO_ENTREGA = 35, PESO_FACTURA = 20, PESO_PAGO = 20
+
+export function calcularAvanceOC(oc: OrdenCompraSeguimiento): number {
+  const hitos = calcularHitos(oc)
+  let avance = PESO_EMITIDA
+  avance += (calcularAvanceEntrega(oc) / 100) * PESO_ENTREGA
+  if (hitos.factura.ok) avance += PESO_FACTURA
+  if (hitos.pagado.ok) avance += PESO_PAGO
+  return Math.round(avance)
+}
+
 export function calcularEstadoSeguimiento(oc: OrdenCompraSeguimiento): EstadoSeguimiento {
   if (oc.estado === 'CANCELADA') return 'CANCELADA'
   // Cierre formal: lo marca logística a mano desde la OC y es terminal, por eso
@@ -193,24 +207,89 @@ export function proximaAccion(oc: OrdenCompraSeguimiento): string {
   }
 }
 
-export type EstadoItem = 'PENDIENTE' | 'PARCIAL' | 'ENTREGADO'
+export type EstadoItem = 'PENDIENTE' | 'PROGRAMADO' | 'EN_TRANSITO' | 'PARCIAL' | 'ENTREGADO'
 
-export function calcularEstadoItem(item: { cantidad: number; cantidadRecibida: number }): EstadoItem {
-  if (item.cantidadRecibida <= 0) return 'PENDIENTE'
-  if (item.cantidadRecibida >= item.cantidad) return 'ENTREGADO'
-  return 'PARCIAL'
+// El estado del ítem mezcla lo recibido con la etapa de la orden: un ítem sin
+// recibir se lee distinto según la OC esté recién emitida, en tránsito o —si es
+// un servicio— ya agendado con el proveedor.
+export function calcularEstadoItem(
+  item: { cantidad: number; cantidadRecibida: number; fechaProgramada?: Date | null; fechaRealizada?: Date | null },
+  oc?: { estado: string },
+): EstadoItem {
+  if (item.fechaRealizada) return 'ENTREGADO'
+  if (item.cantidadRecibida >= item.cantidad && item.cantidad > 0) return 'ENTREGADO'
+  if (item.cantidadRecibida > 0) return 'PARCIAL'
+  if (item.fechaProgramada) return 'PROGRAMADO'
+  if (oc?.estado === 'EN_TRANSITO') return 'EN_TRANSITO'
+  return 'PENDIENTE'
 }
 
 export const ESTADO_ITEM_LABELS: Record<EstadoItem, string> = {
   PENDIENTE: 'Pendiente',
+  PROGRAMADO: 'Programado',
+  EN_TRANSITO: 'En tránsito',
   PARCIAL: 'Parcial',
   ENTREGADO: 'Entregado',
 }
 
 export const ESTADO_ITEM_BADGE: Record<EstadoItem, string> = {
-  PENDIENTE: 'bg-amber-100 text-amber-700',
-  PARCIAL: 'bg-blue-100 text-blue-700',
+  PENDIENTE: 'bg-gray-100 text-gray-500',
+  PROGRAMADO: 'bg-blue-100 text-blue-700',
+  EN_TRANSITO: 'bg-orange-100 text-orange-700',
+  PARCIAL: 'bg-amber-100 text-amber-700',
   ENTREGADO: 'bg-green-100 text-green-700',
+}
+
+export interface Hito {
+  ok: boolean
+  fecha: Date | null
+  nota?: string
+}
+
+// Los cuatro hitos que logística revisa en la grilla: envío de la OC, entrega,
+// recepción de la factura y pago.
+export function calcularHitos(oc: OrdenCompraSeguimiento): {
+  enviada: Hito
+  entregado: Hito
+  factura: Hito
+  pagado: Hito
+} {
+  const entregaCompleta = oc.items.length > 0 && oc.items.every(i => i.fechaRealizada || i.cantidadRecibida >= i.cantidad)
+  const fechasEntrega = [
+    ...oc.items.map(i => i.fechaRealizada ?? i.fechaEntregado).filter((f): f is Date => Boolean(f)),
+    ...oc.recepciones.map(r => r.fechaRecepcion),
+  ]
+
+  const facturas = [...oc.facturas].sort((a, b) => a.fechaEmision.getTime() - b.fechaEmision.getTime())
+  const pagos = oc.facturas.map(f => f.provision?.pago).filter(p => p && PAGOS_REALIZADOS.includes(p.estado))
+
+  return {
+    enviada: { ok: true, fecha: oc.createdAt },
+    entregado: {
+      ok: entregaCompleta,
+      fecha: fechasEntrega.length > 0 ? new Date(Math.max(...fechasEntrega.map(f => f.getTime()))) : null,
+    },
+    factura: {
+      ok: facturas.length > 0 || Boolean(oc.facturaOcUrl),
+      fecha: facturas[0]?.fechaEmision ?? null,
+    },
+    pagado: {
+      ok: haySenalDePago(oc),
+      fecha: pagos[0]?.fechaPago ?? (oc.comprobantePagoUrl ? oc.updatedAt : null),
+    },
+  }
+}
+
+// Días que faltan para la fecha comprometida más próxima; negativo si ya pasó.
+export function diasParaCompromiso(oc: OrdenCompraSeguimiento): number | null {
+  const estado = calcularEstadoSeguimiento(oc)
+  if (ESTADOS_TERMINALES.includes(estado)) return null
+  const fechas = fechasCompromisoPendientes(oc, estado)
+  if (fechas.length === 0) return null
+  const proxima = Math.min(...fechas.map(f => f.getTime()))
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  return Math.round((proxima - hoy.getTime()) / 86400000)
 }
 
 export interface EventoTimeline {
@@ -272,6 +351,10 @@ export function construirTimeline(oc: OrdenCompraSeguimiento): EventoTimeline[] 
 }
 
 export interface KpisSeguimiento {
+  total: number
+  enProceso: number
+  enTransito: number
+  entregadas: number
   abiertas: number
   cerradas: number
   vencidas: number
@@ -292,11 +375,17 @@ export async function calcularKpisSeguimiento(ordenes: OrdenCompraSeguimiento[])
   const egresos = await obtenerEgresosLogistica(anio)
 
   let abiertas = 0, cerradas = 0, vencidas = 0, porVencer = 0, pendientesEntrega = 0, pendientesFactura = 0, pendientesPago = 0
+  let total = 0, enProceso = 0, enTransito = 0, entregadas = 0
   const porProveedorMap = new Map<string, number>()
 
   for (const oc of ordenes) {
     const estado = calcularEstadoSeguimiento(oc)
     if (estado === 'CANCELADA') continue
+    total++
+    const hitos = calcularHitos(oc)
+    if (hitos.entregado.ok) entregadas++
+    else enProceso++
+    if (estado === 'EN_TRANSITO') enTransito++
     // Una OC pagada ya no exige acción de logística, así que cuenta como cerrada
     // aunque todavía no tenga el cierre formal marcado sobre la orden.
     if (estado === 'PAGADA' || estado === 'CERRADA') cerradas++
@@ -320,6 +409,10 @@ export async function calcularKpisSeguimiento(ordenes: OrdenCompraSeguimiento[])
   const porArea = egresos.porDepto.map(d => ({ area: d.departamento, monto: d.facturado }))
 
   return {
+    total,
+    enProceso,
+    enTransito,
+    entregadas,
     abiertas,
     cerradas,
     vencidas,

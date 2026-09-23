@@ -7,7 +7,10 @@ import {
   calcularKpisSeguimiento,
   calcularEstadoSeguimiento,
   calcularAvanceEntrega,
+  calcularAvanceOC,
   calcularEstadoItem,
+  calcularHitos,
+  diasParaCompromiso,
   construirTimeline,
   estaVencida,
   estaPorVencer,
@@ -39,6 +42,11 @@ export default async function SeguimientoPage() {
 
   const filas = ordenes.map(oc => {
     const estado = calcularEstadoSeguimiento(oc)
+    const hitos = calcularHitos(oc)
+    const hito = (h: { ok: boolean; fecha: Date | null }) => ({
+      ok: h.ok,
+      fecha: h.fecha ? formatFecha(h.fecha) : null,
+    })
     const documentos: { label: string; url: string }[] = []
     if (oc.archivoPdfUrl) documentos.push({ label: 'Orden de compra (PDF)', url: oc.archivoPdfUrl })
     if (oc.facturaOcUrl) documentos.push({ label: 'Factura de la OC', url: oc.facturaOcUrl })
@@ -83,15 +91,25 @@ export default async function SeguimientoPage() {
         solicitante: oc.requerimiento.creadoPor?.nombre ?? '—',
         fechaRequerida: oc.requerimiento.fechaRequerida ? formatFecha(oc.requerimiento.fechaRequerida) : null,
       },
-      avance: calcularAvanceEntrega(oc),
+      avance: calcularAvanceOC(oc),
+      avanceEntrega: calcularAvanceEntrega(oc),
       moneda: oc.moneda,
       total: oc.total,
       emitidoPor: oc.emitidoPor?.nombre ?? '—',
       fechaEmision: formatFecha(oc.createdAt),
+      fechaRequerimiento: formatFecha(oc.requerimiento.createdAt),
       fechaEntregaEstimada: oc.fechaEntregaEstimada ? formatFecha(oc.fechaEntregaEstimada) : null,
+      diasCompromiso: diasParaCompromiso(oc),
+      hitos: {
+        enviada: hito(hitos.enviada),
+        entregado: hito(hitos.entregado),
+        factura: hito(hitos.factura),
+        pagado: hito(hitos.pagado),
+      },
       observaciones: oc.observaciones,
+      observacionesSeguimiento: oc.observacionesSeguimiento,
       items: oc.items.map(item => {
-        const estadoItem = calcularEstadoItem(item)
+        const estadoItem = calcularEstadoItem(item, oc)
         return {
           id: item.id,
           descripcion: item.descripcion,
@@ -103,6 +121,18 @@ export default async function SeguimientoPage() {
           estadoLabel: ESTADO_ITEM_LABELS[estadoItem],
           estadoBadge: ESTADO_ITEM_BADGE[estadoItem],
           facturaUrl: item.facturaUrl,
+          // Las OC anteriores a fechaEntregado no la tienen sellada; se cae a la
+          // fecha de entrega de la orden para no mostrar vacío en ítems ya recibidos.
+          fechaEntregado: item.fechaEntregado
+            ? formatFecha(item.fechaEntregado)
+            : estadoItem === 'ENTREGADO' && hitos.entregado.fecha
+              ? formatFecha(hitos.entregado.fecha)
+              : null,
+          fechaProgramada: item.fechaProgramada ? formatFecha(item.fechaProgramada) : null,
+          fechaRealizada: item.fechaRealizada ? formatFecha(item.fechaRealizada) : null,
+          fechaProgramadaInput: item.fechaProgramada ? item.fechaProgramada.toISOString().slice(0, 10) : '',
+          fechaRealizadaInput: item.fechaRealizada ? item.fechaRealizada.toISOString().slice(0, 10) : '',
+          observaciones: item.observaciones,
         }
       }),
       documentos,
@@ -121,7 +151,7 @@ export default async function SeguimientoPage() {
           Seguimiento de Órdenes e Ítems
         </h1>
         <p className="text-gray-500 text-sm mt-1">
-          Estado en tiempo real de cada orden de compra: entrega, facturación, pago y responsable.
+          Control y estado de compras, entregas y pagos.
         </p>
       </div>
 

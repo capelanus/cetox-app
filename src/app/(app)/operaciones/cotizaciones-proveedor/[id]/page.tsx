@@ -157,9 +157,15 @@ export default async function CotizacionProveedorDetallePage({ params }: { param
               <td className="px-4 py-2 text-right font-mono">{cot.subtotal.toFixed(2)}</td>
             </tr>
             <tr>
-              <td colSpan={5} className="px-4 py-2 text-right text-gray-500">IGV (18%):</td>
+              <td colSpan={5} className="px-4 py-2 text-right text-gray-500">IGV:</td>
               <td className="px-4 py-2 text-right font-mono">{cot.igv.toFixed(2)}</td>
             </tr>
+            {cot.percepcion > 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-2 text-right text-gray-500">Percepción:</td>
+                <td className="px-4 py-2 text-right font-mono">{cot.percepcion.toFixed(2)}</td>
+              </tr>
+            )}
             <tr>
               <td colSpan={5} className="px-4 py-2 text-right font-bold text-[#13602C]">Total {cot.moneda}:</td>
               <td className="px-4 py-2 text-right font-bold font-mono text-[#13602C]">{cot.total.toFixed(2)}</td>

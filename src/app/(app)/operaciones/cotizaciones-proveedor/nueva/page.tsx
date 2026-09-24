@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Plus, Trash2, Paperclip, CheckCircle } from 'lucide-react'
 import { crearCotizacionProveedor } from '@/app/actions/cotizaciones-proveedor'
+import TotalesEditables from '@/components/forms/totales-editables'
+import type { ItemExtraido, TotalesExtraidos } from '@/lib/extraer-cotizacion'
 
 interface Requerimiento {
   id: string
@@ -39,6 +41,11 @@ export default function NuevaCotizacionProveedorPage() {
   const [archivoUrl, setArchivoUrl] = useState<string>('')
   const [archivoNombre, setArchivoNombre] = useState<string>('')
   const [uploading, setUploading] = useState(false)
+  const [extrayendo, setExtrayendo] = useState(false)
+  const [extraidos, setExtraidos] = useState<ItemExtraido[] | null>(null)
+  const [totalesPdf, setTotalesPdf] = useState<TotalesExtraidos | null>(null)
+  const [totalesAplicados, setTotalesAplicados] = useState<TotalesExtraidos | undefined>(undefined)
+  const [mensajeExtraccion, setMensajeExtraccion] = useState('')
   const archivoUrlRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -75,14 +82,14 @@ export default function NuevaCotizacionProveedorPage() {
     setItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item))
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0)
-  const igv = subtotal * 0.18
-  const total = subtotal + igv
+  const subtotalItems = items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0)
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
+    setExtraidos(null)
+    setMensajeExtraccion('')
     try {
       const fd = new FormData()
       fd.append('file', file)
@@ -96,6 +103,46 @@ export default function NuevaCotizacionProveedorPage() {
       alert('Error al subir el archivo')
     } finally {
       setUploading(false)
+    }
+
+    if (file.type !== 'application/pdf') {
+      setMensajeExtraccion('Solo se pueden leer los productos desde un PDF con texto. Cárgalos a mano.')
+      return
+    }
+    setExtrayendo(true)
+    try {
+      const { extraerTextoPdf, extraerItems, extraerTotales } = await import('@/lib/extraer-cotizacion')
+      const texto = await extraerTextoPdf(file)
+      const encontrados = extraerItems(texto)
+      setTotalesPdf(extraerTotales(texto))
+      if (encontrados.length === 0) {
+        setMensajeExtraccion('No se reconocieron productos en el PDF (puede ser un escaneo sin texto). Cárgalos a mano.')
+      } else {
+        setExtraidos(encontrados)
+      }
+    } catch {
+      setMensajeExtraccion('No se pudo leer el PDF. Carga los productos a mano.')
+    } finally {
+      setExtrayendo(false)
+    }
+  }
+
+  function usarExtraidos() {
+    if (!extraidos) return
+    setItems(extraidos.map(it => ({
+      descripcion: it.descripcion,
+      cantidad: it.cantidad,
+      unidad: it.unidad,
+      precioUnitario: it.precioUnitario,
+    })))
+    setExtraidos(null)
+    // Si el PDF declara sus propios totales se usan tal cual: son los que tienen
+    // que cuadrar con la factura, aunque no salgan de multiplicar las líneas.
+    if (totalesPdf && Object.values(totalesPdf).some(v => v !== undefined)) {
+      setTotalesAplicados(totalesPdf)
+      setMensajeExtraccion('Productos y totales cargados desde el PDF. Revísalos antes de guardar.')
+    } else {
+      setMensajeExtraccion('Productos cargados desde el PDF. Revísalos antes de guardar.')
     }
   }
 
@@ -185,6 +232,37 @@ export default function NuevaCotizacionProveedorPage() {
                   {archivoNombre} — subido correctamente
                 </p>
               )}
+              {extrayendo && <p className="text-xs text-gray-500 mt-1">Leyendo productos del PDF...</p>}
+              {mensajeExtraccion && <p className="text-xs text-gray-500 mt-1">{mensajeExtraccion}</p>}
+
+              {extraidos && (
+                <div className="mt-3 border border-amber-300 bg-amber-50 rounded-lg p-3">
+                  <p className="text-sm font-medium text-amber-900 mb-2">
+                    Se detectaron {extraidos.length} producto(s) en el PDF
+                  </p>
+                  <div className="max-h-48 overflow-y-auto space-y-1 mb-3">
+                    {extraidos.map((it, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs">
+                        {it.confiable
+                          ? <CheckCircle className="w-3 h-3 text-green-600 shrink-0" />
+                          : <span className="w-3 h-3 rounded-full bg-amber-400 shrink-0" title="Revisar: cantidad × precio no cuadra con el importe" />}
+                        <span className="flex-1 truncate text-gray-700">{it.descripcion}</span>
+                        <span className="font-mono text-gray-500 whitespace-nowrap">
+                          {it.cantidad} {it.unidad} × {it.precioUnitario.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" size="sm" onClick={usarExtraidos} className="bg-[#13602C] hover:bg-[#0e4a21] text-white">
+                      Usar estos productos
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setExtraidos(null)}>Descartar</Button>
+                    <span className="text-xs text-amber-800">Reemplaza los ítems actuales; siempre revisa antes de guardar.</span>
+                  </div>
+                </div>
+              )}
+
               <input ref={archivoUrlRef} type="hidden" name="archivoUrl" value={archivoUrl} />
             </div>
           </div>
@@ -256,23 +334,11 @@ export default function NuevaCotizacionProveedorPage() {
               </div>
             ))}
           </div>
-          {/* Totals */}
-          <div className="flex justify-end">
-            <div className="text-sm space-y-1 min-w-[200px]">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Subtotal:</span>
-                <span className="font-mono">{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">IGV (18%):</span>
-                <span className="font-mono">{igv.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-bold text-[#13602C]">
-                <span>Total:</span>
-                <span className="font-mono">{total.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
+          <TotalesEditables
+            key={totalesAplicados ? 'pdf' : 'items'}
+            subtotalItems={subtotalItems}
+            defaults={totalesAplicados}
+          />
         </div>
 
         <div className="flex gap-3">

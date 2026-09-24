@@ -26,6 +26,15 @@ interface Item {
 
 export default function NuevoRequerimientoPage() {
   const [items, setItems] = useState<Item[]>([{ descripcion: '', cantidad: 1, unidad: 'Unidad', especificaciones: '' }])
+  const [descripcionEditada, setDescripcionEditada] = useState<string | null>(null)
+
+  // La descripción general se arma sola con los productos pedidos para no
+  // escribir dos veces lo mismo; si el usuario la edita, deja de sobrescribirse.
+  const descripcionAuto = items
+    .map(i => i.descripcion.trim())
+    .filter(Boolean)
+    .join(', ')
+  const descripcion = descripcionEditada ?? descripcionAuto
 
   const addItem = () => setItems(prev => [...prev, { descripcion: '', cantidad: 1, unidad: 'Unidad', especificaciones: '' }])
   const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i))
@@ -65,8 +74,30 @@ export default function NuevoRequerimientoPage() {
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción general *</label>
-              <textarea name="descripcion" required rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descripción general *
+                {descripcionEditada === null && descripcionAuto && (
+                  <span className="ml-2 text-xs font-normal text-gray-400">se arma con los productos de abajo</span>
+                )}
+              </label>
+              <textarea
+                name="descripcion"
+                required
+                rows={2}
+                value={descripcion}
+                onChange={e => setDescripcionEditada(e.target.value)}
+                placeholder="Se completa con los productos que agregues abajo"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
+              />
+              {descripcionEditada !== null && (
+                <button
+                  type="button"
+                  onClick={() => setDescripcionEditada(null)}
+                  className="mt-1 text-xs text-gray-500 hover:text-gray-800 underline"
+                >
+                  Volver a armarla con los productos
+                </button>
+              )}
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Justificación</label>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { crearOrdenCompra } from '@/app/actions/ordenes-compra'
+import TotalesEditables from '@/components/forms/totales-editables'
 
 interface Requerimiento {
   id: string
@@ -24,6 +25,10 @@ interface CotizacionProveedor {
   numero: number
   anio: number
   proveedorId: string
+  requerimientoId: string
+  subtotal: number
+  igv: number
+  percepcion: number
   total: number
   moneda: string
   items: { descripcion: string; cantidad: number; unidad: string; precioUnitario: number }[]
@@ -94,12 +99,60 @@ export default function NuevaOrdenCompraPage() {
 
   // Only count checked items
   const includedItems = items.filter(item => item.incluido)
-  const subtotal = includedItems.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0)
-  const igv = subtotal * 0.18
-  const total = subtotal + igv
+  const subtotalItems = includedItems.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0)
 
+  // Con todos los ítems de la cotización incluidos, la OC hereda sus totales
+  // (incluida la percepción) para que coincida con lo cotizado. Si se excluye
+  // algún ítem esos totales dejan de aplicar y se recalcula desde las líneas.
+  const cotsElegidas = selectedCots
+    .map(id => cotizaciones.find(c => c.id === id))
+    .filter((c): c is CotizacionProveedor => Boolean(c))
+  const todosIncluidos = items.length > 0 && items.every(i => i.incluido)
+  const totalesCot = cotsElegidas.length > 0 && todosIncluidos
+    ? {
+        subtotal: cotsElegidas.reduce((s, c) => s + c.subtotal, 0),
+        igv: cotsElegidas.reduce((s, c) => s + c.igv, 0),
+        percepcion: cotsElegidas.reduce((s, c) => s + (c.percepcion ?? 0), 0),
+        total: cotsElegidas.reduce((s, c) => s + c.total, 0),
+      }
+    : undefined
+  const totalesKey = `${selectedCots.join(',')}-${todosIncluidos}`
+
+  // Al marcar cotizaciones se reconstruyen los ítems a partir de ellas, que es
+  // lo que evita reescribir a mano lo ya cotizado. Se reconstruye la lista
+  // completa (no se acumula) para que desmarcar también quite sus ítems.
   const toggleCot = (cotId: string, checked: boolean) => {
-    setSelectedCots(prev => checked ? [...prev, cotId] : prev.filter(c => c !== cotId))
+    const siguientes = checked ? [...selectedCots, cotId] : selectedCots.filter(c => c !== cotId)
+    setSelectedCots(siguientes)
+
+    const cotsElegidas = siguientes
+      .map(id => cotizaciones.find(c => c.id === id))
+      .filter((c): c is CotizacionProveedor => Boolean(c))
+
+    if (cotsElegidas.length === 0) {
+      setFromCot(false)
+      setItems([{ descripcion: '', cantidad: 1, cantidadCot: 0, unidad: 'Unidad', precioUnitario: 0, incluido: true }])
+      return
+    }
+
+    setFromCot(true)
+    setItems(cotsElegidas.flatMap(cot => cot.items ?? []).map(item => ({
+      descripcion: item.descripcion,
+      cantidad: item.cantidad,
+      cantidadCot: item.cantidad,
+      unidad: item.unidad,
+      precioUnitario: item.precioUnitario,
+      incluido: true,
+    })))
+
+    // El proveedor y el requerimiento salen de la cotización para no reescribirlos.
+    // El requerimiento solo se autoselecciona si sigue en la lista: si ya está
+    // cerrado o cancelado no aparece como opción y dejaría el select en blanco.
+    const primera = cotsElegidas[0]
+    if (primera.proveedorId) setSelectedProv(primera.proveedorId)
+    if (primera.requerimientoId && requerimientos.some(r => r.id === primera.requerimientoId)) {
+      setSelectedReq(primera.requerimientoId)
+    }
   }
 
   async function handleSubmit(formData: FormData) {
@@ -307,22 +360,7 @@ export default function NuevaOrdenCompraPage() {
                 : 'Todos los ítems incluidos'}
             </p>
           )}
-          <div className="flex justify-end">
-            <div className="text-sm space-y-1 min-w-[200px]">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Subtotal:</span>
-                <span className="font-mono">{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">IGV (18%):</span>
-                <span className="font-mono">{igv.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-bold text-[#13602C]">
-                <span>Total:</span>
-                <span className="font-mono">{total.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
+          <TotalesEditables key={totalesKey} subtotalItems={subtotalItems} defaults={totalesCot} />
         </div>
 
         <div className="flex gap-3">

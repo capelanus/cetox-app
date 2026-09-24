@@ -481,6 +481,7 @@ model CotizacionProveedor {
   moneda           String        @default("PEN")
   subtotal         Float         @default(0)
   igv              Float         @default(0)
+  percepcion       Float         @default(0)
   total            Float         @default(0)
   plazoEntregaDias Int?
   condicionesPago  String?
@@ -525,6 +526,7 @@ model OrdenCompra {
   moneda                     String               @default("PEN")
   subtotal                   Float                @default(0)
   igv                        Float                @default(0)
+  percepcion                 Float                @default(0)
   total                      Float                @default(0)
   condicionesPago            String?
   lugarEntrega               String?
@@ -677,6 +679,7 @@ model Factura {
   moneda           String      @default("PEN")
   subtotal         Float
   igv              Float
+  percepcion       Float       @default(0)
   total            Float
   fechaEmision     DateTime
   fechaVencimiento DateTime?

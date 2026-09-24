@@ -34,9 +34,18 @@ export async function crearOrdenCompra(formData: FormData) {
     orden: i,
   }))
 
-  const subtotal = itemsWithSubtotal.reduce((sum, item) => sum + item.subtotal, 0)
-  const igv = subtotal * 0.18
-  const total = subtotal + igv
+  // Igual que en la cotización, los totales vienen del formulario: el proveedor
+  // puede cotizar con IGV incluido o agregar percepción, y recalcular al 18%
+  // fijo hacía que la OC no cuadrara con la factura.
+  const num = (campo: string, porDefecto: number) => {
+    const v = parseFloat(formData.get(campo) as string)
+    return Number.isFinite(v) ? v : porDefecto
+  }
+  const subtotalItems = itemsWithSubtotal.reduce((sum, item) => sum + item.subtotal, 0)
+  const subtotal = num('subtotal', subtotalItems)
+  const igv = num('igv', subtotal * 0.18)
+  const percepcion = num('percepcion', 0)
+  const total = num('total', subtotal + igv + percepcion)
 
   const oc = await prisma.ordenCompra.create({
     data: {
@@ -48,6 +57,7 @@ export async function crearOrdenCompra(formData: FormData) {
       tipo,
       subtotal,
       igv,
+      percepcion,
       total,
       condicionesPago: condicionesPago || null,
       lugarEntrega: lugarEntrega || null,
@@ -102,9 +112,15 @@ export async function actualizarOC(id: string, formData: FormData) {
     subtotal: item.cantidad * item.precioUnitario,
     orden: i,
   }))
-  const subtotal = itemsWithSubtotal.reduce((s, i) => s + i.subtotal, 0)
-  const igv   = subtotal * 0.18
-  const total = subtotal + igv
+  const numEdit = (campo: string, porDefecto: number) => {
+    const v = parseFloat(formData.get(campo) as string)
+    return Number.isFinite(v) ? v : porDefecto
+  }
+  const subtotalItems = itemsWithSubtotal.reduce((s, i) => s + i.subtotal, 0)
+  const subtotal = numEdit('subtotal', subtotalItems)
+  const igv = numEdit('igv', subtotal * 0.18)
+  const percepcion = numEdit('percepcion', 0)
+  const total = numEdit('total', subtotal + igv + percepcion)
 
   // Borrar items y cotizaciones anteriores en una transacción
   await prisma.ordenCompraItem.deleteMany({ where: { ordenCompraId: id } })
@@ -119,6 +135,7 @@ export async function actualizarOC(id: string, formData: FormData) {
       observaciones,
       subtotal,
       igv,
+      percepcion,
       total,
       items: { create: itemsWithSubtotal },
       cotizacionesProveedor: cotizacionIds.filter(Boolean).length > 0

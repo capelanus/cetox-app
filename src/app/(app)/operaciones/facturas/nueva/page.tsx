@@ -29,6 +29,9 @@ export default function NuevaFacturaPage() {
   const [ocs, setOcs] = useState<OC[]>([])
   const [selectedOC, setSelectedOC] = useState<string>(ocParam || '')
   const [subtotal, setSubtotal] = useState('')
+  const [igvEditado, setIgvEditado] = useState<string | null>(null)
+  const [percepcion, setPercepcion] = useState('')
+  const [totalEditado, setTotalEditado] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   // File upload state
@@ -43,8 +46,13 @@ export default function NuevaFacturaPage() {
   const numeroRef = useRef<HTMLInputElement>(null)
   const fechaRef = useRef<HTMLInputElement>(null)
 
-  const igv = subtotal ? (parseFloat(subtotal) * 0.18).toFixed(2) : '0.00'
-  const total = subtotal ? (parseFloat(subtotal) * 1.18).toFixed(2) : '0.00'
+  // IGV y total se calculan pero admiten corrección: hay facturas con percepción
+  // o con IGV ya incluido en el precio, y el monto debe poder cuadrar con el papel.
+  const igv = igvEditado ?? (subtotal ? (parseFloat(subtotal) * 0.18).toFixed(2) : '0.00')
+  const totalAuto = (
+    (parseFloat(subtotal) || 0) + (parseFloat(igv) || 0) + (parseFloat(percepcion) || 0)
+  ).toFixed(2)
+  const total = totalEditado ?? totalAuto
 
   useEffect(() => {
     fetch('/api/operaciones/ordenes-compra')
@@ -306,23 +314,54 @@ export default function NuevaFacturaPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">IGV (calculado)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">IGV</label>
               <input
                 name="igv"
                 type="number"
+                min={0}
+                step={0.01}
                 value={igv}
-                readOnly
-                className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-500"
+                onChange={e => setIgvEditado(e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C] ${igvEditado !== null ? 'border-amber-400 bg-amber-50' : 'border-gray-300'}`}
               />
             </div>
-            <div className="col-span-2 flex justify-end">
-              <div className="text-sm space-y-1 min-w-[180px]">
-                <div className="flex justify-between font-bold text-[#13602C]">
-                  <span>Total:</span>
-                  <span className="font-mono">{total}</span>
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Percepción</label>
+              <input
+                name="percepcion"
+                type="number"
+                min={0}
+                step={0.01}
+                value={percepcion}
+                onChange={e => setPercepcion(e.target.value)}
+                placeholder="0.00"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
+              />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total *</label>
+              <input
+                name="total"
+                type="number"
+                required
+                min={0}
+                step={0.01}
+                value={total}
+                onChange={e => setTotalEditado(e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#13602C] ${totalEditado !== null ? 'border-amber-400 bg-amber-50' : 'border-gray-300'}`}
+              />
+            </div>
+            {(igvEditado !== null || totalEditado !== null) && (
+              <div className="col-span-2">
+                <button
+                  type="button"
+                  onClick={() => { setIgvEditado(null); setTotalEditado(null) }}
+                  className="text-xs text-gray-500 hover:text-gray-800 underline"
+                >
+                  Recalcular IGV y total desde el subtotal
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="submit" className="bg-[#13602C] hover:bg-[#0e4a21] text-white">Registrar factura</Button>

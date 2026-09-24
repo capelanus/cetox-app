@@ -96,9 +96,15 @@ export default async function FacturaDetallePage({ params }: { params: Promise<{
               <span className="font-mono">{factura.moneda} {factura.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">IGV (18%):</span>
+              <span className="text-gray-500">IGV:</span>
               <span className="font-mono">{factura.moneda} {factura.igv.toFixed(2)}</span>
             </div>
+            {factura.percepcion > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-500">Percepción:</span>
+                <span className="font-mono">{factura.moneda} {factura.percepcion.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-[#13602C] text-base border-t border-gray-200 pt-2">
               <span>Total:</span>
               <span className="font-mono">{factura.moneda} {factura.total.toFixed(2)}</span>

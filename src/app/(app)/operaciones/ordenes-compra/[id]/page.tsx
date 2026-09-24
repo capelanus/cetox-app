@@ -169,9 +169,15 @@ export default async function OrdenCompraDetallePage({ params }: { params: Promi
               <td className="px-4 py-2 text-right font-mono">{oc.subtotal.toFixed(2)}</td>
             </tr>
             <tr>
-              <td colSpan={6} className="px-4 py-2 text-right text-gray-500">IGV (18%):</td>
+              <td colSpan={6} className="px-4 py-2 text-right text-gray-500">IGV:</td>
               <td className="px-4 py-2 text-right font-mono">{oc.igv.toFixed(2)}</td>
             </tr>
+            {oc.percepcion > 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-2 text-right text-gray-500">Percepción:</td>
+                <td className="px-4 py-2 text-right font-mono">{oc.percepcion.toFixed(2)}</td>
+              </tr>
+            )}
             <tr>
               <td colSpan={6} className="px-4 py-2 text-right font-bold text-[#13602C]">Total {oc.moneda}:</td>
               <td className="px-4 py-2 text-right font-bold font-mono text-[#13602C]">{oc.total.toFixed(2)}</td>

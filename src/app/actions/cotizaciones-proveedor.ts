@@ -40,9 +40,18 @@ export async function crearCotizacionProveedor(formData: FormData) {
     orden: i,
   }))
 
-  const subtotal = itemsWithSubtotal.reduce((sum, item) => sum + item.subtotal, 0)
-  const igv = subtotal * 0.18
-  const total = subtotal + igv
+  // Los totales llegan del formulario porque el usuario puede ajustarlos: hay
+  // cotizaciones con IGV ya incluido en el precio o con percepción sumada, y
+  // recalcular aquí haría que la OC no cuadre con la factura del proveedor.
+  const num = (campo: string, porDefecto: number) => {
+    const v = parseFloat(formData.get(campo) as string)
+    return Number.isFinite(v) ? v : porDefecto
+  }
+  const subtotalItems = itemsWithSubtotal.reduce((sum, item) => sum + item.subtotal, 0)
+  const subtotal = num('subtotal', subtotalItems)
+  const igv = num('igv', subtotal * 0.18)
+  const percepcion = num('percepcion', 0)
+  const total = num('total', subtotal + igv + percepcion)
 
   const cot = await prisma.cotizacionProveedor.create({
     data: {
@@ -53,6 +62,7 @@ export async function crearCotizacionProveedor(formData: FormData) {
       moneda,
       subtotal,
       igv,
+      percepcion,
       total,
       plazoEntregaDias: plazoEntregaDias ? parseInt(plazoEntregaDias) : null,
       condicionesPago: condicionesPago || null,

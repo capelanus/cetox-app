@@ -20,7 +20,11 @@ export async function registrarFactura(formData: FormData) {
 
   const subtotal = parseFloat(subtotalStr) || 0
   const igv = parseFloat(igvStr) || 0
-  const total = subtotal + igv
+  const percepcion = parseFloat(formData.get('percepcion') as string) || 0
+  // El total llega del formulario porque la factura puede traer percepción o
+  // IGV incluido; sumarlo aquí a ciegas descuadraba con el documento físico.
+  const totalForm = parseFloat(formData.get('total') as string)
+  const total = Number.isFinite(totalForm) ? totalForm : subtotal + igv + percepcion
 
   const factura = await prisma.factura.create({
     data: {
@@ -30,6 +34,7 @@ export async function registrarFactura(formData: FormData) {
       moneda,
       subtotal,
       igv,
+      percepcion,
       total,
       fechaEmision: new Date(fechaEmision),
       fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null,

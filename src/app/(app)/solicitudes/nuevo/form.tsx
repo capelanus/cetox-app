@@ -29,6 +29,11 @@ export default function NuevaSolicitudForm({ areaDeducida }: { areaDeducida: str
     { descripcion: '', cantidad: 1, unidad: '', especificaciones: '' },
   ])
   const [sending, setSending] = useState(false)
+  const [descripcionEditada, setDescripcionEditada] = useState<string | null>(null)
+
+  // Ver el formulario de /operaciones/requerimientos/nuevo: la descripción se
+  // arma con los productos para no escribir lo mismo dos veces.
+  const descripcionAuto = items.map(i => i.descripcion.trim()).filter(Boolean).join(', ')
 
   const addItem = () =>
     setItems(prev => [...prev, { descripcion: '', cantidad: 1, unidad: '', especificaciones: '' }])
@@ -89,9 +94,20 @@ export default function NuevaSolicitudForm({ areaDeducida }: { areaDeducida: str
             <input
               name="descripcion"
               required
-              placeholder="Ej: Reactivos para análisis microbiológico, materiales de laboratorio..."
+              value={descripcionEditada ?? descripcionAuto}
+              onChange={e => setDescripcionEditada(e.target.value)}
+              placeholder="Se completa con los productos que agregues abajo"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#13602C]"
             />
+            {descripcionEditada !== null && (
+              <button
+                type="button"
+                onClick={() => setDescripcionEditada(null)}
+                className="mt-1 text-xs text-gray-500 hover:text-gray-800 underline"
+              >
+                Volver a armarla con los productos
+              </button>
+            )}
           </div>
 
           <div>

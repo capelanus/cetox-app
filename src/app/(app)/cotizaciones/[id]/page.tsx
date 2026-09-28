@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle2, Circle, Clock, XCircle, Download } from 'lucid
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
 import { cambiarEstadoCotizacion } from '@/app/actions/cotizaciones'
 import { CotizacionActionsMenu } from '@/components/cotizacion-actions-menu'
+import DocumentosCotizacion from './documentos-cotizacion'
 import { redirect } from 'next/navigation'
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -37,6 +38,10 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
       cliente: true,
       creadoPor: true,
       revisadoPor: { select: { nombre: true, rol: true } },
+      documentos: {
+        include: { subidoPor: { select: { nombre: true } } },
+        orderBy: { createdAt: 'desc' },
+      },
       items: { include: { ensayo: true } },
       muestras: {
         include: {
@@ -443,6 +448,19 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
           )}
         </div>
       </div>
+
+      <DocumentosCotizacion
+        cotizacionId={id}
+        puedeEditar={hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD')}
+        documentos={cot.documentos.map(d => ({
+          id: d.id,
+          nombre: d.nombre,
+          url: d.url,
+          tamano: d.tamano,
+          subidoPor: d.subidoPor.nombre,
+          fecha: formatFecha(d.createdAt),
+        }))}
+      />
     </div>
   )
 }

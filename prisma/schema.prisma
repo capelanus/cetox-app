@@ -22,6 +22,7 @@ model Usuario {
   cotizacionesCreadas   Cotizacion[] @relation("CotCreadaPor")
   cotizacionesEliminadas Cotizacion[] @relation("CotEliminadaPor")
   cotizacionesRevisadas Cotizacion[] @relation("CotRevisadaPor")
+  documentosCotizacion  CotizacionDocumento[] @relation("CotDocumentoSubidoPor")
   setsCreados           SET[]        @relation("SETCreadoPor")
   informesAsignados     Informe[]    @relation("InformeAnalista")
 
@@ -262,8 +263,21 @@ model Cotizacion {
   muestras         CotizacionMuestra[]
   sets             SET[]
   facturasCliente  FacturaCliente[]
+  documentos       CotizacionDocumento[]
 
   @@unique([numero, anio, sufijo])
+}
+
+model CotizacionDocumento {
+  id           String     @id @default(cuid())
+  cotizacionId String
+  cotizacion   Cotizacion @relation(fields: [cotizacionId], references: [id], onDelete: Cascade)
+  nombre       String
+  url          String
+  tamano       Int?
+  subidoPorId  String
+  subidoPor    Usuario    @relation("CotDocumentoSubidoPor", fields: [subidoPorId], references: [id])
+  createdAt    DateTime   @default(now())
 }
 
 model CotizacionMuestra {

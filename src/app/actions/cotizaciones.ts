@@ -430,3 +430,28 @@ export async function toggleInformeEnviado(cotizacionId: string) {
   })
   revalidatePath('/cotizaciones')
 }
+
+// ── Documentos adjuntos ──────────────────────────────────────────────────────
+// Los clientes mandan la información en Word, Excel, PDF o foto, así que la
+// cotización guarda los archivos tal cual llegan.
+
+const ROLES_DOCUMENTOS_COT = ['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'] as const
+
+export async function adjuntarDocumentoCotizacion(
+  cotizacionId: string,
+  nombre: string,
+  url: string,
+  tamano?: number,
+) {
+  const session = await requireRol([...ROLES_DOCUMENTOS_COT])
+  await prisma.cotizacionDocumento.create({
+    data: { cotizacionId, nombre, url, tamano: tamano ?? null, subidoPorId: session.user.id },
+  })
+  revalidatePath(`/cotizaciones/${cotizacionId}`)
+}
+
+export async function eliminarDocumentoCotizacion(documentoId: string) {
+  await requireRol([...ROLES_DOCUMENTOS_COT])
+  const doc = await prisma.cotizacionDocumento.delete({ where: { id: documentoId } })
+  revalidatePath(`/cotizaciones/${doc.cotizacionId}`)
+}

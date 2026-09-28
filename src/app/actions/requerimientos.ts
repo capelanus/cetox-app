@@ -6,9 +6,10 @@ import { siguienteCorrelativo } from '@/lib/correlativo'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-// Todos los roles pueden crear solicitudes; el destino de redirect varía
+// Todos los roles pueden crear solicitudes salvo ADMINISTRACION, que no tiene
+// el módulo; el destino de redirect varía según el rol.
 const TODOS_LOS_ROLES = [
-  'GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD', 'ANALISTA',
+  'GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'COORDINADOR_CALIDAD', 'ANALISTA',
   'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'SUPER_ADMIN',
 ] as const
 

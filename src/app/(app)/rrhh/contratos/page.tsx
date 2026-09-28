@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import Link from 'next/link'
 import { FileText, ArrowLeft, ChevronRight, Clock, Users2, Briefcase, Award } from 'lucide-react'
 
@@ -68,7 +68,7 @@ function TipoCard({ tipo, titulo, subtitulo, descripcion, icon: Icon, color, bg,
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ContratosPage() {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const tipos: TipoCardProps[] = [
     {

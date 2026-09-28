@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import Link from 'next/link'
 import {
   Users2,
@@ -92,7 +92,7 @@ function ModuloCard({ icon: Icon, titulo, descripcion, color, bg, href }: Modulo
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function RRHHPage() {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const modulos: ModuloCardProps[] = [
     {

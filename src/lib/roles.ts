@@ -41,6 +41,28 @@ export async function requireRol(roles: Rol[]) {
   return session
 }
 
+/**
+ * Igual que requireRol, pero además respeta los módulos bloqueados del usuario.
+ * Permite que dos personas con el mismo rol vean menús distintos sin tener que
+ * crear un rol por persona. `modulo` es el prefijo de ruta, p.ej. '/rrhh'.
+ */
+export async function requireModulo(modulo: string, roles: Rol[]) {
+  const session = await requireRol(roles)
+  if (session.user.rol === 'SUPER_ADMIN') return session
+
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: session.user.id },
+    select: { modulosBloqueados: true },
+  })
+  if (moduloBloqueado(usuario?.modulosBloqueados ?? [], modulo)) redirect('/dashboard')
+  return session
+}
+
+/** Un bloqueo de '/rrhh' también cubre '/rrhh/personal' y demás subrutas. */
+export function moduloBloqueado(bloqueados: string[], ruta: string): boolean {
+  return bloqueados.some(b => ruta === b || ruta.startsWith(`${b}/`))
+}
+
 export async function requireNotAnalista() {
   return requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD'])
 }

@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -44,7 +44,7 @@ function estadoContrato(finContrato: Date | null) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function EmpleadoDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
   const { id } = await params
 
   const emp = await prisma.empleado.findUnique({

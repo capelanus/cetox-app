@@ -1,10 +1,10 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import Link from 'next/link'
 import { ArrowLeft, Award } from 'lucide-react'
 import { CertificadoForm } from './certificado-form'
 
 export default async function EmitirCertificadoPage() {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION'])
 
   return (
     <div className="p-6 max-w-2xl mx-auto">

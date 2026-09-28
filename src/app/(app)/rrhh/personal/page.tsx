@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -38,7 +38,7 @@ const CONTRATO_LABELS: Record<string, string> = {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function PersonalPage() {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const empleados = await prisma.empleado.findMany({
     orderBy: [{ activo: 'desc' }, { nombre: 'asc' }],

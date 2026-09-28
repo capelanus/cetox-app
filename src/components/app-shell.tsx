@@ -15,6 +15,7 @@ interface AppShellProps {
   userId:         string
   isVacApprover:  boolean
   esJefeLab?:     boolean
+  modulosBloqueados?: string[]
   notificaciones: NotificacionData[]
 }
 
@@ -27,6 +28,7 @@ export function AppShell({
   userId,
   isVacApprover,
   esJefeLab,
+  modulosBloqueados,
   notificaciones,
 }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false)
@@ -42,6 +44,7 @@ export function AppShell({
         userArea={userArea}
         isVacApprover={isVacApprover}
         esJefeLab={esJefeLab}
+        modulosBloqueados={modulosBloqueados}
       />
 
       {/* ── Main area ───────────────────────────────────────── */}

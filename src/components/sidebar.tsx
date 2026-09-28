@@ -78,6 +78,7 @@ interface SidebarProps {
   userArea:       string | null
   isVacApprover?: boolean
   esJefeLab?:     boolean
+  modulosBloqueados?: string[]
   collapsed:      boolean
   onToggle:       () => void
 }
@@ -387,7 +388,7 @@ const sectionesDirectorCalidad: NavSection[] = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover, esJefeLab, collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover, esJefeLab, modulosBloqueados, collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
 
   // Build flat navItems for non-DC roles
@@ -437,6 +438,20 @@ export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover,
       } else {
         navItems = [...navItems, aprobItem]
       }
+    }
+  }
+
+  // Módulos bloqueados para este usuario en concreto. Va al final para que
+  // gane sobre los accesos que se inyectan arriba (jefe de lab, aprobador).
+  if (modulosBloqueados?.length) {
+    const bloqueado = (href: string) =>
+      modulosBloqueados.some(m => href === m || href.startsWith(`${m}/`))
+    if (sections) {
+      sections = sections
+        .map(s => ({ ...s, items: s.items.filter(i => !bloqueado(i.href)) }))
+        .filter(s => s.items.length > 0)
+    } else {
+      navItems = navItems.filter(i => !bloqueado(i.href))
     }
   }
 

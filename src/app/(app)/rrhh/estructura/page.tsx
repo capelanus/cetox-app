@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import Link from 'next/link'
 import { Building2, ArrowLeft, User, ChevronDown } from 'lucide-react'
 
@@ -136,7 +136,7 @@ function DireccionCard({ d }: { d: Direccion }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function EstructuraPage() {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const direcciones: Direccion[] = [
     {

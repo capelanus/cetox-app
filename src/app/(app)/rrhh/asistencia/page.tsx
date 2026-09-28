@@ -1,4 +1,4 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { format, startOfDay, endOfDay, subDays } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -16,7 +16,7 @@ export default async function AsistenciaPage({
 }: {
   searchParams: Promise<{ dias?: string }>
 }) {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
 
   const { dias: diasParam } = await searchParams
   const dias = Math.min(Math.max(parseInt(diasParam ?? '7', 10), 1), 90)

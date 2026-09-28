@@ -1,10 +1,10 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { EditarEmpleadoForm } from './editar-empleado-form'
 
 export default async function EditarEmpleadoPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
   const { id } = await params
 
   const emp = await prisma.empleado.findUnique({ where: { id } })

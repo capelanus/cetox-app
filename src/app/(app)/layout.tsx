@@ -25,10 +25,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       },
     }),
     prisma.usuarioAprobadorVacaciones.count({ where: { aprobadorId: session.user.id } }),
-    prisma.usuario.findUnique({ where: { id: session.user.id }, select: { esJefeLab: true } }),
+    prisma.usuario.findUnique({ where: { id: session.user.id }, select: { esJefeLab: true, modulosBloqueados: true } }),
   ])
   const isVacApprover = vacApproverCount > 0
   const esJefeLab = usuarioMeta?.esJefeLab ?? false
+  const modulosBloqueados = usuarioMeta?.modulosBloqueados ?? []
 
   const notificacionesSerialized = notificaciones.map((n) => ({
     ...n,
@@ -44,6 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       userId={session.user.id}
       isVacApprover={isVacApprover}
       esJefeLab={esJefeLab}
+      modulosBloqueados={modulosBloqueados}
       notificaciones={notificacionesSerialized}
     >
       <PageTransition>{children}</PageTransition>

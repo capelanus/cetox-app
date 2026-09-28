@@ -1,4 +1,5 @@
 import { auth } from '@/lib/auth'
+import { moduloBloqueado } from '@/lib/roles'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
@@ -44,6 +45,14 @@ export default async function VacacionesPage() {
   // Gate de acceso: HR, Yahaida, aprobadores, o GERENTE_TECNICO/DIRECTOR_CALIDAD (rol)
   const tieneAcceso = isHR || isYahaida || soyAprobador || ['GERENTE_TECNICO', 'DIRECTOR_CALIDAD'].includes(myRol)
   if (!tieneAcceso) redirect('/vacaciones')
+
+  // Un bloqueo de /rrhh manda sobre el gate anterior, para poder excluir a
+  // alguien de RRHH sin quitarle el rol que comparte con el resto del área.
+  const meta = await prisma.usuario.findUnique({
+    where: { id: myId },
+    select: { modulosBloqueados: true },
+  })
+  if (moduloBloqueado(meta?.modulosBloqueados ?? [], '/rrhh')) redirect('/vacaciones')
 
   // ── Cargar datos ─────────────────────────────────────────────────────────
   const [empleados, miColaAprobacion, pendientesComunicar, historial] = await Promise.all([

@@ -1,8 +1,8 @@
-import { requireRol } from '@/lib/roles'
+import { requireModulo } from '@/lib/roles'
 import { NuevoEmpleadoForm } from './nuevo-empleado-form'
 
 export default async function NuevoEmpleadoPage() {
-  await requireRol(['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
+  await requireModulo('/rrhh', ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-lg font-bold text-slate-900 mb-6" style={{ fontFamily: 'var(--font-oswald)', letterSpacing: '0.05em' }}>

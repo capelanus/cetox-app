@@ -49,6 +49,9 @@ model Usuario {
   aprobadoresVacaciones     UsuarioAprobadorVacaciones[] @relation("VacSolicitante")
   aprobacionesVacACargo     UsuarioAprobadorVacaciones[] @relation("VacAprobador")
   empleado                  Empleado?
+  // Rutas que este usuario no puede ver aunque su rol las permita. Sirve para
+  // distinguir a dos personas con el mismo rol sin inventar un rol por persona.
+  modulosBloqueados         String[]                     @default([])
   historialOC               OrdenCompraHistorial[]       @relation("OCHistorialUsuario")
   ordenesCompraResponsable  OrdenCompra[]                @relation("OCResponsableActual")
   documentosOC              OrdenCompraDocumento[]       @relation("OCDocumentoSubidoPor")

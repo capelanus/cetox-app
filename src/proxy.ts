@@ -76,7 +76,11 @@ export default auth((req) => {
 
   // Set X-Frame-Options per route so there's only one value (no stacking with headers() config)
   const embeddable = EMBEDDABLE_PREFIXES.some(p => path.startsWith(p))
-  const res = NextResponse.next()
+  // x-pathname deja la ruta al alcance del layout, que es donde se aplican los
+  // módulos bloqueados por usuario (un server layout no conoce la URL por sí solo).
+  const headers = new Headers(req.headers)
+  headers.set('x-pathname', path)
+  const res = NextResponse.next({ request: { headers } })
   res.headers.set('X-Frame-Options', embeddable ? 'SAMEORIGIN' : 'DENY')
   return res
 })

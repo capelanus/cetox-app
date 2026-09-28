@@ -1,8 +1,12 @@
 import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { moduloBloqueado } from '@/lib/roles'
 import { AppShell } from '@/components/app-shell'
 import { PageTransition } from '@/components/page-transition'
+
+const DESTINO_BLOQUEO = '/dashboard'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -30,6 +34,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isVacApprover = vacApproverCount > 0
   const esJefeLab = usuarioMeta?.esJefeLab ?? false
   const modulosBloqueados = usuarioMeta?.modulosBloqueados ?? []
+
+  // Punto único donde se aplican los módulos bloqueados: el layout envuelve a
+  // todas las páginas, así que cubre también el acceso directo por URL sin
+  // tener que tocar el guard de cada página.
+  if (modulosBloqueados.length > 0 && session.user.rol !== 'SUPER_ADMIN') {
+    const pathname = (await headers()).get('x-pathname') ?? ''
+    if (pathname !== DESTINO_BLOQUEO && moduloBloqueado(modulosBloqueados, pathname)) {
+      redirect(DESTINO_BLOQUEO)
+    }
+  }
 
   const notificacionesSerialized = notificaciones.map((n) => ({
     ...n,

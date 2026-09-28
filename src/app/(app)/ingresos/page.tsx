@@ -1,11 +1,9 @@
-import { requireRol } from '@/lib/roles'
+import { requireNotAnalista } from '@/lib/roles'
 import { prisma } from '@/lib/prisma'
 import { IngresosView } from '@/components/ingresos-view'
 
 export default async function IngresosPage() {
-  // Lista explícita en vez de requireNotAnalista(): Administración no debe ver
-  // los ingresos, y ese helper lo comparten otras páginas que sí se los muestran.
-  await requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'COORDINADOR_CALIDAD'])
+  await requireNotAnalista()
   const sets = await prisma.sET.findMany({
     where: { estado: { not: 'ANULADO' } },
     include: {

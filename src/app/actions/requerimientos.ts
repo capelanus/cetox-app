@@ -1,20 +1,20 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { requireRol } from '@/lib/roles'
+import { requireRol, assertModuloPermitido } from '@/lib/roles'
 import { siguienteCorrelativo } from '@/lib/correlativo'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-// Todos los roles pueden crear solicitudes salvo ADMINISTRACION, que no tiene
-// el módulo; el destino de redirect varía según el rol.
+// Todos los roles pueden crear solicitudes; el destino de redirect varía
 const TODOS_LOS_ROLES = [
-  'GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'COORDINADOR_CALIDAD', 'ANALISTA',
+  'GERENTE_GENERAL', 'GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD', 'ANALISTA',
   'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'SUPER_ADMIN',
 ] as const
 
 export async function crearRequerimiento(formData: FormData) {
   const session = await requireRol([...TODOS_LOS_ROLES])
+  await assertModuloPermitido(session.user.id, '/solicitudes')
   const anio = new Date().getFullYear()
   const numero = await siguienteCorrelativo('requerimiento', anio)
 
@@ -79,6 +79,7 @@ export async function enviarRequerimiento(id: string) {
 
 export async function eliminarRequerimiento(id: string) {
   const session = await requireRol([...TODOS_LOS_ROLES])
+  await assertModuloPermitido(session.user.id, '/solicitudes')
 
   // Verificar que el requerimiento pertenece al usuario (o es operaciones)
   const req = await prisma.requerimiento.findUnique({

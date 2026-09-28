@@ -63,6 +63,21 @@ export function moduloBloqueado(bloqueados: string[], ruta: string): boolean {
   return bloqueados.some(b => ruta === b || ruta.startsWith(`${b}/`))
 }
 
+/**
+ * Versión para server actions: el layout ya bloquea las páginas, pero una
+ * acción se puede invocar sin pasar por ellas. Lanza en vez de redirigir.
+ */
+export async function assertModuloPermitido(usuarioId: string, modulo: string) {
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: usuarioId },
+    select: { rol: true, modulosBloqueados: true },
+  })
+  if (!usuario || usuario.rol === 'SUPER_ADMIN') return
+  if (moduloBloqueado(usuario.modulosBloqueados, modulo)) {
+    throw new Error('No tienes acceso a este módulo.')
+  }
+}
+
 export async function requireNotAnalista() {
   return requireRol(['GERENTE_TECNICO', 'DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD'])
 }

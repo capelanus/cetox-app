@@ -36,6 +36,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
     include: {
       cliente: true,
       creadoPor: true,
+      revisadoPor: { select: { nombre: true, rol: true } },
       items: { include: { ensayo: true } },
       muestras: {
         include: {
@@ -112,7 +113,7 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             const pasos = [
               { label: 'Borrador', depto: 'Administración', dot: 'bg-slate-500', color: 'text-slate-600', done: true },
               { label: 'Revisión', depto: 'Director de Calidad', dot: 'bg-amber-500', color: 'text-amber-700', done: ['EN_REVISION', 'REVISADO', 'APROBADA'].includes(cot.estado), activo: cot.estado === 'EN_REVISION' },
-              { label: 'Revisado', depto: 'Director de Calidad', dot: 'bg-green-500', color: 'text-green-700', done: ['REVISADO', 'APROBADA'].includes(cot.estado), activo: cot.estado === 'REVISADO' },
+              { label: 'Revisado', depto: cot.revisadoPor?.nombre ?? 'Director de Calidad', dot: 'bg-green-500', color: 'text-green-700', done: ['REVISADO', 'APROBADA'].includes(cot.estado), activo: cot.estado === 'REVISADO' },
               { label: 'Aprobada', depto: 'Administración', dot: 'bg-emerald-600', color: 'text-emerald-700', done: cot.estado === 'APROBADA', activo: cot.estado === 'APROBADA' },
             ]
             return (
@@ -151,7 +152,11 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             <p className={`text-sm font-semibold ${cot.estado === 'RECHAZADA' ? 'text-red-700' : 'text-slate-500'}`}>
               {cot.estado === 'RECHAZADA' ? 'Cotización rechazada' : 'Cotización vencida'}
             </p>
-            <p className="text-xs text-slate-400">Director de Calidad</p>
+            <p className="text-xs text-slate-400">
+              {cot.revisadoPor
+                ? `${cot.revisadoPor.nombre}${cot.fechaRevision ? ` · ${formatFecha(cot.fechaRevision)}` : ''}`
+                : 'Director de Calidad'}
+            </p>
           </div>
         </div>
       )}
@@ -168,6 +173,15 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
             <p className="text-slate-500">Creado por</p>
             <p className="font-medium">{cot.creadoPor.nombre}</p>
           </div>
+          {cot.revisadoPor && (
+            <div>
+              <p className="text-slate-500">{cot.estado === 'RECHAZADA' ? 'Rechazada por' : 'Revisada por'}</p>
+              <p className="font-medium">{cot.revisadoPor.nombre}</p>
+              {cot.fechaRevision && (
+                <p className="text-slate-500">{formatFecha(cot.fechaRevision)}</p>
+              )}
+            </div>
+          )}
           <div>
             <p className="text-slate-500">Fecha emisión</p>
             <p className="font-medium">{formatFecha(cot.fechaEmision)}</p>
@@ -354,12 +368,12 @@ export default async function CotizacionPage({ params }: { params: Promise<{ id:
 
         {/* Actions */}
         <div className="border-t pt-4 flex gap-3 flex-wrap">
-          {cot.estado === 'BORRADOR' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD') && (
+          {cot.estado === 'BORRADOR' && hasRol(rol, 'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD') && (
             <form action={enviar}>
               <Button type="submit" variant="outline">Enviar a revisión</Button>
             </form>
           )}
-          {cot.estado === 'EN_REVISION' && hasRol(rol, 'DIRECTOR_CALIDAD') && (
+          {cot.estado === 'EN_REVISION' && hasRol(rol, 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD') && (
             <>
               <form action={aceptar}>
                 <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">Aceptar</Button>

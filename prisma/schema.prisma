@@ -21,6 +21,7 @@ model Usuario {
 
   cotizacionesCreadas   Cotizacion[] @relation("CotCreadaPor")
   cotizacionesEliminadas Cotizacion[] @relation("CotEliminadaPor")
+  cotizacionesRevisadas Cotizacion[] @relation("CotRevisadaPor")
   setsCreados           SET[]        @relation("SETCreadoPor")
   informesAsignados     Informe[]    @relation("InformeAnalista")
 
@@ -246,6 +247,10 @@ model Cotizacion {
   paisOrigen       String?
   creadoPorId      String
   creadoPor        Usuario  @relation("CotCreadaPor", fields: [creadoPorId], references: [id])
+  // Quién resolvió la revisión (aprobó o rechazó) y cuándo.
+  revisadoPorId    String?
+  revisadoPor      Usuario? @relation("CotRevisadaPor", fields: [revisadoPorId], references: [id])
+  fechaRevision    DateTime?
   subtotal         Float    @default(0)
   igv              Float    @default(0)
   total            Float    @default(0)

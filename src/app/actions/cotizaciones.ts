@@ -231,14 +231,29 @@ export async function cambiarEstadoCotizacion(
   id: string,
   estado: 'EN_REVISION' | 'ENVIADA' | 'REVISADO' | 'RECHAZADA'
 ) {
-  const roles: Record<string, ('GERENTE_TECNICO' | 'DIRECTOR_CALIDAD' | 'ADMINISTRACION' | 'ANALISTA')[]> = {
-    EN_REVISION: ['ADMINISTRACION', 'DIRECTOR_CALIDAD'],
-    ENVIADA: ['DIRECTOR_CALIDAD'],
-    REVISADO: ['DIRECTOR_CALIDAD'],
-    RECHAZADA: ['DIRECTOR_CALIDAD'],
+  // Coordinación de Calidad revisa y aprueba igual que Dirección de Calidad.
+  const roles: Record<string, ('GERENTE_TECNICO' | 'DIRECTOR_CALIDAD' | 'COORDINADOR_CALIDAD' | 'ADMINISTRACION' | 'ANALISTA')[]> = {
+    EN_REVISION: ['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'],
+    ENVIADA: ['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'],
+    REVISADO: ['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'],
+    RECHAZADA: ['DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD'],
   }
-  await requireRol(roles[estado])
-  await prisma.cotizacion.update({ where: { id }, data: { estado } })
+  const session = await requireRol(roles[estado])
+
+  // Se deja constancia de quién resolvió la revisión; al devolver la cotización
+  // a EN_REVISION se limpia, porque la decisión anterior ya no vale.
+  const resuelveRevision = estado === 'REVISADO' || estado === 'RECHAZADA'
+  await prisma.cotizacion.update({
+    where: { id },
+    data: {
+      estado,
+      ...(resuelveRevision
+        ? { revisadoPorId: session.user.id, fechaRevision: new Date() }
+        : estado === 'EN_REVISION'
+          ? { revisadoPorId: null, fechaRevision: null }
+          : {}),
+    },
+  })
   revalidatePath('/cotizaciones')
   revalidatePath(`/cotizaciones/${id}`)
 }

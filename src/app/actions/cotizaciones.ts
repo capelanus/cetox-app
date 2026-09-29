@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { addDays } from 'date-fns'
 import { ClienteSchema } from '@/lib/cliente-schema'
+import { REQUISITOS_MUESTRA_KEYS } from '@/lib/constants'
 
 // Devuelve el id de un Cliente existente (por RUC) o crea uno nuevo si no existe
 // todavía — usado cuando la cotización se genera con datos de SUNAT en vez de
@@ -78,6 +79,13 @@ function parseMuestras(formData: FormData): MuestraRaw[] {
     mi++
   }
   return muestras
+}
+
+// Los checkboxes solo llegan cuando están marcados; se filtran contra la lista
+// conocida para no guardar claves inventadas desde el cliente.
+function requisitosDe(formData: FormData): string[] {
+  const marcados = formData.getAll('requisitos').map(String)
+  return REQUISITOS_MUESTRA_KEYS.filter(k => marcados.includes(k))
 }
 
 function parseContacto(formData: FormData) {
@@ -157,6 +165,8 @@ export async function crearCotizacion(formData: FormData) {
       modalidadPago: (formData.get('modalidadPago') as string) || 'ANTICIPO_50_50',
       clienteId,
       observaciones: (formData.get('observaciones') as string) || null,
+      cantidadMuestra: ((formData.get('cantidadMuestra') as string) || '').trim() || null,
+      requisitos: requisitosDe(formData),
       ...parseContacto(formData),
       vigenciaHasta: addDays(new Date(), 30),
       creadoPorId:   session.user.id,
@@ -213,6 +223,8 @@ export async function editarCotizacion(id: string, formData: FormData) {
       modalidadPago: (formData.get('modalidadPago') as string) || 'ANTICIPO_50_50',
       clienteId:     formData.get('clienteId') as string,
       observaciones: (formData.get('observaciones') as string) || null,
+      cantidadMuestra: ((formData.get('cantidadMuestra') as string) || '').trim() || null,
+      requisitos: requisitosDe(formData),
       ...parseContacto(formData),
       subtotal,
       igv,

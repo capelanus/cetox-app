@@ -11,6 +11,7 @@ import { formatMoneda } from '@/lib/format'
 import { ContactoFields } from './contacto-fields'
 import { MuestraEditor } from './muestra-editor'
 import { ObservacionPicker } from './observacion-picker'
+import { MuestraFields } from './muestra-fields'
 import { Search, Loader2 } from 'lucide-react'
 
 interface NuevaCotizacionFormProps {
@@ -186,6 +187,11 @@ export function NuevaCotizacionForm({ clientes, ensayos, tipo = 'NORMAL' }: Nuev
           onChange={(e) => setObservaciones(e.target.value)}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[80px]"
         />
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-slate-700 mb-3">Muestra</h3>
+        <MuestraFields />
       </div>
 
       <div>

@@ -9,12 +9,15 @@ import { toast } from 'sonner'
 import { formatMoneda } from '@/lib/format'
 import { ContactoFields } from './contacto-fields'
 import { MuestraEditor, type InitialMuestra } from './muestra-editor'
+import { MuestraFields } from './muestra-fields'
 
 interface CotizacionData {
   id: string
   moneda: string
   clienteId: string
   observaciones: string | null
+  cantidadMuestra: string | null
+  requisitos: string[]
   contactoNombre: string | null
   contactoEmail: string | null
   contactoTelefono: string | null
@@ -133,6 +136,11 @@ export function EditarCotizacionForm({ cotizacion, clientes, ensayos }: Props) {
           rows={3}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[80px]"
         />
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-slate-700 mb-3">Muestra</h3>
+        <MuestraFields defaults={{ cantidadMuestra: cotizacion.cantidadMuestra, requisitos: cotizacion.requisitos }} />
       </div>
 
       <div>

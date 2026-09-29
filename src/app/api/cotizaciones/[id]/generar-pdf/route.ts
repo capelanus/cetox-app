@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
-import { MODALIDAD_LABELS } from '@/lib/constants'
+import { MODALIDAD_LABELS, REQUISITOS_MUESTRA } from '@/lib/constants'
 import { rgb } from 'pdf-lib'
 import {
   crearMembrete, GREEN, BLACK, GRAY, LIGHT_GRAY, WHITE, ML, MR, CW, PAGE_W,
@@ -22,13 +22,6 @@ const DIRECCION_CETOX = 'Av. Angamos Este N° 2668–2670, Urb. La Calera – Su
 const HORARIO_ATENCION = '9:00 am – 05:00 pm'
 const NUM_FORMATO = 'SIG-FR-ADM-001'
 const VERSION_FORMATO = 'Versión: 01'
-const DATOS_REQUISITOS = [
-  '- Muestra(s) debidamente cerrada(s) e identificada(s)',
-  '- Nombre comercial del producto',
-  '- Ingrediente activo y su concentración',
-  '- Tipo de formulación (Ej: polvo soluble, granulado, suspensión concentrada, etc.)',
-  '- Fecha de fabricación, fecha de vencimiento y número de lote',
-].join('\n')
 const DATOS_BANCARIOS_FILAS: { label: string; value: string }[] = [
   { label: 'Titular de la cuenta', value: 'CENTRO TOXICOLÓGICO S.A.C. (RUC 20506303746)' },
   { label: 'Banco', value: 'Banco de Crédito del Perú' },
@@ -326,14 +319,20 @@ export async function GET(
   type FRow = { label: string; value: string | null }
   const labelW2 = 160, valW2 = CW - labelW2 - 8
 
+  // Requisitos elegidos en la cotización; si no se marcó ninguno la fila no sale.
+  const requisitosTxt = REQUISITOS_MUESTRA
+    .filter(r => cot.requisitos.includes(r.key))
+    .map(r => `- ${r.texto}`)
+    .join('\n') || null
+
   // Solo se listan los campos con valor; los que quedan en blanco no se dibujan
-  // (salvo "Cantidad de muestra", que se deja como línea en blanco para completar a mano).
+  // (salvo "Cantidad de muestra", que se deja como raya para completar a mano).
   const izqBase: FRow[] = [
     { label: 'Observaciones :', value: observacionesTxt },
     { label: 'Indicaciones :', value: indicacionesTxt || null },
     { label: 'Muestra :', value: 'Proporcionada por el cliente' },
-    { label: 'Cantidad de muestra :', value: '—' },
-    { label: 'Datos y requisitos necesarios :', value: DATOS_REQUISITOS },
+    { label: 'Cantidad de muestra :', value: cot.cantidadMuestra?.trim() || '—' },
+    { label: 'Datos y requisitos necesarios :', value: requisitosTxt },
     { label: 'Lugar de recepción de muestra :', value: DIRECCION_CETOX },
     { label: 'Horario de atención :', value: HORARIO_ATENCION },
   ].filter(r => r.value)

@@ -74,6 +74,19 @@ export const ESTADO_OC_LABELS: Record<string, string> = {
   CANCELADA: 'Cancelada',
 }
 
+// Requisitos que se listan en "Datos y requisitos necesarios" del PDF de la
+// cotización. Cada cotización elige cuáles se imprimen; las claves se guardan
+// en Cotizacion.requisitos, así que no se renombran una vez en uso.
+export const REQUISITOS_MUESTRA: { key: string; texto: string }[] = [
+  { key: 'MUESTRA_CERRADA',   texto: 'Muestra(s) debidamente cerrada(s) e identificada(s)' },
+  { key: 'NOMBRE_COMERCIAL',  texto: 'Nombre comercial del producto' },
+  { key: 'INGREDIENTE_ACTIVO', texto: 'Ingrediente activo y su concentración' },
+  { key: 'TIPO_FORMULACION',  texto: 'Tipo de formulación (Ej: polvo soluble, granulado, suspensión concentrada, etc.)' },
+  { key: 'FECHAS_LOTE',       texto: 'Fecha de fabricación, fecha de vencimiento y número de lote' },
+]
+
+export const REQUISITOS_MUESTRA_KEYS = REQUISITOS_MUESTRA.map(r => r.key)
+
 export const TIPO_DOCUMENTO_OC_LABELS: Record<string, string> = {
   CONTRATO: 'Contrato',
   GUIA_REMISION: 'Guía de remisión',

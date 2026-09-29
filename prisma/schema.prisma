@@ -231,6 +231,9 @@ model Cotizacion {
   cliente          Cliente  @relation(fields: [clienteId], references: [id])
   estado           String   @default("BORRADOR")
   observaciones    String?
+  cantidadMuestra  String?
+  // Claves de REQUISITOS_MUESTRA que se imprimen en el PDF de la cotización.
+  requisitos       String[] @default([])
   contactoNombre   String?
   contactoNombre2  String?
   contactoNombre3  String?

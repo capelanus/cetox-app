@@ -209,11 +209,14 @@ export async function recibirODA(odaId: string, _formData: FormData) {
     throw new Error('No tienes permiso para recibir esta ODA')
   }
 
+  // Camino de respaldo cuando la muestra no pasó por la tablet del counter
+  // (p. ej. la trajeron directo al laboratorio). Deja igualmente quién recibió.
   await prisma.oDA.update({
     where: { id: odaId },
-    data: { estado: 'RECIBIDA', fechaRecepcion: new Date() },
+    data: { estado: 'RECIBIDA', fechaRecepcion: new Date(), recibidaPorId: session.user.id },
   })
   revalidatePath(`/oda/${odaId}`)
+  revalidatePath('/quimica/entregas')
 }
 
 export async function iniciarEjecucionODA(odaId: string) {

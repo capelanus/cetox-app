@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { Shield, UserCheck, UserX, AlertTriangle } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/user-avatar'
 import { ToggleAcceso } from './toggle-acceso'
+import { PinCounter } from './pin-counter'
 
 const ROL_LABEL: Record<string, string> = {
   DIRECTOR_ADMINISTRACION: 'Dir. Adm. y Finanzas',
@@ -30,7 +31,7 @@ export default async function GerenciaAccesosPage() {
 
   const usuarios = await prisma.usuario.findMany({
     where:   { rol: { in: ROLES_CONTROLABLES } },
-    select:  { id: true, nombre: true, email: true, rol: true, activo: true, area: true, createdAt: true },
+    select:  { id: true, nombre: true, email: true, rol: true, activo: true, area: true, createdAt: true, pinHash: true },
     orderBy: [{ rol: 'asc' }, { nombre: 'asc' }],
   })
 
@@ -170,6 +171,11 @@ export default async function GerenciaAccesosPage() {
                       <p className="text-xs text-slate-500">
                         {new Date(u.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
+                    </div>
+
+                    {/* PIN de firma para la tablet del counter */}
+                    <div className="hidden md:block flex-shrink-0">
+                      <PinCounter usuarioId={u.id} tienePin={!!u.pinHash} />
                     </div>
 
                     {/* Toggle — no se puede controlar el propio usuario */}

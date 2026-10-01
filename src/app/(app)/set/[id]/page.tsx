@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, CheckCircle2, Pencil, Ban, RotateCcw } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Pencil, Ban, RotateCcw, QrCode } from 'lucide-react'
 import { SetPdfButton } from '@/components/set-pdf-button'
 import { formatFecha, formatNumSET, formatNumODA, formatMoneda } from '@/lib/format'
 import { generarODAs, anularSET, reestablecerSET } from '@/app/actions/set'
@@ -12,6 +12,7 @@ import { revalidatePath } from 'next/cache'
 
 const ESTADO_ODA_LABELS: Record<string, string> = {
   EMITIDA: 'Emitida',
+  ENTREGADA_LAB: 'En el counter',
   RECIBIDA: 'Recibida',
   EN_EJECUCION: 'En ejecución',
   CON_RESULTADO: 'Con resultado',
@@ -101,6 +102,13 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
+          {!esAnulado && (
+            <a href={`/etiqueta/set/${id}`} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm">
+                <QrCode className="h-3.5 w-3.5 mr-1.5" />Etiqueta QR
+              </Button>
+            </a>
+          )}
           {puedoEditar && (
             <Link href={`/set/${id}/editar`}>
               <Button variant="outline" size="sm">

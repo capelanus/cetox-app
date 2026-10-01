@@ -23,7 +23,9 @@ const securityHeaders = [
   { key: 'Strict-Transport-Security',   value: 'max-age=63072000; includeSubDomains; preload' },
   { key: 'X-Content-Type-Options',      value: 'nosniff' },
   { key: 'Referrer-Policy',             value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy',          value: 'camera=(), microphone=(), geolocation=()' },
+  // camera=(self): la tablet del counter lee el QR de la muestra con la cámara.
+  // Sigue cerrada para cualquier origen de terceros.
+  { key: 'Permissions-Policy',          value: 'camera=(self), microphone=(), geolocation=()' },
   { key: 'Content-Security-Policy',     value: cspDirectives },
   { key: 'Cross-Origin-Opener-Policy',  value: 'same-origin' },
 ]

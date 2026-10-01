@@ -424,6 +424,19 @@ export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover,
     if (!yaVisible) navItems = [...navItems, controlBio]
   }
 
+  // Counter de Química: lo usan Administración (deja la muestra) y el equipo
+  // de Química (la recepciona). El registro de entregas es el cuaderno
+  // digital de ese mostrador.
+  const usaCounterQ = userRol === 'ADMINISTRACION' || (userRol === 'ANALISTA' && userArea === 'Q')
+  if (usaCounterQ) {
+    const itemsQ: NavItem[] = [
+      { href: '/counter/quimica', label: 'Counter Química',      icon: FlaskConical,  roles: [userRol] },
+      { href: '/quimica/entregas', label: 'Entregas de muestras', icon: ClipboardList, roles: [userRol] },
+    ]
+    if (sections) sections = [...sections, { label: 'Química', items: itemsQ }]
+    else navItems = [...navItems, ...itemsQ]
+  }
+
   // Aprobador de vacaciones que no es HR: inyectar acceso a la bandeja
   // de aprobación. Si ya está visible por su rol (HR), no duplicamos.
   if (isVacApprover) {

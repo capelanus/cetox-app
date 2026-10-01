@@ -8,6 +8,7 @@ import { asignarODA } from '@/app/actions/oda'
 
 const ESTADO_LABELS: Record<string, string> = {
   EMITIDA: 'Emitida',
+  ENTREGADA_LAB: 'En el counter',
   RECIBIDA: 'Recibida',
   EN_EJECUCION: 'En ejecución',
   CON_RESULTADO: 'Con resultado',

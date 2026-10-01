@@ -14,6 +14,7 @@ import { OdaAsignacion } from '@/components/oda-asignacion'
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
 const ESTADO_LABELS: Record<string, string> = {
   EMITIDA: 'Emitida',
+  ENTREGADA_LAB: 'En el counter',
   RECIBIDA: 'Recibida',
   EN_EJECUCION: 'En ejecución',
   CON_RESULTADO: 'Con resultado',
@@ -45,16 +46,18 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
     ? await prisma.usuario.findUnique({ where: { id: session.user.id }, select: { esJefeLab: true } })
     : null
   const esJefe = (me?.esJefeLab ?? false) && miArea === oda.area
-  const [asignado, analistasArea] = await Promise.all([
-    oda.asignadoAId
-      ? prisma.usuario.findUnique({ where: { id: oda.asignadoAId }, select: { nombre: true } })
-      : Promise.resolve(null),
+  const nombreDe = (id: string | null) =>
+    id ? prisma.usuario.findUnique({ where: { id }, select: { nombre: true } }) : Promise.resolve(null)
+  const [asignado, analistasArea, entregadaPor, recibidaPor] = await Promise.all([
+    nombreDe(oda.asignadoAId ?? null),
     esJefe
       ? prisma.usuario.findMany({
           where: { rol: 'ANALISTA', activo: true, area: oda.area },
           select: { id: true, nombre: true }, orderBy: { nombre: 'asc' },
         })
       : Promise.resolve([]),
+    nombreDe(oda.entregadaPorId ?? null),
+    nombreDe(oda.recibidaPorId ?? null),
   ])
 
   const recibirAction = recibirODA.bind(null, id)
@@ -114,18 +117,19 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
       <div className="space-y-5">
         {/* Flujo de aprobación ODA */}
         {(() => {
-          const estados = ['EMITIDA', 'RECIBIDA', 'EN_EJECUCION', 'CON_RESULTADO', 'INFORME_EMITIDO']
+          const estados = ['EMITIDA', 'ENTREGADA_LAB', 'RECIBIDA', 'EN_EJECUCION', 'CON_RESULTADO', 'INFORME_EMITIDO']
           const idxActual = estados.indexOf(oda.estado)
           const informeFirmado = ['FIRMADO', 'ENTREGADO'].includes(oda.informe?.estado ?? '')
           const todosPasos = [
             { label: 'Emitida', depto: 'Administración', dot: 'bg-slate-500' },
-            { label: 'Recibida', depto: 'Analista', dot: 'bg-purple-500', color: 'text-purple-700', fecha: oda.fechaRecepcion ?? null },
+            { label: 'En el counter', depto: entregadaPor?.nombre ?? 'Administración', dot: 'bg-amber-500', color: 'text-amber-700', fecha: oda.fechaEntregaLab ?? null },
+            { label: 'Recibida', depto: recibidaPor?.nombre ?? 'Analista', dot: 'bg-purple-500', color: 'text-purple-700', fecha: oda.fechaRecepcion ?? null },
             { label: 'En ejecución', depto: 'Analista', dot: 'bg-blue-500', color: 'text-blue-700' },
             { label: 'Informe enviado', depto: 'Analista', dot: 'bg-amber-500', color: 'text-amber-700' },
             { label: 'Informe emitido', depto: 'Gerente Técnico', dot: 'bg-green-500', color: 'text-green-700' },
             { label: 'Informe firmado', depto: 'Administración', dot: 'bg-emerald-500', color: 'text-emerald-700' },
           ]
-          const pasos = esAnalista ? todosPasos.slice(0, 4) : todosPasos
+          const pasos = esAnalista ? todosPasos.slice(0, 5) : todosPasos
           return (
             <div className="bg-white rounded-xl border shadow-sm p-5">
               <h2 className="font-semibold text-slate-700 text-sm mb-4">Flujo de ejecución</h2>
@@ -200,9 +204,14 @@ export default async function ODADetailPage({ params }: { params: Promise<{ id: 
           </div>
 
           {/* Marcar como recibida */}
-          {esAnalista && oda.estado === 'EMITIDA' && (
+          {esAnalista && (oda.estado === 'EMITIDA' || oda.estado === 'ENTREGADA_LAB') && (
             <form action={recibirAction} className="mt-5 border-t pt-4">
               <Button type="submit" variant="outline">Marcar como recibida</Button>
+              {oda.estado === 'ENTREGADA_LAB' && entregadaPor && (
+                <p className="text-xs text-slate-500 mt-2">
+                  {entregadaPor.nombre} la dejó en el counter{oda.fechaEntregaLab ? ` el ${formatFecha(oda.fechaEntregaLab)}` : ''}.
+                </p>
+              )}
             </form>
           )}
 

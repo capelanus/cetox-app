@@ -12,6 +12,7 @@ import { ContactoFields } from './contacto-fields'
 import { MuestraEditor } from './muestra-editor'
 import { ObservacionPicker } from './observacion-picker'
 import { MuestraFields } from './muestra-fields'
+import { AdjuntosCotizacion } from './adjuntos-cotizacion'
 import { Search, Loader2 } from 'lucide-react'
 
 interface NuevaCotizacionFormProps {
@@ -188,6 +189,8 @@ export function NuevaCotizacionForm({ clientes, ensayos, tipo = 'NORMAL' }: Nuev
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm resize-y min-h-[80px]"
         />
       </div>
+
+      <AdjuntosCotizacion />
 
       <div>
         <h3 className="text-sm font-semibold text-slate-700 mb-3">Muestra</h3>

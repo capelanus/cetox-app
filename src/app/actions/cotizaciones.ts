@@ -178,6 +178,25 @@ export async function crearCotizacion(formData: FormData) {
 
   await crearMuestrasConItems(cot.id, muestras)
 
+  // Documentos subidos desde el propio formulario: llegan como campos ocultos
+  // porque hasta aquí no existía la cotización a la que vincularlos.
+  const documentos = formData.getAll('documentos')
+    .map(d => { try { return JSON.parse(String(d)) as { nombre?: string; url?: string; tamano?: number } } catch { return null } })
+    .filter((d): d is { nombre: string; url: string; tamano?: number } =>
+      !!d && typeof d.nombre === 'string' && d.nombre.length > 0 &&
+      typeof d.url === 'string' && /^https:\/\/[^/]+\.vercel-storage\.com\//.test(d.url))
+  if (documentos.length > 0) {
+    await prisma.cotizacionDocumento.createMany({
+      data: documentos.map(d => ({
+        cotizacionId: cot.id,
+        nombre: d.nombre,
+        url: d.url,
+        tamano: typeof d.tamano === 'number' ? Math.round(d.tamano) : null,
+        subidoPorId: session.user.id,
+      })),
+    })
+  }
+
   // ── Notificar a DIRECTOR_CALIDAD solo si la creó ADMINISTRACION ──
   if (session.user.rol === 'ADMINISTRACION') {
     const [cliente, directores] = await Promise.all([

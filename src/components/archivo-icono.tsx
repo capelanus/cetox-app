@@ -1,6 +1,8 @@
-import { FileText, FileSpreadsheet, FileImage, File } from 'lucide-react'
+import { FileText, FileSpreadsheet, FileImage, File, Mail } from 'lucide-react'
 
-export const ARCHIVOS_ACEPTADOS = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp,.gif'
+// .eml y .msg son correos guardados (Outlook, Gmail): los clientes mandan así
+// la información y conviene conservar el mensaje original con sus cabeceras.
+export const ARCHIVOS_ACEPTADOS = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp,.gif,.eml,.msg'
 
 export function extensionDe(nombre: string) {
   return nombre.split('.').pop()?.toLowerCase() ?? ''
@@ -8,6 +10,7 @@ export function extensionDe(nombre: string) {
 
 export function iconoDe(nombre: string) {
   const ext = extensionDe(nombre)
+  if (['eml', 'msg'].includes(ext)) return { Icono: Mail, color: 'text-amber-600' }
   if (['xls', 'xlsx', 'csv'].includes(ext)) return { Icono: FileSpreadsheet, color: 'text-green-600' }
   if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) return { Icono: FileImage, color: 'text-purple-600' }
   if (['doc', 'docx'].includes(ext)) return { Icono: FileText, color: 'text-blue-600' }

@@ -52,7 +52,7 @@ export default function DocumentosCotizacion({ cotizacionId, documentos, puedeEd
       <div className="flex items-center gap-2 mb-4">
         <Paperclip className="w-4 h-4 text-slate-400" />
         <h2 className="font-semibold text-slate-700 text-sm">Documentos adjuntos</h2>
-        <span className="text-xs text-slate-400">Word, Excel, PDF o imágenes enviadas por el cliente</span>
+        <span className="text-xs text-slate-400">Word, Excel, PDF, imágenes o correos (.eml) enviados por el cliente</span>
       </div>
 
       {documentos.length === 0 ? (

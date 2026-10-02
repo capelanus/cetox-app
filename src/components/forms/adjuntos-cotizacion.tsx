@@ -49,7 +49,7 @@ export function AdjuntosCotizacion() {
       <div className="flex items-center gap-2">
         <Paperclip className="w-4 h-4 text-slate-400" />
         <span className="text-sm font-semibold text-slate-700">Documentos del cliente</span>
-        <span className="text-xs text-slate-400">Word, Excel, PDF o imágenes · opcional</span>
+        <span className="text-xs text-slate-400">Word, Excel, PDF, imágenes o correos (.eml) · opcional</span>
       </div>
 
       {adjuntos.length > 0 && (

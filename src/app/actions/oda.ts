@@ -216,7 +216,8 @@ export async function recibirODA(odaId: string, _formData: FormData) {
     data: { estado: 'RECIBIDA', fechaRecepcion: new Date(), recibidaPorId: session.user.id },
   })
   revalidatePath(`/oda/${odaId}`)
-  revalidatePath('/quimica/entregas')
+  const slug = ({ Q: 'quimica', B: 'biologia', M: 'microbiologia' } as Record<string, string>)[oda.area]
+  if (slug) revalidatePath(`/entregas/${slug}`)
 }
 
 export async function iniciarEjecucionODA(odaId: string) {

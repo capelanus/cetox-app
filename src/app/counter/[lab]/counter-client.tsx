@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { PackageOpen, FlaskConical, ScanBarcode, Delete, CheckCircle2, X, LogOut } from 'lucide-react'
+import type { Lab } from '@/lib/counters'
 import {
   buscarMuestraPorCodigo,
   dejarMuestraEnCounter,
   recepcionarMuestraEnCounter,
-} from '@/app/actions/counter-quimica'
+} from '@/app/actions/counter'
 
 export interface OdaCounter {
   id: string
@@ -40,7 +41,7 @@ const MODO = {
   },
   recepcionar: {
     titulo: 'Recepcionar muestra',
-    quien: 'Química',
+    quien: '',
     color: '#13602C',
     fondo: '#ecfdf5',
     icono: FlaskConical,
@@ -60,7 +61,7 @@ function haceCuanto(iso: string | null) {
   return h < 24 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} d`
 }
 
-export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: string }) {
+export function CounterClient({ lab, odas, tablet }: { lab: Lab; odas: OdaCounter[]; tablet: string }) {
   const router = useRouter()
   const [firma, setFirma] = useState<{ modo: Modo; oda: OdaCounter } | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -90,13 +91,13 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
   }, [aviso])
 
   // Un solo campo para los dos actos: el estado de la muestra dice qué toca.
-  // Emitida → la deja Administración; en el counter → la recepciona Química.
+  // Emitida → la deja Administración; en el counter → la recepciona el lab.
   const resolverCodigo = useCallback(async (texto: string) => {
     const limpio = texto.trim()
     if (!limpio) return
     setBuscando(true)
     try {
-      const r = await buscarMuestraPorCodigo(limpio)
+      const r = await buscarMuestraPorCodigo(lab.area, limpio)
       if ('error' in r) { setAviso(r.error!); return }
       const pendiente = r.odas.find(o => o.estado === 'ENTREGADA_LAB') ?? r.odas.find(o => o.estado === 'EMITIDA')
       if (!pendiente) { setAviso(`${r.set.codigo} ya fue recepcionada; no queda nada pendiente en el counter.`); return }
@@ -117,14 +118,14 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
       setBuscando(false)
       setCodigo('')
     }
-  }, [odas])
+  }, [lab.area, odas])
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#EAF4F4' }} onClick={enfocarLector}>
       <header className="flex items-center gap-3 px-5 py-3 bg-white border-b border-slate-200">
-        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: '#13602C' }}>Q</div>
+        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: '#13602C' }}>{lab.area}</div>
         <div className="flex-1">
-          <p className="text-base font-bold text-slate-800 leading-tight">Counter de Química</p>
+          <p className="text-base font-bold text-slate-800 leading-tight">Counter de {lab.nombre}</p>
           <p className="text-xs text-slate-500">Recepción de muestras · Tablet: {tablet}</p>
         </div>
         <button onClick={() => signOut({ callbackUrl: '/login' })} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 px-2 py-1">
@@ -180,6 +181,7 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
           <Panel
             key={modo}
             modo={modo}
+            lab={lab}
             odas={odas.filter(o => o.estado === MODO[modo].esperado)}
             onElegir={oda => setFirma({ modo, oda })}
           />
@@ -188,6 +190,7 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
 
       {firma && (
         <FirmaPin
+          lab={lab}
           modo={firma.modo}
           oda={firma.oda}
           onClose={() => { setFirma(null); enfocarLector() }}
@@ -198,8 +201,13 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
   )
 }
 
-function Panel({ modo, odas, onElegir }: {
+function quienDe(modo: Modo, lab: Lab) {
+  return modo === 'dejar' ? MODO.dejar.quien : lab.nombre
+}
+
+function Panel({ modo, lab, odas, onElegir }: {
   modo: Modo
+  lab: Lab
   odas: OdaCounter[]
   onElegir: (o: OdaCounter) => void
 }) {
@@ -212,7 +220,7 @@ function Panel({ modo, odas, onElegir }: {
         <Icono className="w-7 h-7" style={{ color: cfg.color }} />
         <div className="flex-1">
           <h2 className="text-xl font-bold" style={{ color: cfg.color }}>{cfg.titulo}</h2>
-          <p className="text-xs text-slate-600">{cfg.quien} · {odas.length} pendiente{odas.length === 1 ? '' : 's'} · toca una fila o lee su código</p>
+          <p className="text-xs text-slate-600">{quienDe(modo, lab)} · {odas.length} pendiente{odas.length === 1 ? '' : 's'} · toca una fila o lee su código</p>
         </div>
       </div>
 
@@ -249,7 +257,8 @@ function Panel({ modo, odas, onElegir }: {
   )
 }
 
-function FirmaPin({ modo, oda, onClose, onHecho }: {
+function FirmaPin({ lab, modo, oda, onClose, onHecho }: {
+  lab: Lab
   modo: Modo
   oda: OdaCounter
   onClose: () => void
@@ -266,7 +275,7 @@ function FirmaPin({ modo, oda, onClose, onHecho }: {
     setError(null)
     try {
       const accion = modo === 'dejar' ? dejarMuestraEnCounter : recepcionarMuestraEnCounter
-      const r = await accion(oda.id, valor)
+      const r = await accion(lab.area, oda.id, valor)
       if (!r.ok) {
         setError(r.error)
         setPin('')
@@ -280,7 +289,7 @@ function FirmaPin({ modo, oda, onClose, onHecho }: {
     } finally {
       setEnviando(false)
     }
-  }, [modo, oda.id, onHecho])
+  }, [lab.area, modo, oda.id, onHecho])
 
   const tecla = (d: string) => {
     if (enviando || listo) return
@@ -320,7 +329,7 @@ function FirmaPin({ modo, oda, onClose, onHecho }: {
         ) : (
           <div className="px-5 py-4">
             <p className="text-sm text-slate-600 text-center mb-3">
-              PIN de quien {modo === 'dejar' ? 'entrega' : 'recepciona'} ({cfg.quien})
+              PIN de quien {modo === 'dejar' ? 'entrega' : 'recepciona'} ({quienDe(modo, lab)})
             </p>
             <div className="flex justify-center gap-3 mb-4">
               {[0, 1, 2, 3].map(i => (

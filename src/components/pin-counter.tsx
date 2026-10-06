@@ -3,9 +3,9 @@
 import { useState, useTransition } from 'react'
 import { KeyRound, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { asignarPin, quitarPin } from '@/app/actions/gerencia'
+import { asignarPin, quitarPin } from '@/app/actions/counters-admin'
 
-// PIN de 4 dígitos con el que la persona firma en la tablet del counter.
+// PIN de 4 dígitos con el que la persona firma en la tablet de un counter.
 export function PinCounter({ usuarioId, tienePin }: { usuarioId: string; tienePin: boolean }) {
   const [editando, setEditando] = useState(false)
   const [pin, setPin] = useState('')
@@ -14,25 +14,19 @@ export function PinCounter({ usuarioId, tienePin }: { usuarioId: string; tienePi
   function guardar() {
     if (!/^\d{4}$/.test(pin)) { toast.error('El PIN son 4 dígitos'); return }
     start(async () => {
-      try {
-        const r = await asignarPin(usuarioId, pin)
-        toast.success(`PIN asignado a ${r.nombre}`)
-        setEditando(false)
-        setPin('')
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'No se pudo asignar el PIN')
-      }
+      const r = await asignarPin(usuarioId, pin).catch(() => ({ ok: false as const, error: 'Sin conexión con el servidor' }))
+      if (!r.ok) { toast.error(r.error); return }
+      toast.success(`PIN asignado a ${r.nombre}`)
+      setEditando(false)
+      setPin('')
     })
   }
 
   function quitar() {
     start(async () => {
-      try {
-        const r = await quitarPin(usuarioId)
-        toast.success(`PIN retirado a ${r.nombre}`)
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'No se pudo retirar el PIN')
-      }
+      const r = await quitarPin(usuarioId).catch(() => ({ ok: false as const, error: 'Sin conexión con el servidor' }))
+      if (!r.ok) { toast.error(r.error); return }
+      toast.success(`PIN retirado a ${r.nombre}`)
     })
   }
 

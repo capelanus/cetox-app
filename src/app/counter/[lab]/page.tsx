@@ -1,29 +1,35 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { formatNumSET } from '@/lib/format'
+import { labPorSlug, labPorArea, ROLES_ABREN_COUNTER } from '@/lib/counters'
 import { CounterClient, type OdaCounter } from './counter-client'
 
 export const dynamic = 'force-dynamic'
 
-const ROLES_TABLET = [
-  'COUNTER_QUIMICA',
-  'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD', 'SUPER_ADMIN',
-  'ANALISTA', 'GERENTE_TECNICO', 'GERENTE_GENERAL',
-]
+// Pantalla kiosco para la tablet del mostrador de un laboratorio. Vive fuera
+// del layout (app) a propósito: sin menú ni cabecera, solo las dos acciones
+// del counter. La sesión es la de la tablet; quien firma lo hace con su PIN.
+export default async function CounterPage({ params }: { params: Promise<{ lab: string }> }) {
+  const { lab: slug } = await params
+  const lab = labPorSlug(slug)
+  if (!lab) notFound()
 
-// Pantalla kiosco para la tablet del mostrador de Química. Vive fuera del
-// layout (app) a propósito: sin menú lateral ni cabecera, solo las dos
-// acciones del counter. La sesión es la de la tablet; quien firma lo hace
-// con su PIN en cada acción.
-export default async function CounterQuimicaPage() {
   const session = await auth()
   if (!session) redirect('/login')
-  if (!ROLES_TABLET.includes(session.user.rol)) redirect('/dashboard')
-  if (session.user.rol === 'ANALISTA' && session.user.area && session.user.area !== 'Q') redirect('/oda')
+  const { rol, area } = session.user
+
+  // La cuenta de tablet y los analistas solo abren el counter de su área.
+  if (rol === 'COUNTER' || rol === 'ANALISTA') {
+    const propio = labPorArea(area)
+    if (!propio) redirect(rol === 'COUNTER' ? '/login' : '/oda')
+    if (propio.slug !== lab.slug) redirect(`/counter/${propio.slug}`)
+  } else if (!ROLES_ABREN_COUNTER.includes(rol) && rol !== 'SUPER_ADMIN') {
+    redirect('/dashboard')
+  }
 
   const odas = await prisma.oDA.findMany({
-    where: { area: 'Q', estado: { in: ['EMITIDA', 'ENTREGADA_LAB'] }, set: { estado: { not: 'ANULADO' } } },
+    where: { area: lab.area, estado: { in: ['EMITIDA', 'ENTREGADA_LAB'] }, set: { estado: { not: 'ANULADO' } } },
     orderBy: [{ estado: 'asc' }, { numero: 'asc' }],
     include: {
       set: { select: { numero: true, anio: true, nombreComercial: true, tipoMuestra: true, numeroMuestras: true, cliente: { select: { razonSocial: true } } } },
@@ -51,5 +57,5 @@ export default async function CounterQuimicaPage() {
     entregadaPor: o.entregadaPorId ? (nombreDe.get(o.entregadaPorId) ?? null) : null,
   }))
 
-  return <CounterClient odas={filas} tablet={session.user.name ?? session.user.email ?? 'Counter'} />
+  return <CounterClient lab={lab} odas={filas} tablet={session.user.name ?? session.user.email ?? 'Counter'} />
 }

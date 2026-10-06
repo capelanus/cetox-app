@@ -424,17 +424,28 @@ export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover,
     if (!yaVisible) navItems = [...navItems, controlBio]
   }
 
-  // Counter de Química: lo usan Administración (deja la muestra) y el equipo
-  // de Química (la recepciona). El registro de entregas es el cuaderno
-  // digital de ese mostrador.
-  const usaCounterQ = userRol === 'ADMINISTRACION' || (userRol === 'ANALISTA' && userArea === 'Q')
-  if (usaCounterQ) {
-    const itemsQ: NavItem[] = [
-      { href: '/counter/quimica', label: 'Counter Química',      icon: FlaskConical,  roles: [userRol] },
-      { href: '/quimica/entregas', label: 'Entregas de muestras', icon: ClipboardList, roles: [userRol] },
-    ]
-    if (sections) sections = [...sections, { label: 'Química', items: itemsQ }]
-    else navItems = [...navItems, ...itemsQ]
+  // Counters de laboratorio: Administración deja la muestra en cualquiera de
+  // ellos; cada equipo de laboratorio recepciona en el suyo. "Counters y PIN"
+  // administra las cuentas de tablet y los PIN con que firma el personal.
+  const LABS_NAV = [
+    { slug: 'quimica', area: 'Q', nombre: 'Química' },
+    { slug: 'biologia', area: 'B', nombre: 'Biología' },
+    { slug: 'microbiologia', area: 'M', nombre: 'Microbiología' },
+  ]
+  const adminCounters = ['ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'DIRECTOR_CALIDAD', 'GERENTE_TECNICO', 'GERENTE_GENERAL'].includes(userRol)
+  const labPropio = userRol === 'ANALISTA' ? LABS_NAV.find(l => l.area === userArea) : null
+  if (adminCounters || labPropio) {
+    const itemsCounter: NavItem[] = []
+    if (adminCounters) itemsCounter.push({ href: '/administracion/counters', label: 'Counters y PIN', icon: Shield, roles: [userRol] })
+    if (userRol === 'ADMINISTRACION') {
+      for (const l of LABS_NAV) itemsCounter.push({ href: `/counter/${l.slug}`, label: `Counter ${l.nombre}`, icon: FlaskConical, roles: [userRol] })
+    }
+    if (labPropio) {
+      itemsCounter.push({ href: `/counter/${labPropio.slug}`, label: `Counter ${labPropio.nombre}`, icon: FlaskConical, roles: [userRol] })
+      itemsCounter.push({ href: `/entregas/${labPropio.slug}`, label: 'Entregas de muestras', icon: ClipboardList, roles: [userRol] })
+    }
+    if (sections) sections = [...sections, { label: 'Counters', items: itemsCounter }]
+    else navItems = [...navItems, ...itemsCounter]
   }
 
   // Aprobador de vacaciones que no es HR: inyectar acceso a la bandeja

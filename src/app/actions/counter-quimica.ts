@@ -18,7 +18,7 @@ import { formatNumSET } from '@/lib/format'
 
 const AREA = 'Q'
 const ROLES_ENTREGAN = ['ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD', 'SUPER_ADMIN']
-const ROLES_TABLET = [...ROLES_ENTREGAN, 'ANALISTA', 'GERENTE_TECNICO', 'GERENTE_GENERAL']
+const ROLES_TABLET = ['COUNTER_QUIMICA', ...ROLES_ENTREGAN, 'ANALISTA', 'GERENTE_TECNICO', 'GERENTE_GENERAL']
 
 // Bloqueo tras intentos fallidos. Un PIN de 4 dígitos se adivina en segundos
 // sin esto. Proceso único (1 réplica), así que un Map en memoria basta.

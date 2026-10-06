@@ -12,6 +12,7 @@ const ROL_LABEL: Record<string, string> = {
   JEFE_OPERACIONES:        'Jefe de Operaciones',
   ASISTENTE_LOGISTICA:     'Asistente de Logística',
   ANALISTA:                'Analista',
+  COUNTER_QUIMICA:         'Counter Química (tablet)',
 }
 
 const ROL_COLOR: Record<string, { color: string; bg: string }> = {
@@ -21,10 +22,11 @@ const ROL_COLOR: Record<string, { color: string; bg: string }> = {
   JEFE_OPERACIONES:        { color: '#16a34a', bg: '#dcfce7' },
   ASISTENTE_LOGISTICA:     { color: '#0891b2', bg: '#cffafe' },
   ANALISTA:                { color: '#d97706', bg: '#fef3c7' },
+  COUNTER_QUIMICA:         { color: '#475569', bg: '#e2e8f0' },
 }
 
 // Roles que esta página puede controlar
-const ROLES_CONTROLABLES = ['DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
+const ROLES_CONTROLABLES = ['DIRECTOR_ADMINISTRACION', 'ADMINISTRACION', 'COORDINADOR_CALIDAD', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA', 'COUNTER_QUIMICA']
 
 export default async function GerenciaAccesosPage() {
   const session = await requireRol(['DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO'])

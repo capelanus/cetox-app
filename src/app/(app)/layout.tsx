@@ -11,6 +11,9 @@ const DESTINO_BLOQUEO = '/dashboard'
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session) redirect('/login')
+  // La cuenta de la tablet del counter nunca entra al ERP: todo lo que esté
+  // bajo (app) la devuelve a su pantalla. El counter vive fuera de este layout.
+  if (session.user.rol === 'COUNTER_QUIMICA') redirect('/counter/quimica')
 
   // Fetch the 30 most recent notifications + approver matrix check (for sidebar gating)
   const [notificaciones, vacApproverCount, usuarioMeta] = await Promise.all([

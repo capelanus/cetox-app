@@ -13,6 +13,8 @@ export type Rol =
   | 'SUPER_ADMIN'
   | 'JEFE_OPERACIONES'
   | 'ASISTENTE_LOGISTICA'
+  // Cuenta fija de la tablet del mostrador de Química: solo abre el counter.
+  | 'COUNTER_QUIMICA'
 
 /**
  * GERENTE_GENERAL tiene exactamente los mismos permisos que GERENTE_TECNICO.
@@ -31,6 +33,7 @@ export async function requireRol(roles: Rol[]) {
     const rol = session.user.rol
     if (rol === 'ANALISTA') redirect('/oda')
     if (rol === 'JEFE_OPERACIONES' || rol === 'ASISTENTE_LOGISTICA') redirect('/operaciones')
+    if (rol === 'COUNTER_QUIMICA') redirect('/counter/quimica')
     redirect('/dashboard')
   }
   const email = session.user.email

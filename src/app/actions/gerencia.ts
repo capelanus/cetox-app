@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { audit } from '@/lib/audit'
 
 // Roles que los gerentes pueden controlar
-const ROLES_CONTROLABLES = ['ADMINISTRACION', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA']
+const ROLES_CONTROLABLES = ['ADMINISTRACION', 'JEFE_OPERACIONES', 'ASISTENTE_LOGISTICA', 'ANALISTA', 'COUNTER_QUIMICA']
 
 // Roles que tienen permiso para ejecutar esta acción
 const ROLES_GERENCIA = ['DIRECTOR_CALIDAD', 'DIRECTOR_ADMINISTRACION', 'GERENTE_TECNICO', 'SUPER_ADMIN']

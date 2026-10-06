@@ -9,6 +9,7 @@ export const ROL_LABELS: Record<string, string> = {
   SUPER_ADMIN:            'Super Admin',
   JEFE_OPERACIONES:       'Jefe de Operaciones',
   ASISTENTE_LOGISTICA:    'Asistente de Logística',
+  COUNTER_QUIMICA:        'Counter Química (tablet)',
 }
 
 export const AREA_LABELS: Record<string, string> = {

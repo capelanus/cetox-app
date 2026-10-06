@@ -7,6 +7,7 @@ import { CounterClient, type OdaCounter } from './counter-client'
 export const dynamic = 'force-dynamic'
 
 const ROLES_TABLET = [
+  'COUNTER_QUIMICA',
   'ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD', 'SUPER_ADMIN',
   'ANALISTA', 'GERENTE_TECNICO', 'GERENTE_GENERAL',
 ]

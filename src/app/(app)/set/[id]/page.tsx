@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, CheckCircle2, Pencil, Ban, RotateCcw, QrCode } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Pencil, Ban, RotateCcw, Barcode } from 'lucide-react'
 import { SetPdfButton } from '@/components/set-pdf-button'
 import { formatFecha, formatNumSET, formatNumODA, formatMoneda } from '@/lib/format'
 import { generarODAs, anularSET, reestablecerSET } from '@/app/actions/set'
@@ -105,7 +105,7 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
           {!esAnulado && (
             <a href={`/etiqueta/set/${id}`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">
-                <QrCode className="h-3.5 w-3.5 mr-1.5" />Etiqueta QR
+                <Barcode className="h-3.5 w-3.5 mr-1.5" />Etiqueta
               </Button>
             </a>
           )}

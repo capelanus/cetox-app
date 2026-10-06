@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { PackageOpen, FlaskConical, ScanLine, Delete, CheckCircle2, X, LogOut, Keyboard } from 'lucide-react'
+import { PackageOpen, FlaskConical, ScanBarcode, Delete, CheckCircle2, X, LogOut } from 'lucide-react'
 import {
   buscarMuestraPorCodigo,
   dejarMuestraEnCounter,
@@ -63,8 +63,18 @@ function haceCuanto(iso: string | null) {
 export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: string }) {
   const router = useRouter()
   const [firma, setFirma] = useState<{ modo: Modo; oda: OdaCounter } | null>(null)
-  const [escaner, setEscaner] = useState<Modo | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [codigo, setCodigo] = useState('')
+  const [buscando, setBuscando] = useState(false)
+  const lectorRef = useRef<HTMLInputElement>(null)
+
+  // El lector USB se comporta como un teclado: escribe el código y manda
+  // Enter. Para que eso caiga siempre en el campo correcto, el campo recupera
+  // el foco solo, salvo mientras se está tecleando un PIN.
+  const enfocarLector = useCallback(() => {
+    if (!firma) setTimeout(() => lectorRef.current?.focus(), 50)
+  }, [firma])
+  useEffect(() => { enfocarLector() }, [enfocarLector, odas])
 
   // La tablet queda abierta todo el día: si la otra parte actúa desde su PC,
   // la pantalla se pone al día sola.
@@ -75,38 +85,42 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
 
   useEffect(() => {
     if (!aviso) return
-    const t = setTimeout(() => setAviso(null), 5000)
+    const t = setTimeout(() => setAviso(null), 6000)
     return () => clearTimeout(t)
   }, [aviso])
 
-  const resolverCodigo = useCallback(async (modo: Modo, texto: string) => {
-    const r = await buscarMuestraPorCodigo(texto)
-    if ('error' in r) { setAviso(r.error!); return }
-    const cfg = MODO[modo]
-    const candidata = r.odas.find(o => o.estado === cfg.esperado)
-    if (!candidata) {
-      const estados = r.odas.map(o => o.estado)
-      setAviso(
-        modo === 'dejar'
-          ? (estados.includes('ENTREGADA_LAB') ? `${r.set.codigo} ya está en el counter.` : `${r.set.codigo} ya fue recepcionada.`)
-          : (estados.includes('EMITIDA') ? `${r.set.codigo} todavía no la dejó Administración.` : `${r.set.codigo} ya fue recepcionada.`),
-      )
-      return
+  // Un solo campo para los dos actos: el estado de la muestra dice qué toca.
+  // Emitida → la deja Administración; en el counter → la recepciona Química.
+  const resolverCodigo = useCallback(async (texto: string) => {
+    const limpio = texto.trim()
+    if (!limpio) return
+    setBuscando(true)
+    try {
+      const r = await buscarMuestraPorCodigo(limpio)
+      if ('error' in r) { setAviso(r.error!); return }
+      const pendiente = r.odas.find(o => o.estado === 'ENTREGADA_LAB') ?? r.odas.find(o => o.estado === 'EMITIDA')
+      if (!pendiente) { setAviso(`${r.set.codigo} ya fue recepcionada; no queda nada pendiente en el counter.`); return }
+      const modo: Modo = pendiente.estado === 'EMITIDA' ? 'dejar' : 'recepcionar'
+      const enLista = odas.find(o => o.id === pendiente.id)
+      setFirma({
+        modo,
+        oda: enLista ?? {
+          id: pendiente.id, codigo: r.set.codigo, odaNumero: pendiente.numero, estado: pendiente.estado,
+          nombreComercial: r.set.nombreComercial, cliente: r.set.cliente, tipoMuestra: r.set.tipoMuestra,
+          numeroMuestras: r.set.numeroMuestras, ensayos: pendiente.ensayos,
+          fechaEntregaLab: pendiente.fechaEntregaLab, entregadaPor: null,
+        },
+      })
+    } catch {
+      setAviso('Sin conexión con el servidor. Inténtalo de nuevo.')
+    } finally {
+      setBuscando(false)
+      setCodigo('')
     }
-    const enLista = odas.find(o => o.id === candidata.id)
-    setFirma({
-      modo,
-      oda: enLista ?? {
-        id: candidata.id, codigo: r.set.codigo, odaNumero: candidata.numero, estado: candidata.estado,
-        nombreComercial: r.set.nombreComercial, cliente: r.set.cliente, tipoMuestra: r.set.tipoMuestra,
-        numeroMuestras: r.set.numeroMuestras, ensayos: candidata.ensayos,
-        fechaEntregaLab: candidata.fechaEntregaLab, entregadaPor: null,
-      },
-    })
   }, [odas])
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#EAF4F4' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#EAF4F4' }} onClick={enfocarLector}>
       <header className="flex items-center gap-3 px-5 py-3 bg-white border-b border-slate-200">
         <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: '#13602C' }}>Q</div>
         <div className="flex-1">
@@ -118,8 +132,44 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
         </button>
       </header>
 
+      {/* Campo de lectura: aquí "escribe" el lector de código de barras. */}
+      <form
+        onSubmit={e => { e.preventDefault(); resolverCodigo(codigo) }}
+        className="mx-5 mt-4 bg-white rounded-2xl border-2 shadow-sm px-4 py-3 flex items-center gap-3"
+        style={{ borderColor: '#13602C' }}
+      >
+        <ScanBarcode className="w-7 h-7 shrink-0" style={{ color: '#13602C' }} />
+        <div className="flex-1">
+          <label htmlFor="lector" className="block text-[11px] uppercase tracking-widest font-semibold text-slate-500">
+            Lee el código de barras de la etiqueta, o escríbelo y pulsa Enter
+          </label>
+          <input
+            id="lector"
+            ref={lectorRef}
+            autoFocus
+            value={codigo}
+            onChange={e => setCodigo(e.target.value)}
+            onBlur={enfocarLector}
+            placeholder="SET-0001-2026"
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            disabled={buscando}
+            className="w-full text-2xl font-mono tracking-wide text-slate-900 placeholder:text-slate-300 focus:outline-none bg-transparent py-1"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={buscando || !codigo.trim()}
+          className="px-4 py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-40"
+          style={{ backgroundColor: '#13602C' }}
+        >
+          {buscando ? 'Buscando…' : 'Buscar'}
+        </button>
+      </form>
+
       {aviso && (
-        <div className="mx-5 mt-4 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 text-sm font-medium flex items-center gap-2">
+        <div className="mx-5 mt-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 text-sm font-medium flex items-center gap-2">
           <span className="flex-1">{aviso}</span>
           <button onClick={() => setAviso(null)}><X className="w-4 h-4" /></button>
         </div>
@@ -132,42 +182,29 @@ export function CounterClient({ odas, tablet }: { odas: OdaCounter[]; tablet: st
             modo={modo}
             odas={odas.filter(o => o.estado === MODO[modo].esperado)}
             onElegir={oda => setFirma({ modo, oda })}
-            onEscanear={() => setEscaner(modo)}
-            onCodigo={texto => resolverCodigo(modo, texto)}
           />
         ))}
       </main>
-
-      {escaner && (
-        <Escaner
-          modo={escaner}
-          onClose={() => setEscaner(null)}
-          onLeido={texto => { setEscaner(null); resolverCodigo(escaner, texto) }}
-        />
-      )}
 
       {firma && (
         <FirmaPin
           modo={firma.modo}
           oda={firma.oda}
-          onClose={() => setFirma(null)}
-          onHecho={() => { setFirma(null); router.refresh() }}
+          onClose={() => { setFirma(null); enfocarLector() }}
+          onHecho={() => { setFirma(null); router.refresh(); enfocarLector() }}
         />
       )}
     </div>
   )
 }
 
-function Panel({ modo, odas, onElegir, onEscanear, onCodigo }: {
+function Panel({ modo, odas, onElegir }: {
   modo: Modo
   odas: OdaCounter[]
   onElegir: (o: OdaCounter) => void
-  onEscanear: () => void
-  onCodigo: (texto: string) => void
 }) {
   const cfg = MODO[modo]
   const Icono = cfg.icono
-  const [texto, setTexto] = useState('')
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
@@ -175,32 +212,9 @@ function Panel({ modo, odas, onElegir, onEscanear, onCodigo }: {
         <Icono className="w-7 h-7" style={{ color: cfg.color }} />
         <div className="flex-1">
           <h2 className="text-xl font-bold" style={{ color: cfg.color }}>{cfg.titulo}</h2>
-          <p className="text-xs text-slate-600">{cfg.quien} · {odas.length} pendiente{odas.length === 1 ? '' : 's'}</p>
+          <p className="text-xs text-slate-600">{cfg.quien} · {odas.length} pendiente{odas.length === 1 ? '' : 's'} · toca una fila o lee su código</p>
         </div>
-        <button
-          onClick={onEscanear}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl text-white font-semibold text-sm shadow"
-          style={{ backgroundColor: cfg.color }}
-        >
-          <ScanLine className="w-5 h-5" />Escanear
-        </button>
       </div>
-
-      {/* Entrada para lector USB (escribe y envía Enter) o para tipear el código. */}
-      <form
-        onSubmit={e => { e.preventDefault(); if (texto.trim()) { onCodigo(texto); setTexto('') } }}
-        className="px-5 py-3 border-b border-slate-100 flex items-center gap-2"
-      >
-        <Keyboard className="w-4 h-4 text-slate-400" />
-        <input
-          value={texto}
-          onChange={e => setTexto(e.target.value)}
-          placeholder="o escribe / lee el código aquí y pulsa Enter"
-          className="flex-1 text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2"
-          style={{ ['--tw-ring-color' as string]: cfg.color }}
-          autoComplete="off"
-        />
-      </form>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {odas.length === 0 ? (
@@ -208,7 +222,7 @@ function Panel({ modo, odas, onElegir, onEscanear, onCodigo }: {
         ) : odas.map(o => (
           <button
             key={o.id}
-            onClick={() => onElegir(o)}
+            onClick={e => { e.stopPropagation(); onElegir(o) }}
             className="w-full text-left rounded-xl border border-slate-200 hover:border-slate-400 active:scale-[0.99] transition px-4 py-3 bg-white"
           >
             <div className="flex items-baseline gap-3">
@@ -232,58 +246,6 @@ function Panel({ modo, odas, onElegir, onEscanear, onCodigo }: {
         ))}
       </div>
     </section>
-  )
-}
-
-function Escaner({ modo, onClose, onLeido }: { modo: Modo; onClose: () => void; onLeido: (t: string) => void }) {
-  const cfg = MODO[modo]
-  const [error, setError] = useState<string | null>(null)
-  const leidoRef = useRef(false)
-
-  useEffect(() => {
-    let scanner: { stop: () => Promise<void>; clear: () => void } | null = null
-    let cancelado = false
-    ;(async () => {
-      try {
-        const { Html5Qrcode } = await import('html5-qrcode')
-        if (cancelado) return
-        const s = new Html5Qrcode('lector-qr')
-        scanner = s
-        await s.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 240, height: 240 } },
-          texto => {
-            if (leidoRef.current) return
-            leidoRef.current = true
-            onLeido(texto)
-          },
-          () => {},
-        )
-      } catch (e) {
-        setError(
-          'No se pudo abrir la cámara. Revisa el permiso del navegador o escribe el código en el cuadro de texto.',
-        )
-        console.error(e)
-      }
-    })()
-    return () => {
-      cancelado = true
-      if (scanner) scanner.stop().then(() => scanner?.clear()).catch(() => {})
-    }
-  }, [onLeido])
-
-  return (
-    <div className="fixed inset-0 z-40 bg-black/70 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden">
-        <div className="px-5 py-3 flex items-center gap-2" style={{ backgroundColor: cfg.fondo }}>
-          <ScanLine className="w-5 h-5" style={{ color: cfg.color }} />
-          <p className="font-bold" style={{ color: cfg.color }}>{cfg.titulo} · apunta al QR de la etiqueta</p>
-          <button onClick={onClose} className="ml-auto p-1 text-slate-500"><X className="w-5 h-5" /></button>
-        </div>
-        <div id="lector-qr" className="w-full aspect-square bg-black" />
-        {error && <p className="px-5 py-3 text-sm text-red-700 bg-red-50">{error}</p>}
-      </div>
-    </div>
   )
 }
 
@@ -327,19 +289,21 @@ function FirmaPin({ modo, oda, onClose, onHecho }: {
     if (siguiente.length === 4) enviar(siguiente)
   }
 
-  // Teclado físico (por si la tablet lo tiene) además del numérico en pantalla.
+  // Teclado físico además del numérico en pantalla. Mientras este modal está
+  // abierto, lo que mande el lector no debe llegar al campo de lectura.
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (/^\d$/.test(e.key)) tecla(e.key)
-      else if (e.key === 'Backspace') setPin(p => p.slice(0, -1))
+      if (/^\d$/.test(e.key)) { e.preventDefault(); tecla(e.key) }
+      else if (e.key === 'Backspace') { e.preventDefault(); setPin(p => p.slice(0, -1)) }
       else if (e.key === 'Escape') onClose()
+      else if (e.key === 'Enter') e.preventDefault()
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   })
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={e => e.stopPropagation()}>
       <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
         <div className="px-5 py-4" style={{ backgroundColor: cfg.fondo }}>
           <p className="text-xs uppercase tracking-widest font-semibold" style={{ color: cfg.color }}>{cfg.verbo}</p>

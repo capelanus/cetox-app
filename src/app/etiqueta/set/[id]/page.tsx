@@ -1,15 +1,18 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
-import QRCode from 'qrcode'
+// El paquete solo publica tipos por condición (node/browser); el subpath /node
+// es el que resuelve TypeScript con moduleResolution "bundler".
+import bwipjs from 'bwip-js/node'
 import { formatFecha, formatNumSET } from '@/lib/format'
 import { PrintButton } from '@/components/print-button'
 
 const AREA_LABELS: Record<string, string> = { Q: 'Química', B: 'Biología', M: 'Microbiología' }
 
-// Etiqueta de la muestra. El QR lleva el código de la SET (p. ej. SET-0012-2026)
-// porque es lo que lee la tablet del counter; el texto impreso es el mismo
-// código para que también sirva a ojo o con un lector USB.
+// Etiqueta de la muestra. Lleva un código de barras Code 128 con el código de
+// la SET (p. ej. SET-0012-2026): es lo que lee el lector láser USB del
+// counter, que "escribe" ese texto en el campo de lectura. El número impreso
+// debajo es el mismo, por si hay que teclearlo a mano.
 export default async function EtiquetaSetPage({
   params,
   searchParams,
@@ -34,7 +37,15 @@ export default async function EtiquetaSetPage({
   if (!set || set.estado === 'ANULADO') notFound()
 
   const codigo = formatNumSET(set.numero, set.anio)
-  const qr = await QRCode.toDataURL(codigo, { width: 360, margin: 1, errorCorrectionLevel: 'M' })
+  const barras = bwipjs.toSVG({
+    bcid: 'code128',
+    text: codigo,
+    height: 11,
+    scale: 2,
+    includetext: true,
+    textxalign: 'center',
+    textsize: 9,
+  })
   const areas = [...new Set(set.odas.map(o => AREA_LABELS[o.area] ?? o.area))].join(' · ')
 
   return (
@@ -42,6 +53,7 @@ export default async function EtiquetaSetPage({
       <style>{`
         @page { size: auto; margin: 6mm; }
         @media print { .no-print { display: none !important; } .hoja { gap: 4mm !important; } }
+        .barras svg { width: 100%; height: auto; display: block; }
       `}</style>
 
       <div className="no-print max-w-3xl mx-auto mb-5 flex flex-wrap items-center gap-3">
@@ -68,25 +80,24 @@ export default async function EtiquetaSetPage({
         {Array.from({ length: copias }).map((_, i) => (
           <div
             key={i}
-            className="bg-white border border-slate-300 rounded-lg p-3 flex gap-3 items-center break-inside-avoid print:border-slate-400"
+            className="bg-white border border-slate-300 rounded-lg p-3 flex flex-col gap-2 break-inside-avoid print:border-slate-400"
             style={{ minHeight: '42mm' }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qr} alt={codigo} className="w-[34mm] h-[34mm] shrink-0" />
-            <div className="min-w-0 flex-1 leading-tight">
+            <div className="leading-tight">
               <p className="text-[9px] uppercase tracking-widest text-slate-500">Cetox Lab · Muestra</p>
-              <p className="font-mono font-bold text-lg text-slate-900 tracking-wide">{codigo}</p>
               {set.nombreComercial && (
                 <p className="text-xs font-semibold text-slate-800 truncate" title={set.nombreComercial}>{set.nombreComercial}</p>
               )}
               <p className="text-[10px] text-slate-600 truncate" title={set.cliente.razonSocial}>{set.cliente.razonSocial}</p>
               <p className="text-[10px] text-slate-600">
-                {[set.tipoMuestra, set.numeroMuestras ? `${set.numeroMuestras} muestras` : null].filter(Boolean).join(' · ') || ' '}
+                {[set.tipoMuestra, set.numeroMuestras ? `${set.numeroMuestras} muestras` : null].filter(Boolean).join(' · ') || ' '}
               </p>
               <p className="text-[10px] text-slate-500">
                 Ingreso {formatFecha(set.fechaIngreso)}{areas ? ` · ${areas}` : ''}
               </p>
             </div>
+            {/* Zona tranquila a los lados: el lector láser la necesita para enganchar. */}
+            <div className="barras px-3" dangerouslySetInnerHTML={{ __html: barras }} />
           </div>
         ))}
       </div>

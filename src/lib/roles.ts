@@ -1,6 +1,7 @@
 import { auth } from './auth'
 import { prisma } from './prisma'
 import { redirect } from 'next/navigation'
+import { ROL_LABELS } from './constants'
 
 export type Rol =
   | 'GERENTE_GENERAL'
@@ -38,6 +39,10 @@ export async function requireRol(roles: Rol[]) {
       const slug = ({ Q: 'quimica', B: 'biologia', M: 'microbiologia' } as Record<string, string>)[session.user.area ?? ''] ?? 'quimica'
       redirect(`/counter/${slug}`)
     }
+    // Un rol que el código no conoce (p. ej. una cookie con un nombre de rol
+    // ya renombrado) no puede caer en /dashboard: esa página también pasa por
+    // aquí y se formaría un bucle de redirecciones. Se le pide volver a entrar.
+    if (!(rol in ROL_LABELS)) redirect('/login')
     redirect('/dashboard')
   }
   const email = session.user.email

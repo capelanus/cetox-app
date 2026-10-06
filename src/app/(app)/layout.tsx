@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { moduloBloqueado } from '@/lib/roles'
 import { labPorArea } from '@/lib/counters'
+import { ROL_LABELS } from '@/lib/constants'
 import { AppShell } from '@/components/app-shell'
 import { PageTransition } from '@/components/page-transition'
 
@@ -12,6 +13,9 @@ const DESTINO_BLOQUEO = '/dashboard'
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session) redirect('/login')
+  // Una cookie con un rol que el código ya no conoce (p. ej. renombrado en un
+  // despliegue) no debe entrar al ERP ni rebotar entre páginas: a volver a entrar.
+  if (!(session.user.rol in ROL_LABELS)) redirect('/login')
   // La cuenta de la tablet de un counter nunca entra al ERP: todo lo que esté
   // bajo (app) la devuelve a su mostrador. Los counters viven fuera de este layout.
   if (session.user.rol === 'COUNTER') redirect(`/counter/${labPorArea(session.user.area)?.slug ?? 'quimica'}`)

@@ -28,7 +28,11 @@ export const authConfig: NextAuthConfig = {
       return token
     },
     session({ session, token }) {
-      session.user.rol = token.rol as string
+      // La cookie guarda el rol del momento del login. Las sesiones abiertas
+      // antes de renombrar COUNTER_QUIMICA → COUNTER siguen trayendo el nombre
+      // viejo; se traduce aquí para no obligar a cerrar sesión en las tablets.
+      const rolToken = token.rol as string
+      session.user.rol = rolToken === 'COUNTER_QUIMICA' ? 'COUNTER' : rolToken
       session.user.area = (token.area as string | null) ?? null
       session.user.id = token.userId as string
       return session

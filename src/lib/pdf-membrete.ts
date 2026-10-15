@@ -61,11 +61,13 @@ export interface MembreteDoc {
 export async function crearMembrete(
   titulo: string,
   numero: string,
-  opts: { plantilla?: string; gapExtra?: number; numeroDerecha?: boolean; sinTitulo?: boolean } = {},
+  opts: { plantilla?: string; gapExtra?: number; numeroDerecha?: boolean; sinTitulo?: boolean; footerH?: number } = {},
 ): Promise<MembreteDoc> {
   const templateDoc = await loadTemplate(opts.plantilla)
   const HEADER_H = templateDoc ? 158 : 80
-  const FOOTER_H = templateDoc ? 88 : 50
+  // Los membretes nuevos (cotización, SET) no llevan franja inferior: el
+  // llamador puede reservar menos pie y aprovechar la hoja.
+  const FOOTER_H = opts.footerH ?? (templateDoc ? 88 : 50)
   // Espacio entre la cabecera y el contenido (gapExtra permite airearlo por doc)
   const TOP_Y = PAGE_H - HEADER_H - 12 - (opts.gapExtra ?? 0)
 
@@ -170,4 +172,93 @@ export async function crearMembrete(
   doc.y -= 14
 
   return doc
+}
+
+// ── Bloques "tipo cotización" ─────────────────────────────────────────────────
+// Encabezado numerado y cuadro de celdas con etiqueta verde arriba y valor
+// debajo, como en el PDF de cotización. Compacta en una fila lo que el formato
+// de campos sueltos (`field`) gastaba en tres o cuatro líneas.
+export const SHADE = rgb(0.918, 0.957, 0.957)   // fondo claro CETOX #EAF4F4
+
+export interface CeldaGrid {
+  label: string
+  /** Varios valores se apilan en líneas (p. ej. tres contactos). */
+  values: (string | null | undefined)[] | string | null | undefined
+  /** Columnas que ocupa dentro de la fila (por defecto 1). */
+  span?: number
+  size?: number
+}
+
+export function wrapText(font: PDFFont, text: string, maxW: number, size: number): string[] {
+  const out: string[] = []
+  for (const para of String(text).split(/\r?\n/)) {
+    const words = para.split(/\s+/).filter(Boolean)
+    let cur = ''
+    for (const wd of words) {
+      const test = cur ? `${cur} ${wd}` : wd
+      if (font.widthOfTextAtSize(test, size) > maxW && cur) { out.push(cur); cur = wd }
+      else cur = test
+    }
+    out.push(cur || '')
+  }
+  return out
+}
+
+export function crearGrid(doc: MembreteDoc, columnas = 3) {
+  const { font, fontBold } = doc
+  const bx0 = ML, bx1 = PAGE_W - MR
+  const colW = (bx1 - bx0) / columnas
+  const LINE = 9.5, PAD_TOP = 17, PAD_BOT = 4
+
+  const badge = (n: string, titulo: string) => {
+    doc.page.drawRectangle({ x: ML, y: doc.y - 3, width: 13, height: 13, color: GREEN })
+    doc.page.drawText(n, { x: ML + 4, y: doc.y, size: 8.5, font: fontBold, color: WHITE })
+    doc.page.drawText(titulo, { x: ML + 19, y: doc.y, size: 9.5, font: fontBold, color: GREEN })
+    doc.y -= 16
+  }
+
+  type Prep = { x: number; w: number; label: string; lines: string[]; vacio: boolean; size: number }
+  const preparar = (celdas: CeldaGrid[]): Prep[] => {
+    let x = bx0
+    return celdas.map(c => {
+      const span = c.span ?? 1
+      const w = colW * span
+      const size = c.size ?? 8
+      const raw = Array.isArray(c.values) ? c.values : [c.values]
+      const vals = raw.filter(Boolean).map(String)
+      const lines = vals.length ? vals.flatMap(v => wrapText(font, v, w - 6, size)) : ['—']
+      const p = { x, w, label: c.label, lines, vacio: vals.length === 0, size }
+      x += w
+      return p
+    })
+  }
+
+  /**
+   * Dibuja las filas de un cuadro, una por llamada a `filas`, con sombreado
+   * alterno y bordes. Cada fila mide lo que necesite su celda más alta.
+   */
+  const cuadro = async (filas: CeldaGrid[][]) => {
+    const preps = filas.map(preparar)
+    const alturas = preps.map(p => PAD_TOP + Math.max(...p.map(c => c.lines.length)) * LINE + PAD_BOT - LINE + 2)
+    const total = alturas.reduce((a, b) => a + b, 0)
+    await doc.ensureSpace(total + 8)
+    const yTop = doc.y
+    let y = yTop
+    preps.forEach((celdas, i) => {
+      const h = alturas[i]
+      const yBot = y - h
+      if (i % 2 === 0) doc.page.drawRectangle({ x: bx0, y: yBot, width: bx1 - bx0, height: h, color: SHADE })
+      celdas.forEach(c => {
+        doc.page.drawText(c.label, { x: c.x + 3, y: y - 8, size: 6.3, font: fontBold, color: GREEN })
+        c.lines.forEach((ln, j) => doc.page.drawText(ln, { x: c.x + 3, y: y - PAD_TOP - j * LINE, size: c.size, font, color: c.vacio ? GRAY : BLACK }))
+        if (c.x > bx0) doc.page.drawLine({ start: { x: c.x, y }, end: { x: c.x, y: yBot }, thickness: 0.6, color: GREEN })
+      })
+      doc.page.drawLine({ start: { x: bx0, y: yBot }, end: { x: bx1, y: yBot }, thickness: 0.6, color: GREEN })
+      y = yBot
+    })
+    doc.page.drawRectangle({ x: bx0, y, width: bx1 - bx0, height: yTop - y, borderColor: GREEN, borderWidth: 0.7 })
+    doc.y = y - 12
+  }
+
+  return { badge, cuadro, bx0, bx1, colW }
 }

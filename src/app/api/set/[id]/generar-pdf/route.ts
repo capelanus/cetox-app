@@ -37,7 +37,7 @@ export async function GET(
   // Mismo membrete y misma estructura que el PDF de cotización: cabecera con
   // título/número, bloques numerados y cuadros de celdas compactos.
   const doc = await crearMembrete('SOLICITUD DE ENSAYO TOXICOLÓGICO', numSET, {
-    plantilla: 'letterhead-set.pdf', gapExtra: 0, sinTitulo: true, footerH: 46,
+    plantilla: 'letterhead-set.pdf', gapExtra: 0, sinTitulo: true, footerH: 40,
   })
   const { font, fontBold } = doc
   const { badge, cuadro, bx0, bx1 } = crearGrid(doc, 3)
@@ -198,7 +198,7 @@ export async function GET(
     doc.page.drawText(`TOTAL (${monedaCorta})`, { x: totLabelX, y: rowTop - 11, size: 9.5, font: fontBold, color: WHITE })
     drawRight(formatMoneda(total, moneda), bx1 - 6, rowTop - 11, 9.5, fontBold, WHITE)
     doc.page.drawRectangle({ x: totBoxX0, y: totalRowBot, width: totBoxW, height: totBoxTop - totalRowBot, borderColor: GREEN, borderWidth: 0.7 })
-    doc.y = totalRowBot - 14
+    doc.y = totalRowBot - 12
   }
 
   // ── 4. ENTREGA DE INFORMES ───────────────────────────────────────────────────
@@ -210,9 +210,10 @@ export async function GET(
   const importante = 'IMPORTANTE: Corrobore todos los datos. Al firmar este documento da conformidad de TODOS los datos de la empresa y de la muestra indicados en el SET, y declara conocer las condiciones contractuales.'
   const impLineas = wrapText(fontBold, importante, bx1 - bx0 - 12, 8)
   const boxH = 6 + condiciones.length * 11 + 6 + impLineas.length * 10 + 6
+  const BANC_H = 24
 
   // Título, cuadro y firmas se reservan juntos para que no se partan de página.
-  await doc.ensureSpace(16 + boxH + 48)
+  await doc.ensureSpace(15 + boxH + BANC_H + 36)
   badge('4', 'ENTREGA DE INFORMES EN OFICINA CETOX')
   const boxTop = doc.y + 4
   let cy = boxTop - 12
@@ -229,7 +230,26 @@ export async function GET(
   }
   const boxBot = boxTop - boxH
   doc.page.drawRectangle({ x: bx0, y: boxBot, width: bx1 - bx0, height: boxTop - boxBot, borderColor: GREEN, borderWidth: 0.7 })
-  doc.y = boxBot - 30
+
+  // ── Cuenta corriente: franja pegada al recuadro, una línea por moneda ─────
+  const bancY = boxBot, bancH = 24
+  doc.page.drawRectangle({ x: bx0, y: bancY - bancH, width: bx1 - bx0, height: bancH, color: SHADE, borderColor: GREEN, borderWidth: 0.7 })
+  doc.page.drawRectangle({ x: bx0, y: bancY - bancH, width: 92, height: bancH, color: GREEN })
+  doc.page.drawText('CUENTA CORRIENTE', { x: bx0 + 6, y: bancY - 10, size: 6.5, font: fontBold, color: WHITE })
+  doc.page.drawText('BCP', { x: bx0 + 6, y: bancY - 19, size: 7.5, font: fontBold, color: WHITE })
+  const cuentas: [string, string, string][] = [
+    ['Dólares', '194-1427241-1-85', '00219400142724118592'],
+    ['Soles', '194-1778268-0-01', '00219400177826800195'],
+  ]
+  const xCta = bx0 + 100, xNum = xCta + 54, xCciL = xNum + 80, xCci = xCciL + 20
+  cuentas.forEach(([mon, cta, cci], i) => {
+    const y = bancY - 10 - i * 9.5
+    doc.page.drawText(`Cta. ${mon}`, { x: xCta, y, size: 7.5, font: fontBold, color: GREEN })
+    doc.page.drawText(cta, { x: xNum, y, size: 7.5, font: fontBold, color: BLACK })
+    doc.page.drawText('CCI', { x: xCciL, y, size: 7, font: fontBold, color: GRAY })
+    doc.page.drawText(cci, { x: xCci, y, size: 7.5, font, color: BLACK })
+  })
+  doc.y = bancY - bancH - 24
 
   // ── Firmas ───────────────────────────────────────────────────────────────────
   const sigY = doc.y, sig1X = ML + 18, sig2X = PAGE_W - MR - 195
@@ -241,9 +261,9 @@ export async function GET(
   // ── Pie de página: código de formato (todas las páginas) ─────────────────────
   for (const p of doc.pdfDoc.getPages()) {
     const fw1 = fontBold.widthOfTextAtSize(NUM_FORMATO, 7)
-    p.drawText(NUM_FORMATO, { x: PAGE_W - MR - fw1, y: 38, size: 7, font: fontBold, color: GREEN })
+    p.drawText(NUM_FORMATO, { x: PAGE_W - MR - fw1, y: 24, size: 7, font: fontBold, color: GREEN })
     const fw2 = font.widthOfTextAtSize(VERSION_FORMATO, 7)
-    p.drawText(VERSION_FORMATO, { x: PAGE_W - MR - fw2, y: 28, size: 7, font, color: GREEN })
+    p.drawText(VERSION_FORMATO, { x: PAGE_W - MR - fw2, y: 14, size: 7, font, color: GREEN })
   }
 
   return doc.finish(`SET-${numSET}.pdf`, 'attachment') as unknown as NextResponse

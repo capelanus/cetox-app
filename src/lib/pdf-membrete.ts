@@ -208,13 +208,13 @@ export function crearGrid(doc: MembreteDoc, columnas = 3) {
   const { font, fontBold } = doc
   const bx0 = ML, bx1 = PAGE_W - MR
   const colW = (bx1 - bx0) / columnas
-  const LINE = 9.5, PAD_TOP = 17, PAD_BOT = 4
+  const LINE = 9.5, PAD_TOP = 16, PAD_BOT = 4
 
   const badge = (n: string, titulo: string) => {
     doc.page.drawRectangle({ x: ML, y: doc.y - 3, width: 13, height: 13, color: GREEN })
     doc.page.drawText(n, { x: ML + 4, y: doc.y, size: 8.5, font: fontBold, color: WHITE })
     doc.page.drawText(titulo, { x: ML + 19, y: doc.y, size: 9.5, font: fontBold, color: GREEN })
-    doc.y -= 16
+    doc.y -= 15
   }
 
   type Prep = { x: number; w: number; label: string; lines: string[]; vacio: boolean; size: number }

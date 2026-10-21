@@ -51,6 +51,7 @@ import {
   Rocket,
   Goal,
   Route,
+  Globe,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -167,6 +168,7 @@ const sectionesAdministracion: NavSection[] = [
       { href: '/solicitudes',  label: 'Mis Solicitudes',      icon: ShoppingBag,  roles: ['ADMINISTRACION'] },
       { href: '/vacaciones',   label: 'Mis Vacaciones',       icon: CalendarDays, roles: ['ADMINISTRACION'] },
       { href: '/administracion/sugerencias', label: 'Sugerencias', icon: MessageSquare, roles: ['ADMINISTRACION'] },
+      { href: '/administracion/solicitudes-web', label: 'Solicitudes web', icon: Globe, roles: ['ADMINISTRACION'] },
     ],
   },
   {
@@ -215,6 +217,7 @@ const sectionesCoordinadorCalidad: NavSection[] = [
       { href: '/finanzas',     label: 'Dashboard Financiero', icon: DollarSign, roles: ['COORDINADOR_CALIDAD'] },
       { href: '/facturacion',  label: 'Facturación',          icon: Landmark,   roles: ['COORDINADOR_CALIDAD'] },
       { href: '/administracion/sugerencias', label: 'Sugerencias', icon: MessageSquare, roles: ['COORDINADOR_CALIDAD'] },
+      { href: '/administracion/solicitudes-web', label: 'Solicitudes web', icon: Globe, roles: ['COORDINADOR_CALIDAD'] },
     ],
   },
   {
@@ -259,6 +262,7 @@ const sectionesDirectorAdmin: NavSection[] = [
       { href: '/historial',   label: 'Historial',            icon: History,     roles: ['DIRECTOR_ADMINISTRACION'], muted: true },
       { href: '/solicitudes', label: 'Mis Solicitudes',      icon: ShoppingBag, roles: ['DIRECTOR_ADMINISTRACION'] },
       { href: '/administracion/sugerencias', label: 'Sugerencias', icon: MessageSquare, roles: ['DIRECTOR_ADMINISTRACION'] },
+      { href: '/administracion/solicitudes-web', label: 'Solicitudes web', icon: Globe, roles: ['DIRECTOR_ADMINISTRACION'] },
     ],
   },
   {
@@ -344,6 +348,7 @@ const sectionesDirectorCalidad: NavSection[] = [
       { href: '/facturacion', label: 'Facturación',          icon: Landmark,   roles: ['DIRECTOR_CALIDAD'] },
       { href: '/kpis',        label: 'KPIs Equipo',          icon: BarChart2,  roles: ['DIRECTOR_CALIDAD'] },
       { href: '/administracion/sugerencias', label: 'Sugerencias', icon: MessageSquare, roles: ['DIRECTOR_CALIDAD'] },
+      { href: '/administracion/solicitudes-web', label: 'Solicitudes web', icon: Globe, roles: ['DIRECTOR_CALIDAD'] },
     ],
   },
   {

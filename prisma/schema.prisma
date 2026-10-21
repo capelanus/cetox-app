@@ -1393,3 +1393,36 @@ model ControlOdaBiologia {
 
   @@index([setNumero])
 }
+
+// Solicitudes recibidas desde los formularios de cetoxlab.com (Solicitar
+// análisis / Contacto). El sitio web llama a /api/public/solicitudes-web con
+// una clave compartida (WEB_LEAD_API_KEY); aquí quedan visibles en
+// Administración aunque falle el envío del correo.
+model SolicitudWeb {
+  id             String    @id @default(cuid())
+  formulario     String    // solicitud | contacto | reclamo | chat
+  nombre         String
+  empresa        String?
+  correo         String
+  telefono       String?
+  ubicacion      String?
+  sector         String?
+  matriz         String?
+  analisis       String?
+  objetivo       String?
+  norma          String?
+  cantidad       String?
+  acreditado     String?
+  fechaRequerida String?
+  detalle        String?
+  mensaje        String?
+  pagina         String?
+  estado         String    @default("NUEVA") // NUEVA | EN_PROCESO | ATENDIDA | DESCARTADA
+  notaInterna    String?
+  atendidoPor    String?
+  fechaAtencion  DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([estado])
+}

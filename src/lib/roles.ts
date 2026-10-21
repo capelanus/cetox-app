@@ -27,6 +27,10 @@ function expandRoles(roles: Rol[]): Rol[] {
   return roles
 }
 
+export const ROLES_SOLICITUDES_WEB: Rol[] = [
+  'ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD',
+]
+
 export async function requireRol(roles: Rol[]) {
   const session = await auth()
   if (!session) redirect('/login')

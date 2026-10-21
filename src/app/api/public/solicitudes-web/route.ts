@@ -13,7 +13,7 @@ const FORMULARIOS = ['solicitud', 'contacto', 'reclamo', 'chat']
 // web manda "fecha", la columna se llama "fechaRequerida" para no chocar con
 // createdAt.
 const CAMPOS: { clave: string; columna: string }[] = [
-  'telefono', 'ubicacion', 'sector', 'matriz', 'analisis', 'objetivo',
+  'empresa', 'telefono', 'ubicacion', 'sector', 'matriz', 'analisis', 'objetivo',
   'norma', 'cantidad', 'acreditado', 'detalle', 'mensaje',
 ].map(c => ({ clave: c, columna: c }))
 CAMPOS.push({ clave: 'fecha', columna: 'fechaRequerida' })

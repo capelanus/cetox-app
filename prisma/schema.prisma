@@ -1416,6 +1416,7 @@ model SolicitudWeb {
   fechaRequerida String?
   detalle        String?
   mensaje        String?
+  otrosDatos     String?   // campos de Contacto/Libro de Reclamaciones sin columna propia (documento, domicilio, tipo, servicio, pedido, motivo, adjunto…)
   pagina         String?
   estado         String    @default("NUEVA") // NUEVA | EN_PROCESO | ATENDIDA | DESCARTADA
   notaInterna    String?

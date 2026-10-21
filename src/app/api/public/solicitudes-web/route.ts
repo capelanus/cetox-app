@@ -8,13 +8,28 @@ import { NextRequest, NextResponse } from 'next/server'
 // (mismo patrón que /api/asistencia/sync con el huellero).
 const FORMULARIOS = ['solicitud', 'contacto', 'reclamo', 'chat']
 
-// Campos de texto libre esperados del formulario web; cualquier otra clave
-// del payload se ignora.
-const CAMPOS = [
-  'nombre', 'empresa', 'correo', 'telefono', 'ubicacion', 'sector',
-  'matriz', 'analisis', 'objetivo', 'norma', 'cantidad', 'acreditado',
-  'fechaRequerida', 'detalle', 'mensaje',
-] as const
+// Campos con columna propia (los de "Solicitar análisis"). El nombre de la
+// clave en el payload no siempre coincide con el de la columna: el formulario
+// web manda "fecha", la columna se llama "fechaRequerida" para no chocar con
+// createdAt.
+const CAMPOS: { clave: string; columna: string }[] = [
+  'telefono', 'ubicacion', 'sector', 'matriz', 'analisis', 'objetivo',
+  'norma', 'cantidad', 'acreditado', 'detalle', 'mensaje',
+].map(c => ({ clave: c, columna: c }))
+CAMPOS.push({ clave: 'fecha', columna: 'fechaRequerida' })
+
+// El resto de campos (de Contacto y Libro de Reclamaciones, que no tienen
+// columna propia) se guardan como texto legible en "otrosDatos" para no
+// perder nada aunque esos formularios cambien de campos más adelante.
+const EXTRA_LABELS: Record<string, string> = {
+  documento: 'Documento de identidad',
+  domicilio: 'Domicilio',
+  tipo: 'Tipo',
+  servicio: 'Servicio contratado',
+  pedido: 'Pedido',
+  motivo: 'Motivo de contacto',
+  adjunto: 'Adjunto (nombre de archivo)',
+}
 
 function limpiar(v: unknown): string | undefined {
   if (v == null) return undefined
@@ -53,14 +68,17 @@ export async function POST(req: NextRequest) {
   }
 
   const resto: Record<string, string | undefined> = {}
-  for (const campo of CAMPOS) {
-    if (campo === 'nombre' || campo === 'correo') continue
-    resto[campo] = limpiar(fields[campo])
+  for (const { clave, columna } of CAMPOS) {
+    resto[columna] = limpiar(fields[clave])
   }
+  const otrosDatos = Object.entries(EXTRA_LABELS)
+    .map(([clave, label]) => { const v = limpiar(fields[clave]); return v ? `${label}: ${v}` : null })
+    .filter(Boolean)
+    .join('\n') || undefined
   const pagina = limpiar(body.page)
 
   const solicitud = await prisma.solicitudWeb.create({
-    data: { formulario, nombre, correo, pagina, ...resto },
+    data: { formulario, nombre, correo, pagina, otrosDatos, ...resto },
   })
 
   // Avisar a Administración: mismos roles que ya administran counters/RRHH.

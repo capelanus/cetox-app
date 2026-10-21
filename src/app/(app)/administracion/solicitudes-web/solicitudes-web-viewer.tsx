@@ -26,6 +26,7 @@ interface Solicitud {
   fechaRequerida: string | null
   detalle: string | null
   mensaje: string | null
+  otrosDatos: string | null
   pagina: string | null
   estado: string
   notaInterna: string | null
@@ -126,6 +127,12 @@ function Tarjeta({ s }: { s: Solicitud }) {
             <div className="flex items-start gap-2 text-sm bg-slate-50 rounded-lg px-3 py-2">
               <MessageSquare className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
               <p className="text-slate-700 whitespace-pre-wrap">{s.detalle || s.mensaje}</p>
+            </div>
+          )}
+          {s.otrosDatos && (
+            <div className="flex items-start gap-2 text-sm bg-slate-50 rounded-lg px-3 py-2">
+              <FileCheck2 className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
+              <p className="text-slate-700 whitespace-pre-wrap">{s.otrosDatos}</p>
             </div>
           )}
 

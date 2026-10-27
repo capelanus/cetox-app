@@ -22,7 +22,7 @@ export async function GET(
     where: { id },
     include: {
       cliente: true,
-      cotizacion: true,
+      cotizacion: { include: { facturasCliente: { where: { estado: { not: 'ANULADA' } }, orderBy: { fechaEmision: 'asc' } } } },
       creadoPor: true,
       odas: { include: { items: { include: { ensayo: true } } }, orderBy: { numero: 'asc' } },
     },
@@ -61,6 +61,7 @@ export async function GET(
     const contactos = [cot?.contactoNombre, cot?.contactoNombre2, cot?.contactoNombre3]
     const telefonos = [cot?.contactoTelefono, cot?.contactoTelefono2, cot?.contactoTelefono3]
     const emails = [cot?.contactoEmail, cot?.contactoEmail2, cot?.contactoEmail3]
+    const facturas = cot?.facturasCliente ?? []
     await cuadro([
       [
         { label: 'SOLICITANTE', values: set.cliente.razonSocial, span: 2 },
@@ -73,10 +74,11 @@ export async function GET(
         { label: 'EMAIL', values: emails, size: 7 },
       ],
       [
-        { label: 'COTIZACIÓN', values: cot ? formatNumCotizacion(cot.numero, cot.anio, cot.sufijo) : null },
-        { label: 'CÓDIGO DE MUESTRA', values: set.codigoMuestra },
-        { label: 'REGISTRADO POR', values: set.creadoPor.nombre },
+        { label: 'N° DE COTIZACIÓN', values: cot ? formatNumCotizacion(cot.numero, cot.anio, cot.sufijo) : null },
+        { label: 'N° DE FACTURA', values: facturas.length ? facturas.map(f => `${f.serie}-${String(f.numero).padStart(8, '0')}`) : null },
+        { label: 'FECHA DE EMISIÓN', values: facturas.length ? facturas.map(f => formatFecha(f.fechaEmision)) : null },
       ],
+      [{ label: 'CÓDIGO DE MUESTRA', values: set.codigoMuestra, span: 3 }],
     ])
   }
 
@@ -85,14 +87,12 @@ export async function GET(
   {
     const ingreso = set.ingresoMuestra === 'Otro' ? `Otro: ${set.ingresoMuestraOtro ?? ''}` : set.ingresoMuestra
     const filas: CeldaGrid[][] = [
+      [{ label: 'NOMBRE COMERCIAL', values: set.nombreComercial, span: 3 }],
+      // Fila completa: el cliente a veces declara varios ingredientes activos.
+      [{ label: 'INGREDIENTE ACTIVO', values: set.ingredienteActivo, span: 3 }],
       [
-        { label: 'NOMBRE COMERCIAL', values: set.nombreComercial, span: 2 },
-        { label: 'TIPO DE MUESTRA', values: set.tipoMuestra },
-      ],
-      [
-        { label: 'INGREDIENTE ACTIVO', values: set.ingredienteActivo },
         { label: 'FORMULACIÓN', values: set.formulacion },
-        { label: 'N° DE LOTE', values: set.numeroLote },
+        { label: 'N° DE LOTE', values: set.numeroLote, span: 2 },
       ],
       [
         { label: 'FECHA DE FABRICACIÓN', values: set.fechaFabricacion ? formatFecha(set.fechaFabricacion) : null },
@@ -101,12 +101,13 @@ export async function GET(
       ],
       [
         { label: 'N° DE MUESTRAS', values: set.numeroMuestras },
-        { label: 'INGRESO DE MUESTRA', values: ingreso },
+        { label: 'TIPO DE MUESTRA', values: set.tipoMuestra },
         { label: 'DEVOLUCIÓN DE SOBRANTE', values: set.devolucionMuestra },
       ],
       [
         { label: 'CONDICIONES AMBIENTALES', values: set.condicionesAmbientales },
-        { label: 'PROCEDENCIA', values: set.procedenciaDescripcion, span: 2 },
+        { label: 'PROCEDENCIA', values: set.procedenciaDescripcion },
+        { label: 'INGRESO DE MUESTRA', values: ingreso },
       ],
     ]
     // Filas que solo aparecen cuando hay algo que decir, para no gastar hoja.
@@ -257,6 +258,10 @@ export async function GET(
   doc.page.drawLine({ start: { x: sig2X, y: sigY }, end: { x: sig2X + 180, y: sigY }, thickness: 0.75, color: BLACK })
   doc.page.drawText('Cliente', { x: sig1X + 60, y: sigY - 13, size: 8, font: fontBold, color: GRAY })
   doc.page.drawText('Centro Toxicológico S.A.C. "CETOX"', { x: sig2X + 12, y: sigY - 13, size: 8, font: fontBold, color: GRAY })
+  // Firma del registrador: la parte del correo antes de la arroba (a.cadillo@… → A.Cadillo).
+  const firma = set.creadoPor.email.split('@')[0].split('.').map(t => t.charAt(0).toUpperCase() + t.slice(1)).join('.')
+  const fw = font.widthOfTextAtSize(firma, 8)
+  doc.page.drawText(firma, { x: sig2X + 90 - fw / 2, y: sigY - 24, size: 8, font, color: GRAY })
 
   // ── Pie de página: código de formato (todas las páginas) ─────────────────────
   for (const p of doc.pdfDoc.getPages()) {

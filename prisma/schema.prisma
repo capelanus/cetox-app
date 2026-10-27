@@ -1427,3 +1427,25 @@ model SolicitudWeb {
   @@index([createdAt])
   @@index([estado])
 }
+
+// Artículos del blog de cetoxlab.com: Administración asigna el revisor
+// científico (nombre, cargo, colegiatura) y la fecha de revisión; la web los
+// lee por /api/public/blog-web para mostrar la autoría (contenido YMYL).
+model BlogArticulo {
+  id                 String    @id @default(cuid())
+  slug               String    @unique
+  titulo             String
+  categoria          String
+  url                String
+  revisorNombre      String?
+  revisorCargo       String?
+  revisorColegiatura String?
+  fechaRevision      DateTime?
+  estado             String    @default("PENDIENTE") // PENDIENTE | REVISADO
+  notaInterna        String?
+  actualizadoPor     String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([estado])
+}

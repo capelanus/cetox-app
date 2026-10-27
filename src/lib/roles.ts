@@ -31,6 +31,11 @@ export const ROLES_SOLICITUDES_WEB: Rol[] = [
   'ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD',
 ]
 
+// Blog web: quién asigna la autoría científica de los artículos de cetoxlab.com.
+export const ROLES_BLOG_WEB: Rol[] = [
+  'ADMINISTRACION', 'DIRECTOR_ADMINISTRACION', 'DIRECTOR_CALIDAD', 'COORDINADOR_CALIDAD', 'GERENTE_TECNICO',
+]
+
 export async function requireRol(roles: Rol[]) {
   const session = await auth()
   if (!session) redirect('/login')

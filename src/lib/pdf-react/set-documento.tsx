@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from '@react-pdf/renderer'
+import type { Style } from '@react-pdf/types'
 import {
   DocumentoMembrete, Membrete, Encabezado, Badge, Cuadro, type CeldaGrid,
   GREEN, BLACK, GRAY, LIGHT_GRAY, SHADE, WHITE,
@@ -153,6 +154,71 @@ const entregaStyles = StyleSheet.create({
   firmaSub: { fontSize: 8, color: GRAY, marginTop: 2 },
 })
 
+// ── Control de pagos: casillero en blanco para completar a mano cuando el
+// cliente paga en oficina (cotización/fecha/atención, y hasta 2 facturas con
+// monto y fechas). Sin datos de la base: es un control físico, no un reporte.
+const pagosStyles = StyleSheet.create({
+  box: { borderWidth: 0.7, borderColor: BLACK, marginTop: 10 },
+  filaSup: { flexDirection: 'row', borderBottomWidth: 0.6, borderBottomColor: BLACK },
+  campoSup: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, borderRightWidth: 0.6, borderRightColor: BLACK },
+  campoSupUltimo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, flexGrow: 1 },
+  filaPagos: { flexDirection: 'row' },
+  etiquetaPagos: {
+    width: 54, borderRightWidth: 0.6, borderRightColor: BLACK,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  etiquetaPagosTxt: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: BLACK },
+  filasFacturas: { flexGrow: 1 },
+  filaFactura: { flexDirection: 'row', borderBottomWidth: 0.6, borderBottomColor: BLACK },
+  filaFacturaUltima: { flexDirection: 'row' },
+  campoPago: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, borderRightWidth: 0.6, borderRightColor: BLACK },
+  campoPagoUltimo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, flexGrow: 1 },
+  label: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: BLACK, marginRight: 4, flexShrink: 0 },
+  linea: { flexGrow: 1, borderBottomWidth: 0.6, borderBottomColor: BLACK, minWidth: 10 },
+})
+
+/**
+ * Un campo "Etiqueta: ____" — la línea es un borde inferior en blanco. El
+ * ancho es fijo (no proporcional): las etiquetas son cortas y no deben
+ * partirse en varias líneas, así que se calcula cada columna a mano en vez
+ * de repartir el espacio por flex-grow.
+ */
+function CampoEnBlanco({ label, style, width }: { label: string; style: Style; width?: number }) {
+  return (
+    <View style={[style, width ? { width } : { flexGrow: 1 }]}>
+      <Text style={pagosStyles.label}>{label}</Text>
+      <View style={pagosStyles.linea} />
+    </View>
+  )
+}
+
+function ControlDePagos() {
+  return (
+    <View style={pagosStyles.box} wrap={false}>
+      <View style={pagosStyles.filaSup}>
+        <CampoEnBlanco label="N° de COTIZACIÓN :" style={pagosStyles.campoSup} width={180} />
+        <CampoEnBlanco label="Fecha:" style={pagosStyles.campoSup} width={110} />
+        <CampoEnBlanco label="Atención:" style={pagosStyles.campoSupUltimo} />
+      </View>
+      <View style={pagosStyles.filaPagos}>
+        <View style={pagosStyles.etiquetaPagos}>
+          <Text style={pagosStyles.etiquetaPagosTxt}>PAGOS :</Text>
+        </View>
+        <View style={pagosStyles.filasFacturas}>
+          {[0, 1].map(i => (
+            <View key={i} style={i === 1 ? pagosStyles.filaFacturaUltima : pagosStyles.filaFactura}>
+              <CampoEnBlanco label="Factura N°:" style={pagosStyles.campoPago} width={135} />
+              <CampoEnBlanco label="Monto:" style={pagosStyles.campoPago} width={95} />
+              <CampoEnBlanco label="Fecha Emisión:" style={pagosStyles.campoPago} width={128} />
+              <CampoEnBlanco label="Fecha Pago:" style={pagosStyles.campoPagoUltimo} />
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  )
+}
+
 const CUENTAS: [string, string, string][] = [
   ['Dólares', '194-1427241-1-85', '00219400142724118592'],
   ['Soles', '194-1778268-0-01', '00219400177826800195'],
@@ -189,6 +255,7 @@ function EntregaYFirmas({ firmaRegistrador }: { firmaRegistrador: string }) {
           ))}
         </View>
       </View>
+      <ControlDePagos />
       <View style={entregaStyles.firmas}>
         <View style={entregaStyles.firmaCol}>
           <View style={entregaStyles.firmaLinea} />

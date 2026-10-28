@@ -158,23 +158,17 @@ const entregaStyles = StyleSheet.create({
 // cliente paga en oficina (cotización/fecha/atención, y hasta 2 facturas con
 // monto y fechas). Sin datos de la base: es un control físico, no un reporte.
 const pagosStyles = StyleSheet.create({
-  box: { borderWidth: 0.7, borderColor: BLACK, marginTop: 10 },
-  filaSup: { flexDirection: 'row', borderBottomWidth: 0.6, borderBottomColor: BLACK },
-  campoSup: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, borderRightWidth: 0.6, borderRightColor: BLACK },
-  campoSupUltimo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, flexGrow: 1 },
-  filaPagos: { flexDirection: 'row' },
-  etiquetaPagos: {
-    width: 54, borderRightWidth: 0.6, borderRightColor: BLACK,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  etiquetaPagosTxt: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: BLACK },
-  filasFacturas: { flexGrow: 1 },
-  filaFactura: { flexDirection: 'row', borderBottomWidth: 0.6, borderBottomColor: BLACK },
-  filaFacturaUltima: { flexDirection: 'row' },
-  campoPago: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, borderRightWidth: 0.6, borderRightColor: BLACK },
-  campoPagoUltimo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingVertical: 5, flexGrow: 1 },
-  label: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: BLACK, marginRight: 4, flexShrink: 0 },
-  linea: { flexGrow: 1, borderBottomWidth: 0.6, borderBottomColor: BLACK, minWidth: 10 },
+  box: { flexDirection: 'row', borderWidth: 0.7, borderColor: GREEN, marginTop: 10 },
+  tag: { width: 92, backgroundColor: GREEN, padding: 6, justifyContent: 'center' },
+  tagTxt1: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: WHITE },
+  tagTxt2: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: WHITE, marginTop: 2 },
+  cuerpo: { flexGrow: 1, flexBasis: 0 },
+  fila: { flexDirection: 'row', borderBottomWidth: 0.6, borderBottomColor: GREEN },
+  filaUltima: { flexDirection: 'row' },
+  campo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingTop: 7, paddingBottom: 5, borderRightWidth: 0.6, borderRightColor: GREEN },
+  campoUltimo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingTop: 7, paddingBottom: 5 },
+  label: { fontSize: 6.3, fontFamily: 'Helvetica-Bold', color: GREEN, marginRight: 4, flexShrink: 0 },
+  linea: { flexGrow: 1, borderBottomWidth: 0.6, borderBottomColor: GRAY, minWidth: 10, marginBottom: 1 },
 })
 
 /**
@@ -193,27 +187,28 @@ function CampoEnBlanco({ label, style, width }: { label: string; style: Style; w
 }
 
 function ControlDePagos() {
+  const filas: { label: string; width?: number }[][] = [
+    [{ label: 'N° DE COTIZACIÓN', width: 150 }, { label: 'FECHA', width: 100 }, { label: 'ATENCIÓN' }],
+    ...[1, 2].map(n => [
+      { label: `FACTURA N° ${n}`, width: 120 }, { label: 'MONTO', width: 80 },
+      { label: 'F. EMISIÓN', width: 95 }, { label: 'F. PAGO' },
+    ]),
+  ]
   return (
     <View style={pagosStyles.box} wrap={false}>
-      <View style={pagosStyles.filaSup}>
-        <CampoEnBlanco label="N° de COTIZACIÓN :" style={pagosStyles.campoSup} width={180} />
-        <CampoEnBlanco label="Fecha:" style={pagosStyles.campoSup} width={110} />
-        <CampoEnBlanco label="Atención:" style={pagosStyles.campoSupUltimo} />
+      <View style={pagosStyles.tag}>
+        <Text style={pagosStyles.tagTxt1}>CONTROL DE</Text>
+        <Text style={pagosStyles.tagTxt2}>PAGOS</Text>
       </View>
-      <View style={pagosStyles.filaPagos}>
-        <View style={pagosStyles.etiquetaPagos}>
-          <Text style={pagosStyles.etiquetaPagosTxt}>PAGOS :</Text>
-        </View>
-        <View style={pagosStyles.filasFacturas}>
-          {[0, 1].map(i => (
-            <View key={i} style={i === 1 ? pagosStyles.filaFacturaUltima : pagosStyles.filaFactura}>
-              <CampoEnBlanco label="Factura N°:" style={pagosStyles.campoPago} width={135} />
-              <CampoEnBlanco label="Monto:" style={pagosStyles.campoPago} width={95} />
-              <CampoEnBlanco label="Fecha Emisión:" style={pagosStyles.campoPago} width={128} />
-              <CampoEnBlanco label="Fecha Pago:" style={pagosStyles.campoPagoUltimo} />
-            </View>
-          ))}
-        </View>
+      <View style={pagosStyles.cuerpo}>
+        {filas.map((celdas, i) => (
+          <View key={i} style={[i === filas.length - 1 ? pagosStyles.filaUltima : pagosStyles.fila, i % 2 === 0 ? { backgroundColor: SHADE } : {}]}>
+            {celdas.map((c, j) => (
+              <CampoEnBlanco key={j} label={c.label} width={c.width}
+                style={j === celdas.length - 1 ? pagosStyles.campoUltimo : pagosStyles.campo} />
+            ))}
+          </View>
+        ))}
       </View>
     </View>
   )

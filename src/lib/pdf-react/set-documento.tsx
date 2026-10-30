@@ -4,7 +4,7 @@ import {
   DocumentoMembrete, Membrete, Encabezado, Badge, Cuadro, type CeldaGrid,
   GREEN, BLACK, GRAY, LIGHT_GRAY, SHADE, WHITE,
 } from './membrete'
-import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
+import { formatFecha, formatMoneda, formatNumCotizacion, suavizarMayusculas } from '@/lib/format'
 
 const NUM_FORMATO = 'SIG-FR-ADM-002'
 const VERSION_FORMATO = 'Versión: 01'
@@ -332,9 +332,9 @@ export function SetDocumento({ set, numSET }: { set: SetPdfData; numSET: string 
     ])
   }
   const indicaciones = [
-    set.otraIndicacionQ && `Química: ${set.otraIndicacionQ}`,
-    set.otraIndicacionB && `Biología: ${set.otraIndicacionB}`,
-    set.otraIndicacionM && `Microbiología: ${set.otraIndicacionM}`,
+    set.otraIndicacionQ && `Química: ${suavizarMayusculas(set.otraIndicacionQ)}`,
+    set.otraIndicacionB && `Biología: ${suavizarMayusculas(set.otraIndicacionB)}`,
+    set.otraIndicacionM && `Microbiología: ${suavizarMayusculas(set.otraIndicacionM)}`,
     !set.otraIndicacionQ && !set.otraIndicacionB && !set.otraIndicacionM ? set.otraIndicacion : null,
   ].filter(Boolean) as string[]
   if (indicaciones.length) filasMuestra.push([{ label: 'INDICACIONES', values: indicaciones, span: 3 }])

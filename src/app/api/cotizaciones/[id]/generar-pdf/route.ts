@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
-import { formatFecha, formatMoneda, formatNumCotizacion } from '@/lib/format'
+import { formatFecha, formatMoneda, formatNumCotizacion, suavizarMayusculas, suavizarNombre } from '@/lib/format'
 import { MODALIDAD_LABELS, REQUISITOS_MUESTRA } from '@/lib/constants'
 import { rgb } from 'pdf-lib'
 import {
@@ -298,23 +298,27 @@ export async function GET(
   // Si más de una muestra aporta indicación para el mismo departamento, se
   // antepone el nombre de la muestra a cada una para no mezclarlas sin aclarar
   // a cuál corresponde.
-  const indicacionesTxt = ([
+  // Indicaciones agrupadas por muestra: el nombre de la muestra en negrita
+  // (líneas marcadas con «§», ver drawFilas) y debajo una línea por
+  // departamento. Antes iban por departamento con las muestras unidas por
+  // «;», y con varias muestras era ilegible. Los textos tecleados todo en
+  // mayúsculas se pasan a mayúscula inicial; nada más se corrige.
+  const DEPTOS = [
     ['Química', 'indicacionQ'],
     ['Biología', 'indicacionB'],
     ['Microbiología', 'indicacionM'],
-  ] as [string, 'indicacionQ' | 'indicacionB' | 'indicacionM'][])
-    .map(([label, campo]) => {
-      const entradas = cot.muestras
-        .map(m => ({ nombre: (m.nombre || '').split(/\r?\n/)[0].trim(), valor: m[campo] }))
-        .filter((e): e is { nombre: string; valor: string } => Boolean(e.valor))
-      if (!entradas.length) return null
-      const texto = entradas.length > 1
-        ? entradas.map(e => `${e.nombre || 'muestra'}: ${e.valor}`).join('; ')
-        : entradas[0].valor
-      return `${label}: ${texto}`
-    })
-    .filter(Boolean)
-    .join('\n')
+  ] as [string, 'indicacionQ' | 'indicacionB' | 'indicacionM'][]
+  const limpiarIndicacion = (v: string) => suavizarMayusculas(v.trim().replace(/^>\s*/, ''))
+  const muestrasConIndicacion = cot.muestras
+    .map(m => ({
+      nombre: suavizarNombre((m.nombre || '').split(/\r?\n/)[0].trim() || 'Muestra'),
+      lineas: DEPTOS.filter(([, campo]) => m[campo]?.trim())
+        .map(([label, campo]) => `${label}: ${limpiarIndicacion(m[campo] as string)}`),
+    }))
+    .filter(m => m.lineas.length > 0)
+  const indicacionesTxt = muestrasConIndicacion.length > 1
+    ? muestrasConIndicacion.map(m => [`§${m.nombre}`, ...m.lineas].join('\n')).join('\n\n')
+    : (muestrasConIndicacion[0]?.lineas.join('\n') ?? '')
 
   type FRow = { label: string; value: string | null }
   const labelW2 = 160, valW2 = CW - labelW2 - 8
@@ -398,7 +402,10 @@ export async function GET(
   const drawFilas = (filas: ReturnType<typeof buildFilas>) => {
     for (const r of filas) {
       doc.page.drawText(r.label, { x: bx0 + 4, y: doc.y - 9, size: 8, font: fontBold, color: BLACK })
-      r.valueLines.forEach((ln, j) => doc.page.drawText(ln, { x: bx0 + labelW2 + 4, y: doc.y - 9 - j * lineH, size: 8, font, color: BLACK }))
+      r.valueLines.forEach((ln, j) => {
+        const titulo = ln.startsWith('§')
+        doc.page.drawText(titulo ? ln.slice(1) : ln, { x: bx0 + labelW2 + 4, y: doc.y - 9 - j * lineH, size: 8, font: titulo ? fontBold : font, color: titulo ? GREEN : BLACK })
+      })
       doc.y -= r.h
       hline(doc.y)
     }

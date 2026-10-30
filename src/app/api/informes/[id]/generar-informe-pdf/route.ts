@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib'
-import { formatFecha, formatNumInforme } from '@/lib/format'
+import { formatFecha, formatNumInforme, formatFechaMuestra } from '@/lib/format'
 
 // ── Colores corporativos CETOX ────────────────────────────────────────────────
 const GREEN      = rgb(0.075, 0.376, 0.173)   // #13602C
@@ -201,8 +201,8 @@ export async function GET(
   field('Ingrediente activo', set.ingredienteActivo)
   field('Formulación', set.formulacion)
   field('Número de lote', set.numeroLote)
-  field('Fecha de fabricación', set.fechaFabricacion ? formatFecha(set.fechaFabricacion) : null)
-  field('Fecha de vencimiento', set.fechaVencimiento ? formatFecha(set.fechaVencimiento) : null)
+  field('Fecha de fabricación', set.fechaFabricacion ? formatFechaMuestra(set.fechaFabricacion, set.fechaFabricacionSoloMes) : null)
+  field('Fecha de vencimiento', set.fechaVencimiento ? formatFechaMuestra(set.fechaVencimiento, set.fechaVencimientoSoloMes) : null)
   field('Código interno', set.codigoMuestra)
   y -= 4
 

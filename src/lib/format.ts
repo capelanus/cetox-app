@@ -96,3 +96,30 @@ export function suavizarNombre(texto: string): string {
   if (letras.length < 2 || letras !== letras.toUpperCase()) return texto
   return texto.toLowerCase().replace(/(^|[\s(/-])(\p{L})/gu, (_m, p: string, l: string) => p + l.toUpperCase())
 }
+
+/**
+ * Fecha de fabricación/vencimiento de una muestra. Algunos clientes la dan
+ * completa (dd/mm/aaaa) y otros solo mes y año ("agosto 2026"); en ese caso
+ * se guarda el día 15 a mediodía UTC (ningún huso horario lo corre de mes) y
+ * `soloMes` indica que se muestre sin día.
+ */
+export function formatFechaMuestra(date: Date | string | null | undefined, soloMes: boolean | null | undefined): string {
+  if (!date) return '—'
+  const d = new Date(date)
+  // Siempre en UTC: la fecha se guardó sin hora real, y leerla en hora de
+  // Lima la correría al día anterior.
+  if (!soloMes) {
+    const dd = String(d.getUTCDate()).padStart(2, '0'), mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+    return `${dd}/${mm}/${d.getUTCFullYear()}`
+  }
+  const mes = new Intl.DateTimeFormat('es-PE', { month: 'long', timeZone: 'UTC' }).format(d)
+  return `${mes} ${d.getUTCFullYear()}`
+}
+
+/** Valor del formulario ("2026-08-14" o, con soloMes, "2026-08") → Date. */
+export function parseFechaMuestra(valor: string | null | undefined, soloMes: boolean): Date | null {
+  if (!valor) return null
+  const m = valor.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?$/)
+  if (!m) return null
+  return new Date(Date.UTC(+m[1], +m[2] - 1, soloMes ? 15 : +(m[3] ?? 1), 12))
+}

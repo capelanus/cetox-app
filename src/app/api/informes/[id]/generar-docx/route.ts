@@ -5,7 +5,7 @@ import { readFileSync, existsSync } from 'fs'
 import path from 'path'
 import PizZip from 'pizzip'
 import Docxtemplater from 'docxtemplater'
-import { formatFecha } from '@/lib/format'
+import { formatFecha, formatFechaMuestra } from '@/lib/format'
 
 export async function GET(
   _req: NextRequest,
@@ -59,8 +59,8 @@ export async function GET(
       nombreComercial: set.nombreComercial,
       ingredienteActivo: set.ingredienteActivo ?? '',
       lote: set.numeroLote ?? '',
-      fechaFabricacion: set.fechaFabricacion ? formatFecha(set.fechaFabricacion) : '',
-      fechaVencimiento: set.fechaVencimiento ? formatFecha(set.fechaVencimiento) : '',
+      fechaFabricacion: set.fechaFabricacion ? formatFechaMuestra(set.fechaFabricacion, set.fechaFabricacionSoloMes) : '',
+      fechaVencimiento: set.fechaVencimiento ? formatFechaMuestra(set.fechaVencimiento, set.fechaVencimientoSoloMes) : '',
       codigoInterno: set.codigoMuestra,
       fechaRecepcion: formatFecha(set.fechaIngreso),
       fechaEmision: formatFecha(new Date()),

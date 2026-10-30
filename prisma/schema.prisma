@@ -328,6 +328,10 @@ model SET {
   numeroLote        String?
   fechaFabricacion  DateTime?
   fechaVencimiento  DateTime?
+  // El cliente a veces declara solo mes/año ("agosto 2026"): se guarda el día 15
+  // y estas marcas dicen que se muestre sin día.
+  fechaFabricacionSoloMes Boolean @default(false)
+  fechaVencimientoSoloMes Boolean @default(false)
   pesoVolumen       String?
   tipoMuestra       String?
   codigoMuestra     String     @unique

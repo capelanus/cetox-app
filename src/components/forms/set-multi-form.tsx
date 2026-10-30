@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { crearSETsFromMuestras } from '@/app/actions/set'
 import { ChevronDown, ChevronUp, Package } from 'lucide-react'
 import { OtraIndicacionFields } from './otra-indicacion-fields'
+import { CampoFechaMuestra } from '@/components/forms/campo-fecha-muestra'
 
 interface Muestra {
   id: string
@@ -151,14 +152,8 @@ function MuestraForm({
                 <Label className="text-xs">Peso / Volumen</Label>
                 <Input name={`${prefix}pesoVolumen`} placeholder="p. ej. 500 mL" className="text-sm" />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Fecha de fabricación</Label>
-                <Input name={`${prefix}fechaFabricacion`} type="date" className="text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Fecha de vencimiento</Label>
-                <Input name={`${prefix}fechaVencimiento`} type="date" className="text-sm" />
-              </div>
+              <CampoFechaMuestra name={`${prefix}fechaFabricacion`} label="Fecha de fabricación" compacto />
+              <CampoFechaMuestra name={`${prefix}fechaVencimiento`} label="Fecha de vencimiento" compacto />
               <div className="space-y-1.5">
                 <Label className="text-xs">Tipo de muestra</Label>
                 <Input name={`${prefix}tipoMuestra`} placeholder="p. ej. Producto químico" className="text-sm" />

@@ -1,10 +1,9 @@
 import { View, Text, StyleSheet } from '@react-pdf/renderer'
-import type { Style } from '@react-pdf/types'
 import {
   DocumentoMembrete, Membrete, Encabezado, Badge, Cuadro, type CeldaGrid,
   GREEN, BLACK, GRAY, LIGHT_GRAY, SHADE, WHITE,
 } from './membrete'
-import { formatFecha, formatMoneda, formatNumCotizacion, suavizarMayusculas } from '@/lib/format'
+import { formatFecha, formatMoneda, formatNumCotizacion, suavizarMayusculas, formatFechaMuestra } from '@/lib/format'
 
 const NUM_FORMATO = 'SIG-FR-ADM-002'
 const VERSION_FORMATO = 'Versión: 01'
@@ -24,6 +23,8 @@ export interface SetPdfData {
   numeroLote: string | null
   fechaFabricacion: Date | null
   fechaVencimiento: Date | null
+  fechaFabricacionSoloMes: boolean
+  fechaVencimientoSoloMes: boolean
   pesoVolumen: string | null
   numeroMuestras: string | null
   tipoMuestra: string | null
@@ -46,7 +47,7 @@ export interface SetPdfData {
   cliente: { razonSocial: string; ruc: string; direccion: string }
   creadoPor: { email: string }
   cotizacion: {
-    numero: number; anio: number; sufijo: string | null; moneda: string
+    numero: number; anio: number; sufijo: string | null; moneda: string; fechaEmision: Date
     contactoNombre: string | null; contactoNombre2: string | null; contactoNombre3: string | null
     contactoTelefono: string | null; contactoTelefono2: string | null; contactoTelefono3: string | null
     contactoEmail: string | null; contactoEmail2: string | null; contactoEmail3: string | null
@@ -152,11 +153,15 @@ const entregaStyles = StyleSheet.create({
   firmaLinea: { borderTopWidth: 0.75, borderTopColor: BLACK, width: '100%' },
   firmaTxt: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: GRAY, marginTop: 4 },
   firmaSub: { fontSize: 8, color: GRAY, marginTop: 2 },
+  firmaDato: { flexDirection: 'row', alignItems: 'flex-end', width: '100%', marginTop: 9 },
+  firmaDatoLabel: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: GRAY, marginRight: 4 },
+  firmaDatoLinea: { flexGrow: 1, borderBottomWidth: 0.6, borderBottomColor: GRAY, marginBottom: 1 },
 })
 
-// ── Control de pagos: casillero en blanco para completar a mano cuando el
-// cliente paga en oficina (cotización/fecha/atención, y hasta 2 facturas con
-// monto y fechas). Sin datos de la base: es un control físico, no un reporte.
+// ── Control de pagos: cabecera prellenada con la cotización (N°, fecha y
+// a quién se atendió: el contacto que escribió a CETOX) y dos filas en
+// blanco para anotar a mano las facturas y pagos. Las columnas son las
+// mismas en todas las filas para que las divisiones queden alineadas.
 const pagosStyles = StyleSheet.create({
   box: { flexDirection: 'row', borderWidth: 0.7, borderColor: GREEN, marginTop: 10 },
   tag: { width: 92, backgroundColor: GREEN, padding: 6, justifyContent: 'center' },
@@ -168,32 +173,26 @@ const pagosStyles = StyleSheet.create({
   campo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingTop: 7, paddingBottom: 5, borderRightWidth: 0.6, borderRightColor: GREEN },
   campoUltimo: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 6, paddingTop: 7, paddingBottom: 5 },
   label: { fontSize: 6.3, fontFamily: 'Helvetica-Bold', color: GREEN, marginRight: 4, flexShrink: 0 },
-  linea: { flexGrow: 1, borderBottomWidth: 0.6, borderBottomColor: GRAY, minWidth: 10, marginBottom: 1 },
+  linea: { flexGrow: 1, flexBasis: 0, borderBottomWidth: 0.6, borderBottomColor: GRAY, minWidth: 10, marginBottom: 1 },
+  valor: { fontSize: 7.5, color: BLACK, paddingBottom: 1 },
 })
 
-/**
- * Un campo "Etiqueta: ____" — la línea es un borde inferior en blanco. El
- * ancho es fijo (no proporcional): las etiquetas son cortas y no deben
- * partirse en varias líneas, así que se calcula cada columna a mano en vez
- * de repartir el espacio por flex-grow.
- */
-function CampoEnBlanco({ label, style, width }: { label: string; style: Style; width?: number }) {
+// Anchos de columna compartidos por todas las filas (pt).
+const COL = { factura: 120, monto: 80, emision: 95 }
+
+/** "ETIQUETA ____" con la línea en blanco o con el valor ya escrito encima. */
+function Campo({ label, valor, width, ultimo }: { label: string; valor?: string | null; width?: number; ultimo?: boolean }) {
   return (
-    <View style={[style, width ? { width } : { flexGrow: 1 }]}>
+    <View style={[ultimo ? pagosStyles.campoUltimo : pagosStyles.campo, width ? { width } : { flexGrow: 1, flexBasis: 0 }]}>
       <Text style={pagosStyles.label}>{label}</Text>
-      <View style={pagosStyles.linea} />
+      <View style={pagosStyles.linea}>
+        {valor ? <Text style={pagosStyles.valor}>{valor}</Text> : null}
+      </View>
     </View>
   )
 }
 
-function ControlDePagos() {
-  const filas: { label: string; width?: number }[][] = [
-    [{ label: 'N° DE COTIZACIÓN', width: 150 }, { label: 'FECHA', width: 100 }, { label: 'ATENCIÓN' }],
-    ...[1, 2].map(n => [
-      { label: `FACTURA N° ${n}`, width: 120 }, { label: 'MONTO', width: 80 },
-      { label: 'F. EMISIÓN', width: 95 }, { label: 'F. PAGO' },
-    ]),
-  ]
+function ControlDePagos({ cotizacion, fecha, atencion }: { cotizacion: string | null; fecha: string | null; atencion: string | null }) {
   return (
     <View style={pagosStyles.box} wrap={false}>
       <View style={pagosStyles.tag}>
@@ -201,12 +200,17 @@ function ControlDePagos() {
         <Text style={pagosStyles.tagTxt2}>PAGOS</Text>
       </View>
       <View style={pagosStyles.cuerpo}>
-        {filas.map((celdas, i) => (
-          <View key={i} style={[i === filas.length - 1 ? pagosStyles.filaUltima : pagosStyles.fila, i % 2 === 0 ? { backgroundColor: SHADE } : {}]}>
-            {celdas.map((c, j) => (
-              <CampoEnBlanco key={j} label={c.label} width={c.width}
-                style={j === celdas.length - 1 ? pagosStyles.campoUltimo : pagosStyles.campo} />
-            ))}
+        <View style={[pagosStyles.fila, { backgroundColor: SHADE }]}>
+          <Campo label="N° DE COTIZACIÓN" valor={cotizacion} width={COL.factura + COL.monto} />
+          <Campo label="FECHA" valor={fecha} width={COL.emision} />
+          <Campo label="ATENCIÓN" valor={atencion} ultimo />
+        </View>
+        {[1, 2].map(n => (
+          <View key={n} style={[n === 2 ? pagosStyles.filaUltima : pagosStyles.fila, n === 2 ? { backgroundColor: SHADE } : {}]}>
+            <Campo label={`FACTURA N° ${n}`} width={COL.factura} />
+            <Campo label="MONTO" width={COL.monto} />
+            <Campo label="F. EMISIÓN" width={COL.emision} />
+            <Campo label="F. PAGO" ultimo />
           </View>
         ))}
       </View>
@@ -219,7 +223,10 @@ const CUENTAS: [string, string, string][] = [
   ['Soles', '194-1778268-0-01', '00219400177826800195'],
 ]
 
-function EntregaYFirmas({ firmaRegistrador }: { firmaRegistrador: string }) {
+function EntregaYFirmas({ firmaRegistrador, pagos }: {
+  firmaRegistrador: string
+  pagos: { cotizacion: string | null; fecha: string | null; atencion: string | null }
+}) {
   return (
     <View wrap={false}>
       <Badge n="4" titulo="ENTREGA DE INFORMES EN OFICINA CETOX" />
@@ -234,7 +241,26 @@ function EntregaYFirmas({ firmaRegistrador }: { firmaRegistrador: string }) {
           </Text>
         </View>
       </View>
-      <View style={entregaStyles.banco}>
+      <View style={entregaStyles.firmas}>
+        <View style={entregaStyles.firmaCol}>
+          <View style={entregaStyles.firmaLinea} />
+          <Text style={entregaStyles.firmaTxt}>Cliente</Text>
+          <View style={entregaStyles.firmaDato}>
+            <Text style={entregaStyles.firmaDatoLabel}>Nombre:</Text>
+            <View style={entregaStyles.firmaDatoLinea} />
+          </View>
+          <View style={entregaStyles.firmaDato}>
+            <Text style={entregaStyles.firmaDatoLabel}>DNI:</Text>
+            <View style={entregaStyles.firmaDatoLinea} />
+          </View>
+        </View>
+        <View style={entregaStyles.firmaCol}>
+          <View style={entregaStyles.firmaLinea} />
+          <Text style={entregaStyles.firmaTxt}>Centro Toxicológico S.A.C. &quot;CETOX&quot;</Text>
+          <Text style={entregaStyles.firmaSub}>{firmaRegistrador}</Text>
+        </View>
+      </View>
+      <View style={[entregaStyles.banco, { marginTop: 18, borderTopWidth: 0.7 }]}>
         <View style={entregaStyles.bancoTag}>
           <Text style={entregaStyles.bancoTagTxt1}>CUENTA CORRIENTE</Text>
           <Text style={entregaStyles.bancoTagTxt2}>BCP</Text>
@@ -250,18 +276,7 @@ function EntregaYFirmas({ firmaRegistrador }: { firmaRegistrador: string }) {
           ))}
         </View>
       </View>
-      <ControlDePagos />
-      <View style={entregaStyles.firmas}>
-        <View style={entregaStyles.firmaCol}>
-          <View style={entregaStyles.firmaLinea} />
-          <Text style={entregaStyles.firmaTxt}>Cliente</Text>
-        </View>
-        <View style={entregaStyles.firmaCol}>
-          <View style={entregaStyles.firmaLinea} />
-          <Text style={entregaStyles.firmaTxt}>Centro Toxicológico S.A.C. &quot;CETOX&quot;</Text>
-          <Text style={entregaStyles.firmaSub}>{firmaRegistrador}</Text>
-        </View>
-      </View>
+      <ControlDePagos cotizacion={pagos.cotizacion} fecha={pagos.fecha} atencion={pagos.atencion} />
     </View>
   )
 }
@@ -269,7 +284,6 @@ function EntregaYFirmas({ firmaRegistrador }: { firmaRegistrador: string }) {
 export function SetDocumento({ set, numSET }: { set: SetPdfData; numSET: string }) {
   const moneda = (set.cotizacion?.moneda ?? 'USD') as 'USD' | 'PEN'
   const cot = set.cotizacion
-  const facturas = cot?.facturasCliente ?? []
 
   const contactos = [cot?.contactoNombre, cot?.contactoNombre2, cot?.contactoNombre3]
   const telefonos = [cot?.contactoTelefono, cot?.contactoTelefono2, cot?.contactoTelefono3]
@@ -286,11 +300,6 @@ export function SetDocumento({ set, numSET }: { set: SetPdfData; numSET: string 
       { label: 'TELÉFONO', values: telefonos },
       { label: 'EMAIL', values: emails, size: 7 },
     ],
-    [
-      { label: 'N° DE COTIZACIÓN', values: cot ? formatNumCotizacion(cot.numero, cot.anio, cot.sufijo ?? undefined) : null },
-      { label: 'N° DE FACTURA', values: facturas.length ? facturas.map(f => `${f.serie}-${String(f.numero).padStart(8, '0')}`) : null },
-      { label: 'FECHA DE EMISIÓN', values: facturas.length ? facturas.map(f => formatFecha(f.fechaEmision)) : null },
-    ],
     [{ label: 'CÓDIGO DE MUESTRA', values: set.codigoMuestra, span: 3 }],
   ]
 
@@ -303,8 +312,8 @@ export function SetDocumento({ set, numSET }: { set: SetPdfData; numSET: string 
       { label: 'N° DE LOTE', values: set.numeroLote, span: 2 },
     ],
     [
-      { label: 'FECHA DE FABRICACIÓN', values: set.fechaFabricacion ? formatFecha(set.fechaFabricacion) : null },
-      { label: 'FECHA DE VENCIMIENTO', values: set.fechaVencimiento ? formatFecha(set.fechaVencimiento) : null },
+      { label: 'FECHA DE FABRICACIÓN', values: set.fechaFabricacion ? formatFechaMuestra(set.fechaFabricacion, set.fechaFabricacionSoloMes) : null },
+      { label: 'FECHA DE VENCIMIENTO', values: set.fechaVencimiento ? formatFechaMuestra(set.fechaVencimiento, set.fechaVencimientoSoloMes) : null },
       { label: 'PESO / VOLUMEN', values: set.pesoVolumen },
     ],
     [
@@ -352,7 +361,7 @@ export function SetDocumento({ set, numSET }: { set: SetPdfData; numSET: string 
           titulo="SOLICITUD DE ENSAYO TOXICOLÓGICO"
           numero={numSET}
           subtitulo="Registro de ingreso de muestra (SET)"
-          fechas={`Ingreso: ${formatFecha(set.fechaIngreso)}    |    Emisión: ${formatFecha(new Date())}`}
+          fechas={`Ingreso: ${formatFecha(set.fechaIngreso)}`}
         />
 
         <Badge n="1" titulo="DATOS DEL CLIENTE" />
@@ -368,7 +377,14 @@ export function SetDocumento({ set, numSET }: { set: SetPdfData; numSET: string 
           <TablaEnsayos odas={set.odas} moneda={moneda} />
         )}
 
-        <EntregaYFirmas firmaRegistrador={firmaRegistrador} />
+        <EntregaYFirmas
+          firmaRegistrador={firmaRegistrador}
+          pagos={{
+            cotizacion: cot ? formatNumCotizacion(cot.numero, cot.anio, cot.sufijo ?? undefined) : null,
+            fecha: cot ? formatFecha(cot.fechaEmision) : null,
+            atencion: cot?.contactoNombre ?? null,
+          }}
+        />
       </Membrete>
     </DocumentoMembrete>
   )

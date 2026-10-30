@@ -8,6 +8,7 @@ import type { Cliente, Ensayo } from '@/generated/prisma/client'
 import { crearSETCero } from '@/app/actions/set'
 import { toast } from 'sonner'
 import { CheckCircle2, Circle, AlertCircle } from 'lucide-react'
+import { CampoFechaMuestra } from '@/components/forms/campo-fecha-muestra'
 
 const MOTIVOS = [
   {
@@ -269,14 +270,8 @@ export function SetCeroForm({ clientes, ensayos }: Props) {
             <Label>Peso / Volumen</Label>
             <Input name="pesoVolumen" placeholder="p. ej. 500 mL" />
           </div>
-          <div className="space-y-2">
-            <Label>Fecha de fabricación</Label>
-            <Input name="fechaFabricacion" type="date" />
-          </div>
-          <div className="space-y-2">
-            <Label>Fecha de vencimiento</Label>
-            <Input name="fechaVencimiento" type="date" />
-          </div>
+          <CampoFechaMuestra name="fechaFabricacion" label="Fecha de fabricación" />
+          <CampoFechaMuestra name="fechaVencimiento" label="Fecha de vencimiento" />
           <div className="space-y-2">
             <Label>Tipo de muestra</Label>
             <Input name="tipoMuestra" placeholder="p. ej. Producto químico" />

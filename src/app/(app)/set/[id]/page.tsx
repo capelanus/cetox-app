@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, CheckCircle2, Pencil, Ban, RotateCcw, Barcode } from 'lucide-react'
 import { SetPdfButton } from '@/components/set-pdf-button'
-import { formatFecha, formatNumSET, formatNumODA, formatMoneda } from '@/lib/format'
+import { formatFecha, formatNumSET, formatNumODA, formatMoneda, formatFechaMuestra } from '@/lib/format'
 import { generarODAs, anularSET, reestablecerSET } from '@/app/actions/set'
 import { revalidatePath } from 'next/cache'
 
@@ -174,8 +174,8 @@ export default async function SETDetailPage({ params }: { params: Promise<{ id: 
           <InfoRow label="Formulación" value={set.formulacion} />
           <InfoRow label="Número de lote" value={set.numeroLote} />
           <InfoRow label="Peso / Volumen" value={set.pesoVolumen} />
-          <InfoRow label="Fecha de fabricación" value={set.fechaFabricacion ? formatFecha(set.fechaFabricacion) : null} />
-          <InfoRow label="Fecha de vencimiento" value={set.fechaVencimiento ? formatFecha(set.fechaVencimiento) : null} />
+          <InfoRow label="Fecha de fabricación" value={set.fechaFabricacion ? formatFechaMuestra(set.fechaFabricacion, set.fechaFabricacionSoloMes) : null} />
+          <InfoRow label="Fecha de vencimiento" value={set.fechaVencimiento ? formatFechaMuestra(set.fechaVencimiento, set.fechaVencimientoSoloMes) : null} />
           <InfoRow label="Fecha de ingreso" value={formatFecha(set.fechaIngreso)} />
           <InfoRow label="Ingreso de muestra" value={set.ingresoMuestra === 'Otro' ? `Otro: ${set.ingresoMuestraOtro ?? ''}` : set.ingresoMuestra} />
           <InfoRow label="Número de muestras" value={set.numeroMuestras ? String(set.numeroMuestras) : null} />

@@ -7,6 +7,7 @@ import { notificarJefesNuevasODAs } from '@/lib/oda-notif'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { addDays } from 'date-fns'
+import { parseFechaMuestra } from '@/lib/format'
 
 export async function crearSET(formData: FormData) {
   const session = await requireRol(['ADMINISTRACION'])
@@ -40,8 +41,7 @@ export async function crearSET(formData: FormData) {
       ingredienteActivo: (formData.get('ingredienteActivo') as string) || null,
       formulacion: (formData.get('formulacion') as string) || null,
       numeroLote: (formData.get('numeroLote') as string) || null,
-      fechaFabricacion: formData.get('fechaFabricacion') ? new Date(formData.get('fechaFabricacion') as string) : null,
-      fechaVencimiento: formData.get('fechaVencimiento') ? new Date(formData.get('fechaVencimiento') as string) : null,
+      ...fechasMuestra(formData),
       pesoVolumen: (formData.get('pesoVolumen') as string) || null,
       tipoMuestra: (formData.get('tipoMuestra') as string) || null,
       observaciones: (formData.get('observaciones') as string) || null,
@@ -148,6 +148,20 @@ function resolveCondAmb(fd: FormData, prefix = '') {
   return val
 }
 
+// Fechas de fabricación/vencimiento: completas (aaaa-mm-dd) o solo mes y año
+// (aaaa-mm, marcado con <campo>SoloMes). Ver CampoFechaMuestra.
+function fechasMuestra(fd: FormData, prefix = '') {
+  const leer = (k: string) => {
+    const soloMes = fd.get(`${prefix}${k}SoloMes`) === '1'
+    return { fecha: parseFechaMuestra(fd.get(`${prefix}${k}`) as string | null, soloMes), soloMes }
+  }
+  const fab = leer('fechaFabricacion'), ven = leer('fechaVencimiento')
+  return {
+    fechaFabricacion: fab.fecha, fechaFabricacionSoloMes: !!fab.fecha && fab.soloMes,
+    fechaVencimiento: ven.fecha, fechaVencimientoSoloMes: !!ven.fecha && ven.soloMes,
+  }
+}
+
 // Helper para construir datos de SET a partir de FormData (prefijados o no)
 function buildSETData(fd: FormData, prefix = '') {
   const g = (k: string) => (fd.get(`${prefix}${k}`) as string) || null
@@ -156,8 +170,7 @@ function buildSETData(fd: FormData, prefix = '') {
     ingredienteActivo: g('ingredienteActivo'),
     formulacion: g('formulacion'),
     numeroLote: g('numeroLote'),
-    fechaFabricacion: g('fechaFabricacion') ? new Date(g('fechaFabricacion')!) : null,
-    fechaVencimiento: g('fechaVencimiento') ? new Date(g('fechaVencimiento')!) : null,
+    ...fechasMuestra(fd, prefix),
     pesoVolumen: g('pesoVolumen'),
     tipoMuestra: g('tipoMuestra'),
     observaciones: g('observaciones'),
@@ -296,8 +309,7 @@ export async function crearSETCero(formData: FormData) {
       ingredienteActivo: (formData.get('ingredienteActivo') as string) || null,
       formulacion: (formData.get('formulacion') as string) || null,
       numeroLote: (formData.get('numeroLote') as string) || null,
-      fechaFabricacion: formData.get('fechaFabricacion') ? new Date(formData.get('fechaFabricacion') as string) : null,
-      fechaVencimiento: formData.get('fechaVencimiento') ? new Date(formData.get('fechaVencimiento') as string) : null,
+      ...fechasMuestra(formData),
       pesoVolumen: (formData.get('pesoVolumen') as string) || null,
       tipoMuestra: (formData.get('tipoMuestra') as string) || null,
       observaciones: (formData.get('observaciones') as string) || null,
@@ -438,8 +450,7 @@ export async function actualizarSET(setId: string, formData: FormData) {
       ingredienteActivo: (formData.get('ingredienteActivo') as string) || null,
       formulacion: (formData.get('formulacion') as string) || null,
       numeroLote: (formData.get('numeroLote') as string) || null,
-      fechaFabricacion: formData.get('fechaFabricacion') ? new Date(formData.get('fechaFabricacion') as string) : null,
-      fechaVencimiento: formData.get('fechaVencimiento') ? new Date(formData.get('fechaVencimiento') as string) : null,
+      ...fechasMuestra(formData),
       pesoVolumen: (formData.get('pesoVolumen') as string) || null,
       tipoMuestra: (formData.get('tipoMuestra') as string) || null,
       observaciones: (formData.get('observaciones') as string) || null,

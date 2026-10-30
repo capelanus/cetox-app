@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { actualizarSET } from '@/app/actions/set'
 import { useRouter } from 'next/navigation'
 import { OtraIndicacionFields } from '@/components/forms/otra-indicacion-fields'
+import { CampoFechaMuestra } from '@/components/forms/campo-fecha-muestra'
 
 interface SETData {
   id: string
@@ -17,6 +18,8 @@ interface SETData {
   numeroLote: string | null
   fechaFabricacion: Date | null
   fechaVencimiento: Date | null
+  fechaFabricacionSoloMes: boolean
+  fechaVencimientoSoloMes: boolean
   pesoVolumen: string | null
   tipoMuestra: string | null
   observaciones: string | null
@@ -130,14 +133,8 @@ export function SetEditarForm({ set, areas }: Props) {
             <Label>Peso / Volumen</Label>
             <Input name="pesoVolumen" defaultValue={set.pesoVolumen ?? ''} placeholder="p. ej. 500 mL" />
           </div>
-          <div className="space-y-2">
-            <Label>Fecha de fabricación</Label>
-            <Input name="fechaFabricacion" type="date" defaultValue={toDateInput(set.fechaFabricacion)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Fecha de vencimiento</Label>
-            <Input name="fechaVencimiento" type="date" defaultValue={toDateInput(set.fechaVencimiento)} />
-          </div>
+          <CampoFechaMuestra name="fechaFabricacion" label="Fecha de fabricación" defaultValue={set.fechaFabricacion} defaultSoloMes={set.fechaFabricacionSoloMes} />
+          <CampoFechaMuestra name="fechaVencimiento" label="Fecha de vencimiento" defaultValue={set.fechaVencimiento} defaultSoloMes={set.fechaVencimientoSoloMes} />
           <div className="space-y-2">
             <Label>Tipo de muestra</Label>
             <Input name="tipoMuestra" defaultValue={set.tipoMuestra ?? ''} placeholder="p. ej. Producto químico" />

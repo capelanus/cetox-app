@@ -273,9 +273,8 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <li><a href="#constructor"><span class="code">1.3</span>Constructor de pedidos</a></li>
       <li><a href="#duelo"><span class="code">1.4</span>Duelo de pedidos</a></li>
       <li class="lvl">Nivel 2 · Intermedio</li>
-      <li><a href="#demo"><span class="code">2.1</span>Demo en vivo</a></li>
-      <li><a href="#areas"><span class="code">2.2</span>Casos por área</a></li>
-      <li><a href="#tiempo"><span class="code">2.3</span>Tiempo recuperado</a></li>
+      <li><a href="#areas"><span class="code">2.1</span>Casos por área</a></li>
+      <li><a href="#tiempo"><span class="code">2.2</span>Tiempo recuperado</a></li>
       <li class="lvl">Uso responsable</li>
       <li><a href="#mitos"><span class="code">3.1</span>¿Mito o verdad?</a></li>
       <li><a href="#semaforo"><span class="code">3.2</span>Semáforo de datos</a></li>
@@ -400,18 +399,8 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
     </section>
 
     <!-- 2.1 -->
-    <section class="view" data-view="demo" hidden>
-      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.1 · Demo en vivo</span><h2>Del archivo suelto al documento terminado, en seis pasos</h2>
-      <p class="lead">Este es el guion para hacerlo en vivo en la cuenta de CETOX. Cada paso trae el pedido para copiar, qué señalar al grupo y qué verificar delante de todos.</p></div>
-      <div class="row between"><span class="score" id="scriptScore">0 de 6 pasos hechos</span><button id="scriptReset">Reiniciar</button></div>
-      <div class="script" id="script"></div>
-      <div class="card"><h3><span class="tag">MÉTODO</span>Iterar como profesional</h3>
-        <p>Estructura primero, desarrollo después, crítica al final. Pide el índice, apruébalo, pide sección por sección y cierra con: "¿Qué le falta? ¿Qué preguntaría un auditor?"</p></div>
-    </section>
-
-    <!-- 2.2 -->
     <section class="view" data-view="areas" hidden>
-      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.2</span><h2>Casos por área, con el pedido listo</h2>
+      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.1</span><h2>Casos por área, con el pedido listo</h2>
       <p class="lead">Cada fila tiene un pedido para copiar. La columna "Qué verificar" es la que no se puede saltar.</p></div>
       <div class="tabs" role="tablist" id="areaTabs">
         <button role="tab" aria-selected="true" data-area="adm">Administración</button>
@@ -422,9 +411,9 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <div class="stamp"><b>LÍNEA ROJA</b><span>Claude nunca genera, modifica ni "corrige" resultados analíticos ni registros técnicos. Sirve para preparar, revisar y explicar. El dato técnico lo produce y firma el personal autorizado.</span></div>
     </section>
 
-    <!-- 2.3 -->
+    <!-- 2.2 -->
     <section class="view" data-view="tiempo" hidden>
-      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.3 · Actividad</span><h2>¿Cuánto tiempo puede ahorrar tu área?</h2>
+      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.2 · Actividad</span><h2>¿Cuánto tiempo puede ahorrar tu área?</h2>
       <p class="lead">Una cuenta rápida para decidir por qué tareas empezar a usar Claude. No es una medición: son estimaciones del grupo, hechas en tres pasos.</p></div>
       <ol style="margin:0 0 18px;padding-left:1.3em;display:grid;gap:6px;max-width:72ch">
         <li><strong>Horas de hoy.</strong> En cada tarea, escribe cuántas horas a la semana le dedica hoy tu área, sin usar Claude. Si una tarea no es de tu área, déjala en 0.</li>
@@ -505,7 +494,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <div class="checks" id="checks"></div>
       <div class="done-msg" id="doneMsg" hidden>Lista la base. Ahora toca usarlo con casos reales esta semana.</div>
       <div class="card" style="max-width:760px"><h3><span class="tag">RETO DE LA SEMANA</span></h3>
-        <p>Cada persona elige <b>una</b> tarea de su área (módulo 2.2), la hace con Claude usando una plantilla, y anota dos cosas: cuánto tiempo le tomó y qué tuvo que corregir.</p>
+        <p>Cada persona elige <b>una</b> tarea de su área (módulo 2.1), la hace con Claude usando una plantilla, y anota dos cosas: cuánto tiempo le tomó y qué tuvo que corregir.</p>
         <p class="muted">En dos semanas cada área comparte un caso donde Claude ahorró tiempo y uno donde falló. Con eso se arma el nivel avanzado.</p></div>
     </section>
 
@@ -679,27 +668,7 @@ $('#duel').addEventListener('click',e=>{
 });
 $('#duelReset').onclick=()=>{dround=0;dscore=0;dpick=null;dpicks=[];dsent=false;$('#duelNota').hidden=true;renderDuel()};renderDuel();
 
-/* 2.1 guion demo */
-const steps=[
-  {t:'Crear el Proyecto del área',p:'Instrucciones del proyecto:\nResponde en español formal. Somos CETOX LAB, laboratorio toxicológico acreditado ISO/IEC 17025, en Lima. Cuando no tengas un dato, dilo; no lo inventes. Cuando des cifras o normas, indica la fuente.',say:'Desde ahora, todos los chats de este Proyecto ya saben quiénes somos. No hay que repetirlo.',chk:'Abre un chat nuevo dentro del Proyecto y pregunta "¿quiénes somos?" para mostrar que lo recuerda.'},
-  {t:'Subir un documento y preguntarle',p:'Resume este documento en 5 puntos para alguien nuevo en el área. Dime todos los plazos y responsables que menciona, con la página de cada uno.',say:'Trabaja sobre el documento real, cita páginas y no hace falta leer las 14 páginas para saber qué hay dentro.',chk:'Abre una de las páginas citadas delante del grupo y comprueba que dice eso.'},
-  {t:'Subir un Excel y analizarlo con código',p:'Con este Excel, resume el total por mes y por cliente. Calcula con código y muéstrame el código. Señala si algún mes se sale de la tendencia y haz un gráfico de la evolución.',say:'El código es visible: no es una caja negra, se puede auditar. Y el gráfico salió sin abrir Excel.',chk:'Compara el total de un mes con una suma rápida en el Excel original.'},
-  {t:'Convertir el resultado en un documento o presentación',p:'Convierte este análisis en una presentación de 5 diapositivas para gerencia: situación, tendencia, el mes atípico, posibles causas y siguiente paso.',say:'El archivo se puede editar y exportar a PowerPoint o PDF. Pasamos de datos sueltos a algo presentable en minutos.',chk:'Revisa que las cifras de las diapositivas coincidan con las del análisis.'},
-  {t:'Pedirle que critique su propio trabajo',p:'Revisa la presentación que acabas de hacer como si fueras el gerente general. ¿Qué le falta? ¿Qué pregunta incómoda haría? ¿Qué dato debería verificarse antes de presentarla?',say:'Claude mejora cuando se le pide que se critique. Esto es iterar: estructura, desarrollo, crítica.',chk:'Toma al menos una de sus observaciones y pídele que la corrija.'},
-  {t:'Provocar un error a propósito',p:'¿Cuál es el límite máximo permisible exacto de plomo en sangre según la normativa peruana vigente? Dame el valor y la norma.',say:'Aquí es donde hay que desconfiar: puede dar un valor y una norma con total seguridad. Pídele la fuente y ábrela.',chk:'Si no da una fuente verificable o la fuente no dice eso, el dato no existe. Esa es la lección más importante de la sesión.'}
-];
-let sdone=new Set(store.get('cetox-script',[]));
-function renderScript(){
-  $('#script').innerHTML=steps.map((s,i)=>`<div class="step ${sdone.has(i)?'done':''}"><div class="n">${i+1}</div><div class="body"><div class="title"><span>${esc(s.t)}</span><span class="row"><button class="small" data-copy="${i}">Copiar pedido</button><button class="small ${sdone.has(i)?'primary':''}" data-done="${i}">${sdone.has(i)?'Hecho ✓':'Marcar hecho'}</button></span></div><pre>${esc(s.p)}</pre><div class="hints"><div class="say"><b>Qué señalar al grupo</b>${esc(s.say)}</div><div class="chk"><b>Qué verificar en vivo</b>${esc(s.chk)}</div></div></div></div>`).join('');
-  $('#scriptScore').textContent=`${sdone.size} de ${steps.length} pasos hechos`;
-}
-$('#script').addEventListener('click',e=>{
-  const c=e.target.closest('button[data-copy]');if(c){copy(steps[c.dataset.copy].p);return}
-  const d=e.target.closest('button[data-done]');if(d){const i=+d.dataset.done;sdone.has(i)?sdone.delete(i):sdone.add(i);store.set('cetox-script',[...sdone]);renderScript()}
-});
-$('#scriptReset').onclick=()=>{sdone=new Set();store.set('cetox-script',[]);renderScript()};renderScript();
-
-/* 2.2 áreas con prompt */
+/* 2.1 áreas con prompt */
 const areas={
   adm:[['Correos a clientes','Cotizaciones, cobranzas, respuestas a reclamos','Montos, nombres, plazos','Redacta una respuesta al reclamo de [cliente] sobre [tema]. Reconoce el problema sin admitir responsabilidad legal, explica el siguiente paso y da un plazo. Tono profesional, máximo 8 líneas.'],['Cotizaciones','Redactar a partir de la lista de servicios y precios','Que use la lista vigente','Con la lista de servicios adjunta, redacta una cotización para [cliente] por [servicios]. Incluye precio unitario, total, validez de 15 días y condiciones de pago. No agregues servicios que no estén en la lista.'],['Seguimiento de cobranzas','Ordenar facturas vencidas y priorizar a quién llamar','Montos y fechas contra Facturación','Con la lista de facturas adjunta, ordena las vencidas por días de atraso y por monto. Agrupa por cliente y sugiere el orden de contacto. Calcula con código.'],['Reportes','Resumen mensual de ventas o cobranzas con gráfico','Totales contra el sistema','Con el Excel adjunto, resume [ventas/cobranzas] por mes y por cliente. Calcula con código, muestra las fórmulas y haz un gráfico de tendencia. Señala meses atípicos.'],['Consultas de clientes','Responder dudas sobre requisitos de muestra y plazos','Que requisitos y plazos sean los vigentes','Redacta una respuesta a [cliente], que pregunta por [análisis]. Usa solo los requisitos de muestra y plazos del documento adjunto. Si algo no está en el documento, dilo en vez de suponerlo. Máximo 8 líneas.'],['Proveedores','Comparar 3 cotizaciones en una tabla','Precios y condiciones','Compara las tres cotizaciones adjuntas en una tabla: precio, plazo de entrega, garantía, forma de pago y lo que no incluye cada una. Al final, señala qué diferencias importan más y qué preguntaría a cada proveedor.']],
   qui:[['Explicar métodos','Resumir un artículo o método analítico en lenguaje simple','Contra la fuente original','Explica el método de [técnica] para [analito] como si se lo enseñaras a un analista nuevo. Incluye principio, pasos y errores frecuentes. Si mencionas valores o normas, indica la fuente.'],['Borradores de procedimientos','Estructura de un procedimiento a partir de notas','Revisión técnica completa','Con estas notas, arma el borrador de un procedimiento con: objetivo, alcance, responsables, materiales, desarrollo paso a paso y registros. Marca con [REVISAR] cada punto donde te falte información técnica.'],['Cálculos de apoyo','Diluciones, curvas de calibración, conversiones, con código y fórmulas visibles','Recalcular en Excel validado','Calcula [dilución/curva/conversión] con estos datos: [datos]. Hazlo con código, muestra cada paso y la fórmula usada.'],['Interpretación de datos','Detectar tendencias o atípicos en series de controles','Criterio del analista','Con esta serie de controles de calidad adjunta, calcula media y desviación estándar, marca los puntos fuera de ±2 y ±3 desviaciones y describe la tendencia. Calcula con código. No concluyas causas; solo describe.'],['Búsqueda bibliográfica','Encontrar artículos y normas con enlaces','Abrir cada fuente','Busca artículos o guías publicados sobre [tema] en los últimos 5 años. Para cada uno dame título, autores, año, enlace y un resumen de 2 líneas. Solo incluye lo que puedas enlazar.'],['Redacción técnica','Corregir el estilo de informes internos, no los resultados','Que no cambie ningún valor','Corrige ortografía, claridad y redacción de este informe interno sin cambiar ningún número, unidad ni conclusión. Lista todos los cambios que hiciste.']],
@@ -711,7 +680,7 @@ $('#areaTabs').addEventListener('click',e=>{const b=e.target.closest('button[dat
 $('#areaBody').addEventListener('click',e=>{const b=e.target.closest('button[data-ap]');if(b)copy(areas[areaCur][b.dataset.ap][3])});
 setArea('adm');
 
-/* 2.3 calculadora */
+/* 2.2 calculadora */
 const tasks=[['Correos, cotizaciones y cobranzas','adm',4],['Reportes de ingresos y cobranzas en Excel','adm',3],['Respuestas a consultas de clientes','adm',2],['Redactar y revisar procedimientos e informes','qui',3],['Búsqueda bibliográfica y explicación de métodos','qui',2],['Preparar auditorías y revisar documentos','cal',3],['Análisis de no conformidades y capacitaciones','cal',2]];
 const SEMANAS=4.33;
 let hours=store.get('cetox-hours',tasks.map(t=>t[2]));
@@ -820,7 +789,7 @@ $('#tpls').addEventListener('click',e=>{const b=e.target.closest('button[data-t]
 renderTpl('all');
 
 /* 4.2 cierre */
-const checks=['Sé escribir un pedido con rol, tarea, datos, formato y límites.','Sé adjuntar archivos y pedir resúmenes con referencia a la página.','Tengo el Proyecto de mi área creado y configurado.','Sé pedir un documento, hoja de cálculo o presentación como archivo.','Conozco las reglas de "Siempre" y "Nunca".','Vi a Claude equivocarse y sé cómo verificar un dato antes de usarlo.'];
+const checks=['Sé escribir un pedido con rol, tarea, datos, formato y límites.','Sé adjuntar archivos y pedir resúmenes con referencia a la página.','Abro un chat nuevo por tema y uso el Proyecto de mi área.','Sé usar una plantilla de pedido de mi área (módulo 4.1).','Conozco las reglas de "Siempre" y "Nunca".','Sé cómo verificar un dato de Claude antes de usarlo.'];
 let cs=store.get('cetox-cierre',[]);
 function paintChecks(){$('#prog').style.width=(cs.length/checks.length*100)+'%';$('#doneMsg').hidden=cs.length<checks.length}
 function renderChecks(){

@@ -18,7 +18,7 @@ export default async function AyudaPage() {
       href: '/ayuda/capacitacion-claude',
       icon: Sparkles,
       titulo: 'Capacitación: Claude en CETOX',
-      texto: 'Clase interactiva de 13 módulos para Administración, Química y Calidad: cómo pedirle bien a Claude, casos por área, uso responsable de datos y plantillas listas para copiar.',
+      texto: 'Clase interactiva de 12 módulos para Administración, Química y Calidad: cómo pedirle bien a Claude, casos por área, uso responsable de datos y plantillas listas para copiar.',
       etiqueta: 'Clase interactiva',
     },
     {

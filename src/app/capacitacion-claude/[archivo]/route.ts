@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // /public porque Next sirve esos archivos sin pasar por el login; aquí se
 // exige sesión. Solo se sirven los archivos de la lista, nunca rutas libres.
 const ARCHIVOS: Record<string, string> = {
-  'index.html': 'index.html',   // clase interactiva (13 módulos)
+  'index.html': 'index.html',   // clase interactiva (12 módulos)
   'guia.html': 'guia.html',     // documento resumen
 }
 

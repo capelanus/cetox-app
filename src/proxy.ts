@@ -42,7 +42,7 @@ const RULES = [
 ]
 
 // Routes whose responses must be embeddable in a same-origin <iframe>
-const EMBEDDABLE_PREFIXES = ['/api/informes/', '/api/documentos-calidad/']
+const EMBEDDABLE_PREFIXES = ['/api/informes/', '/api/documentos-calidad/', '/capacitacion-claude/']
 
 // ── Proxy: rate-limit first, then NextAuth's authorized callback ────────────
 

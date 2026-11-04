@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Clase Claude CETOX</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: cuaderno de laboratorio — índice lateral de la sesión, un módulo por vista, barra de progreso arriba, controles grandes para proyectar; cada módulo muestra a Claude trabajando (chat simulado) y da el prompt para repetirlo en vivo */
+:root{
+  --bg:#eef3f2; --surface:#ffffff; --surface-2:#e3ecea; --ink:#11302e; --muted:#536e6a; --line:#cfdcd9;
+  --accent:#0d6a61; --accent-ink:#ffffff; --accent-soft:#d8ebe8; --amber:#b86e12; --amber-soft:#f6e6cc;
+  --ok:#2c7a3a; --ok-soft:#dcefdc; --warn:#9a6a10; --warn-soft:#f5ead0; --bad:#ad2f27; --bad-soft:#f6dcd9;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --r:10px; --fs:18px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0c1615; --surface:#132220; --surface-2:#1a2d2a; --ink:#e2eeeb; --muted:#93aca8; --line:#264340;
+  --accent:#4cbfb1; --accent-ink:#06201d; --accent-soft:#163c37; --amber:#e9a34b; --amber-soft:#3a2a14;
+  --ok:#62c172; --ok-soft:#173222; --warn:#e2b552; --warn-soft:#352b12; --bad:#ee6d61; --bad-soft:#3a1a17;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0c1615; --surface:#132220; --surface-2:#1a2d2a; --ink:#e2eeeb; --muted:#93aca8; --line:#264340;
+  --accent:#4cbfb1; --accent-ink:#06201d; --accent-soft:#163c37; --amber:#e9a34b; --amber-soft:#3a2a14;
+  --ok:#62c172; --ok-soft:#173222; --warn:#e2b552; --warn-soft:#352b12; --bad:#ee6d61; --bad-soft:#3a1a17;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:var(--fs);line-height:1.55}
+body.big{--fs:21px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2rem,4.5vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.6rem,3.2vw,2.4rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.2rem;font-weight:700}
+p{margin:0;max-width:66ch}
+a{color:var(--accent)}
+.mono{font-family:var(--f-mono)}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);font-weight:600}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+
+.app{display:grid;grid-template-columns:270px 1fr;min-height:100%}
+nav.side{position:sticky;top:0;height:100vh;overflow:auto;border-right:1px solid var(--line);background:var(--surface);
+  padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:16px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand b{font-family:var(--f-display);font-size:1.35rem;font-weight:800}
+.brand span{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);letter-spacing:.06em}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.steps a{display:grid;grid-template-columns:42px 1fr;align-items:baseline;gap:6px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:.98rem}
+.steps a .code{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.steps a:hover{background:var(--surface-2)}
+.steps a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.steps a[aria-current="page"] .code{color:var(--accent-ink);opacity:.8}
+.steps a.seen:not([aria-current="page"]) .code::after{content:" ✓";color:var(--ok)}
+.steps .lvl{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px}
+.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;font-size:.8rem;color:var(--muted)}
+kbd{font-family:var(--f-mono);font-size:.75rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface-2)}
+
+main{min-width:0;padding-block:0 32px;padding-left:max(16px,4vw);padding-right:max(16px,env(safe-area-inset-right,0px),4vw)}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:16px 12px;margin-bottom:24px;display:flex;flex-direction:column;gap:8px;max-width:1080px}
+.topbar .row{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:3px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .35s}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+
+section.view{display:flex;flex-direction:column;gap:28px;max-width:1080px;animation:in .35s ease-out}
+@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lead{font-size:1.25rem;color:var(--muted);max-width:60ch}
+.head{display:flex;flex-direction:column;gap:10px}
+
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:12px;padding-top:20px;border-top:1px solid var(--line);flex-wrap:wrap;max-width:1080px}
+button,.btn{font:inherit;font-weight:600;font-size:.95rem;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:disabled{opacity:.55;cursor:default}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.small{padding:5px 10px;font-size:.82rem}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font-family:var(--f-mono);font-size:.7rem;font-weight:600;letter-spacing:.08em;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.tag.adm{background:var(--accent-soft);color:var(--accent)} .tag.qui{background:var(--amber-soft);color:var(--amber)} .tag.cal{background:var(--ok-soft);color:var(--ok)}
+.idea{border-left:4px solid var(--amber);background:var(--amber-soft);padding:16px 20px;border-radius:0 var(--r) var(--r) 0;font-size:1.15rem;max-width:60ch}
+
+/* Portada */
+.cover{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:start}
+.poll{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px}
+.poll .opt{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.poll .opt .lbl{font-weight:600}
+.poll .opt .ctr{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.poll .opt .ctr button{padding:4px 10px}
+.poll .opt .ctr b{min-width:2ch;text-align:center}
+.poll .track{grid-column:1/-1;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.poll .track i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+/* Chat simulado */
+.chat{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.msg{display:flex;flex-direction:column;gap:6px;max-width:100%}
+.msg .who{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.msg.user .bubble{background:var(--surface-2);border-radius:12px 12px 12px 4px;padding:12px 16px;font-size:1rem;white-space:pre-wrap}
+.msg.ai .bubble{border-left:3px solid var(--accent);padding:4px 0 4px 16px;display:flex;flex-direction:column;gap:10px;font-size:1rem}
+.msg.ai .bubble p,.msg.ai .bubble li{max-width:70ch}
+.msg.ai .bubble ul,.msg.ai .bubble ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+.msg.ai .bubble pre{margin:0;font-family:var(--f-mono);font-size:.85rem;background:var(--surface-2);padding:12px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+.msg.ai .bubble .tw{overflow-x:auto}
+.msg.ai .bubble table{min-width:0;font-size:.95rem}
+.msg.ai .bubble th,.msg.ai .bubble td{padding:7px 12px}
+.msg.ai .bubble .note{font-size:.9rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.blk{animation:in .25s ease-out}
+.cursor::after{content:"▍";color:var(--accent);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+mark.bad{background:var(--bad-soft);color:var(--bad);border-radius:3px;padding:0 3px}
+mark.good{background:var(--ok-soft);color:var(--ok);border-radius:3px;padding:0 3px}
+
+/* Vitrina */
+.vitrina{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.caps{display:flex;flex-direction:column;gap:6px}
+.caps button{text-align:left;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 14px}
+.caps button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.caps button[aria-pressed="true"] .tag{background:rgba(255,255,255,.25);color:inherit}
+.capbody{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* Antes / después */
+.ab{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ab .chat{height:100%}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+
+/* Duelo */
+.duel{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.opt-card{text-align:left;padding:18px;border-radius:var(--r);background:var(--surface);border:2px solid var(--line);font-weight:400;font-size:1rem;line-height:1.5;display:flex;flex-direction:column;gap:8px;cursor:pointer}
+.opt-card .k{font-family:var(--f-display);font-weight:800;font-size:1.4rem;color:var(--muted)}
+.opt-card:hover{border-color:var(--accent)}
+.opt-card.win{border-color:var(--ok);background:var(--ok-soft)} .opt-card.lose{border-color:var(--bad);opacity:.8}
+.why{font-size:.98rem;padding:12px 14px;border-radius:8px}
+.why.ok{background:var(--ok-soft)} .why.no{background:var(--bad-soft)}
+.score{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:1rem}
+
+/* Constructor */
+.builder{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-weight:700;display:flex;justify-content:space-between;gap:8px}
+.field label small{font-weight:400;color:var(--muted);font-size:.85rem}
+textarea,input[type=text],input[type=number]{font:inherit;font-size:1rem;width:100%;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:9px 12px;resize:vertical}
+.out{position:sticky;top:90px;display:flex;flex-direction:column;gap:12px}
+.out pre{white-space:pre-wrap;word-break:break-word;margin:0;font-family:var(--f-mono);font-size:.9rem;line-height:1.6;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-height:220px}
+.meter{display:flex;gap:6px}
+.meter i{flex:1;height:10px;border-radius:3px;background:var(--surface-2);border:1px solid var(--line)}
+.meter i.on{background:var(--accent);border-color:var(--accent)}
+.verdict{font-weight:700}
+
+/* Guion demo */
+.script{display:flex;flex-direction:column;gap:10px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.step .n{font-family:var(--f-display);font-weight:800;font-size:1.6rem;color:var(--muted);line-height:1}
+.step.done{border-color:var(--ok)} .step.done .n{color:var(--ok)}
+.step .body{display:flex;flex-direction:column;gap:10px;min-width:0}
+.step .title{font-weight:700;font-size:1.1rem;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.step pre{margin:0;font-family:var(--f-mono);font-size:.86rem;background:var(--surface-2);padding:12px 14px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+.step .hints{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.95rem}
+.step .hints div{padding:10px 12px;border-radius:8px}
+.step .hints .say{background:var(--accent-soft)} .step .hints .chk{background:var(--amber-soft)}
+.step .hints b{display:block;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.step .hints .say b{color:var(--accent)} .step .hints .chk b{color:var(--amber)}
+
+/* Áreas */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:1rem}
+th,td{text-align:left;padding:12px 16px;border-top:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-top:0;background:var(--surface-2)}
+td:first-child{font-weight:700}
+td.check{color:var(--amber);font-weight:600}
+.stamp{border:2px solid var(--bad);color:var(--bad);border-radius:8px;padding:14px 18px;font-weight:600;max-width:70ch;display:flex;gap:14px;align-items:flex-start}
+.stamp b{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.14em;border:1.5px solid var(--bad);padding:2px 6px;border-radius:4px;white-space:nowrap;transform:rotate(-3deg)}
+
+/* Calculadora */
+.calc{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.calc table{min-width:0}
+.calc td input{width:90px;text-align:right;font-variant-numeric:tabular-nums}
+.result{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:12px;position:sticky;top:90px}
+.result .big{font-family:var(--f-display);font-weight:800;font-size:clamp(2.4rem,5vw,3.6rem);line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.result input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* Mito / semáforo */
+.myth{display:flex;flex-direction:column;gap:12px}
+.mrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.mrow .btns{display:flex;gap:8px}
+.mrow .why{grid-column:1/-1}
+.sem{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.item .q{font-weight:600}
+.lights{display:flex;gap:8px;flex-wrap:wrap}
+.lights button{flex:1;min-width:84px;padding:8px 10px;font-size:.88rem}
+.lights .v{border-color:var(--ok);color:var(--ok)} .lights .a{border-color:var(--warn);color:var(--warn)} .lights .r{border-color:var(--bad);color:var(--bad)}
+.item.done-ok{border-color:var(--ok)} .item.done-no{border-color:var(--bad)}
+
+/* Reglas */
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rules ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.rules li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--surface-2);cursor:pointer}
+.rules li input{width:20px;height:20px;accent-color:var(--accent);margin-top:3px;flex:none}
+.rules .always h3{color:var(--ok)} .rules .never h3{color:var(--bad)}
+.rules li.on{background:var(--accent-soft)}
+details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px}
+summary{cursor:pointer;font-weight:700}
+details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+
+/* Plantillas */
+.tpl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.tpl header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.tpl header b{font-size:.98rem}
+.tpl pre{margin:0;padding:14px;white-space:pre-wrap;word-break:break-word;font-family:var(--f-mono);font-size:.84rem;line-height:1.6}
+.tpl pre mark{background:var(--amber-soft);color:var(--amber);border-radius:3px;padding:0 2px}
+
+/* Cierre */
+.checks{display:flex;flex-direction:column;gap:8px;max-width:760px}
+.checks label{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;font-size:1.05rem}
+.checks input{width:22px;height:22px;accent-color:var(--accent);margin-top:2px;flex:none}
+.checks label:has(input:checked){border-color:var(--accent);color:var(--muted)}
+.done-msg{background:var(--accent);color:var(--accent-ink);border-radius:var(--r);padding:20px 24px;font-family:var(--f-display);font-size:1.4rem;font-weight:700;max-width:760px}
+
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:calc(20px + env(safe-area-inset-right,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1;transform:none}
+
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .steps{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}
+  .steps .lvl{display:none}
+  .steps a{grid-template-columns:auto;white-space:nowrap;padding:8px 12px;border:1px solid var(--line)}
+  .steps a .code{display:none}
+  .sidefoot{display:none}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .cover,.builder,.rules,.vitrina,.ab,.duel,.calc,.step .hints{grid-template-columns:1fr}
+  .out,.result{position:static}
+  .caps{flex-direction:row;overflow-x:auto;padding-bottom:4px}
+  .caps button{white-space:nowrap;grid-template-columns:auto}
+  .caps button .tag{display:none}
+  .mrow{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <nav class="side" aria-label="Módulos de la clase">
+    <div class="brand"><b>Claude en CETOX</b><span>CAPACITACIÓN · ADM · QUÍMICA · CALIDAD</span></div>
+    <ol class="steps" id="steps">
+      <li class="lvl">Inicio</li>
+      <li><a href="#inicio"><span class="code">00</span>Bienvenida</a></li>
+      <li class="lvl">Nivel 1 · Básico</li>
+      <li><a href="#vitrina"><span class="code">1.1</span>Claude en acción</a></li>
+      <li><a href="#pedir"><span class="code">1.2</span>Antes y después</a></li>
+      <li><a href="#constructor"><span class="code">1.3</span>Constructor de pedidos</a></li>
+      <li><a href="#duelo"><span class="code">1.4</span>Duelo de pedidos</a></li>
+      <li class="lvl">Nivel 2 · Intermedio</li>
+      <li><a href="#demo"><span class="code">2.1</span>Demo en vivo</a></li>
+      <li><a href="#areas"><span class="code">2.2</span>Casos por área</a></li>
+      <li><a href="#tiempo"><span class="code">2.3</span>Tiempo recuperado</a></li>
+      <li class="lvl">Uso responsable</li>
+      <li><a href="#mitos"><span class="code">3.1</span>¿Mito o verdad?</a></li>
+      <li><a href="#semaforo"><span class="code">3.2</span>Semáforo de datos</a></li>
+      <li><a href="#reglas"><span class="code">3.3</span>Reglas CETOX</a></li>
+      <li class="lvl">Práctica</li>
+      <li><a href="#plantillas"><span class="code">4.1</span>Plantillas</a></li>
+      <li><a href="#cierre"><span class="code">4.2</span>Cierre</a></li>
+    </ol>
+    <div class="sidefoot">
+      <span><kbd>←</kbd> <kbd>→</kbd> cambian de módulo</span>
+      <button class="small" id="fontToggle">Texto más grande</button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <div class="topbar">
+      <div class="row between"><span id="where">Módulo 1 de 15</span><span id="whereName">Bienvenida</span></div>
+      <div class="bar"><i id="topProg"></i></div>
+    </div>
+
+    <!-- 00 -->
+    <section class="view" data-view="inicio">
+      <div class="cover">
+        <div class="head">
+          <span class="eyebrow">CETOX LAB · Laboratorio acreditado ISO/IEC 17025</span>
+          <h1>Hoy vas a ver a Claude trabajar. Y lo vas a poner a trabajar tú.</h1>
+          <p class="lead">En esta sesión no vamos a hablar de inteligencia artificial en abstracto. Vamos a redactar, resumir, calcular y preparar documentos reales de Administración, Química y Calidad, y a aprender qué revisar antes de usar el resultado.</p>
+          <div class="idea"><b>La regla del día:</b> Claude es rápido y muy capaz, pero puede equivocarse con total seguridad. Quien firma, revisa.</div>
+        </div>
+        <div class="poll">
+          <span class="eyebrow">Para empezar · manos arriba</span>
+          <p style="font-weight:700">¿Cuánto has usado Claude u otra IA?</p>
+          <div id="poll"></div>
+          <p class="muted" style="font-size:.9rem">El facilitador cuenta las manos y anota aquí. Sirve para calibrar el ritmo.</p>
+        </div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><h3><span class="tag adm">ADMINISTRACIÓN</span></h3><p>Correos, cotizaciones, cobranzas, reportes con gráfico y actas en minutos.</p></div>
+        <div class="card"><h3><span class="tag qui">QUÍMICA</span></h3><p>Explicar métodos, estructurar procedimientos y revisar cálculos de apoyo paso a paso.</p></div>
+        <div class="card"><h3><span class="tag cal">CALIDAD</span></h3><p>Simular auditorías, ordenar análisis de causa raíz y comparar versiones de documentos.</p></div>
+      </div>
+    </section>
+
+    <!-- 1.1 -->
+    <section class="view" data-view="vitrina" hidden>
+      <div class="head"><span class="eyebrow">Nivel 1 · Módulo 1.1</span><h2>Ocho cosas que Claude hace en segundos</h2>
+      <p class="lead">Elige una capacidad y mira el pedido y la respuesta. Luego copia el pedido y repítelo en vivo en la cuenta de CETOX.</p></div>
+      <div class="vitrina">
+        <div class="caps" id="caps"></div>
+        <div class="capbody">
+          <div class="chat" id="capChat"></div>
+          <div class="row between">
+            <span class="muted" style="font-size:.9rem">Respuesta de ejemplo, escrita para esta clase. En vivo el texto cambia, pero el tipo de resultado es este.</span>
+            <span class="row"><button id="capReplay">Repetir</button><button class="primary" id="capCopy">Copiar pedido para probar en vivo</button></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.2 -->
+    <section class="view" data-view="pedir" hidden>
+      <div class="head"><span class="eyebrow">Nivel 1 · Módulo 1.2</span><h2>El mismo encargo, dos pedidos, dos resultados</h2>
+      <p class="lead">A la izquierda, lo que pasa cuando el pedido es vago. A la derecha, el mismo encargo con las cinco piezas. Pregunta al grupo qué cambió.</p></div>
+      <div class="legend"><span><mark class="bad">rojo</mark> inventado o fuera de lo pedido</span><span><mark class="good">verde</mark> exactamente lo que se pidió</span></div>
+      <div class="ab">
+        <div class="chat">
+          <div class="msg user"><span class="who">Pedido débil</span><div class="bubble">Hazme un correo para un cliente que no paga.</div></div>
+          <div class="msg ai"><span class="who">Claude · respuesta de ejemplo</span><div class="bubble">
+            <p>Estimado/a <mark class="bad">[Nombre del cliente]</mark>,</p>
+            <p>Le escribimos para recordarle que mantiene un saldo pendiente de <mark class="bad">[monto]</mark> correspondiente a <mark class="bad">[servicio]</mark>. Entendemos que pueden surgir imprevistos, por lo que <mark class="bad">estamos dispuestos a ofrecerle facilidades de pago o un descuento por pronto pago</mark>.</p>
+            <p>Quedamos atentos a su respuesta. <mark class="bad">Si el pago no se regulariza en 48 horas, procederemos por la vía legal.</mark></p>
+            <p>Atentamente,<br><mark class="bad">[Su nombre]</mark></p>
+            <p class="note">Claude llenó los huecos con suposiciones: ofreció descuentos y amenazó con acciones legales. Nadie le dijo que no lo hiciera.</p>
+          </div></div>
+        </div>
+        <div class="chat">
+          <div class="msg user"><span class="who">Pedido fuerte</span><div class="bubble">Soy de Administración de CETOX LAB. Redacta un correo de cobranza para la empresa Minera Andes por la factura F001-234 de S/ 1 200, vencida hace 15 días. Tono cordial pero firme, máximo 6 líneas, sin ofrecer descuentos, y que pida confirmar la fecha de pago.</div></div>
+          <div class="msg ai"><span class="who">Claude · respuesta de ejemplo</span><div class="bubble">
+            <p><b>Asunto:</b> Factura F001-234 pendiente de pago</p>
+            <p>Estimados señores de <mark class="good">Minera Andes</mark>:</p>
+            <p>Les escribimos desde CETOX LAB para recordarles que la factura <mark class="good">F001-234, por S/ 1 200</mark>, venció <mark class="good">hace 15 días</mark> y aún no registra pago. Agradeceremos nos <mark class="good">confirmen la fecha en que se realizará el abono</mark>. Si ya fue efectuado, basta con enviarnos el comprobante.</p>
+            <p>Quedamos atentos. Saludos cordiales,<br>Administración · CETOX LAB</p>
+            <p class="note"><mark class="good">6 líneas, sin descuentos, sin amenazas</mark>, con los datos reales. Listo para revisar y enviar.</p>
+          </div></div>
+        </div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><h3>Pide que pregunte</h3><p class="mono muted" style="font-size:.95rem">"Antes de responder, hazme las preguntas que necesites."</p></div>
+        <div class="card"><h3>Pide alternativas</h3><p class="mono muted" style="font-size:.95rem">"Dame 3 versiones distintas."</p></div>
+        <div class="card"><h3>Corrige en la conversación</h3><p class="mono muted" style="font-size:.95rem">"Más corto", "más formal", "quita la segunda parte".</p></div>
+      </div>
+    </section>
+
+    <!-- 1.3 -->
+    <section class="view" data-view="constructor" hidden>
+      <div class="head"><span class="eyebrow">Nivel 1 · Módulo 1.3 · Actividad</span><h2>Constructor de pedidos</h2>
+      <p class="lead">Un buen pedido tiene cinco piezas. Carga un ejemplo de tu área o escribe un caso real, y copia el pedido para probarlo en Claude.</p></div>
+      <div class="row"><span class="muted">Cargar ejemplo:</span><button class="small" data-ex="adm">Administración</button><button class="small" data-ex="qui">Química</button><button class="small" data-ex="cal">Calidad</button><button class="small" id="b-clear">Vaciar</button></div>
+      <div class="builder">
+        <div class="grid" style="gap:14px">
+          <div class="field"><label for="p-rol">1 · Rol y contexto <small>¿Quién soy y dónde trabajo?</small></label><textarea id="p-rol" rows="2"></textarea></div>
+          <div class="field"><label for="p-tarea">2 · Tarea <small>¿Qué quiero exactamente?</small></label><textarea id="p-tarea" rows="2"></textarea></div>
+          <div class="field"><label for="p-datos">3 · Datos <small>¿Con qué información?</small></label><textarea id="p-datos" rows="2"></textarea></div>
+          <div class="field"><label for="p-formato">4 · Formato <small>¿Cómo lo quiero?</small></label><textarea id="p-formato" rows="2"></textarea></div>
+          <div class="field"><label for="p-limites">5 · Límites <small>¿Qué no debe hacer?</small></label><textarea id="p-limites" rows="2"></textarea></div>
+        </div>
+        <div class="out">
+          <div class="row between"><span class="verdict" id="verdict"></span><button class="primary" id="b-copy">Copiar pedido</button></div>
+          <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <pre id="assembled"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.4 -->
+    <section class="view" data-view="duelo" hidden>
+      <div class="head"><span class="eyebrow">Nivel 1 · Módulo 1.4 · Actividad</span><h2>Duelo de pedidos</h2>
+      <p class="lead">Dos personas piden lo mismo. ¿Cuál pedido va a dar mejor resultado? El grupo vota tocando una tarjeta.</p></div>
+      <div class="row between"><span class="score" id="duelScore">Ronda 1 de 4 · Aciertos: 0</span><button id="duelReset">Reiniciar</button></div>
+      <div id="duel"></div>
+    </section>
+
+    <!-- 2.1 -->
+    <section class="view" data-view="demo" hidden>
+      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.1 · Demo en vivo</span><h2>Del archivo suelto al documento terminado, en seis pasos</h2>
+      <p class="lead">Este es el guion para hacerlo en vivo en la cuenta de CETOX. Cada paso trae el pedido para copiar, qué señalar al grupo y qué verificar delante de todos.</p></div>
+      <div class="row between"><span class="score" id="scriptScore">0 de 6 pasos hechos</span><button id="scriptReset">Reiniciar</button></div>
+      <div class="script" id="script"></div>
+      <div class="card"><h3><span class="tag">MÉTODO</span>Iterar como profesional</h3>
+        <p>Estructura primero, desarrollo después, crítica al final. Pide el índice, apruébalo, pide sección por sección y cierra con: "¿Qué le falta? ¿Qué preguntaría un auditor?"</p></div>
+    </section>
+
+    <!-- 2.2 -->
+    <section class="view" data-view="areas" hidden>
+      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.2</span><h2>Casos por área, con el pedido listo</h2>
+      <p class="lead">Cada fila tiene un pedido para copiar. La columna "Qué verificar" es la que no se puede saltar.</p></div>
+      <div class="tabs" role="tablist" id="areaTabs">
+        <button role="tab" aria-selected="true" data-area="adm">Administración</button>
+        <button role="tab" aria-selected="false" data-area="qui">Química</button>
+        <button role="tab" aria-selected="false" data-area="cal">Calidad · ISO/IEC 17025</button>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>Tarea</th><th>Qué pedirle a Claude</th><th>Qué verificar</th><th></th></tr></thead><tbody id="areaBody"></tbody></table></div>
+      <div class="stamp"><b>LÍNEA ROJA</b><span>Claude nunca genera, modifica ni "corrige" resultados analíticos ni registros técnicos. Sirve para preparar, revisar y explicar. El dato técnico lo produce y firma el personal autorizado.</span></div>
+    </section>
+
+    <!-- 2.3 -->
+    <section class="view" data-view="tiempo" hidden>
+      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.3 · Actividad</span><h2>¿Cuánto tiempo recupera tu área?</h2>
+      <p class="lead">El grupo estima cuántas horas a la semana se van hoy en cada tarea y qué parte cree que Claude le ahorra. Es su estimación, no un dato medido: sirve para decidir por dónde empezar.</p></div>
+      <div class="calc">
+        <div class="tablewrap"><table><thead><tr><th>Tarea</th><th>Área</th><th>Horas/semana hoy</th></tr></thead><tbody id="calcBody"></tbody></table></div>
+        <div class="result">
+          <span class="eyebrow">Horas recuperadas al mes</span>
+          <div class="big" id="calcOut">0</div>
+          <p class="muted" id="calcSub"></p>
+          <label for="calcPct" style="font-weight:700;display:flex;justify-content:space-between">Ahorro estimado <span id="calcPctLbl">40 %</span></label>
+          <input type="range" id="calcPct" min="10" max="80" step="5" value="40">
+          <p class="muted" style="font-size:.9rem">Mueve el ahorro entre 10 % y 80 %. Un número conservador convence más que uno optimista.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3.1 -->
+    <section class="view" data-view="mitos" hidden>
+      <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.1 · Actividad</span><h2>¿Mito o verdad?</h2>
+      <p class="lead">Lee cada frase en voz alta. El grupo vota y luego se revela la respuesta.</p></div>
+      <div class="row between"><span class="score" id="mythScore">Aciertos: 0 de 0</span><button id="mythReset">Reiniciar</button></div>
+      <div class="myth" id="myths"></div>
+    </section>
+
+    <!-- 3.2 -->
+    <section class="view" data-view="semaforo" hidden>
+      <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.2 · Actividad</span><h2>Semáforo de datos: ¿lo subo a Claude?</h2>
+      <p class="lead">Para cada caso, el grupo decide: verde (se puede), ámbar (con cuidado o anonimizando) o rojo (no).</p></div>
+      <div class="row between"><span class="score" id="semScore">Aciertos: 0 de 0</span><button id="semReset">Reiniciar</button></div>
+      <div class="sem" id="sem"></div>
+    </section>
+
+    <!-- 3.3 -->
+    <section class="view" data-view="reglas" hidden>
+      <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.3</span><h2>Reglas de uso en CETOX</h2>
+      <p class="lead">En un laboratorio acreditado, el riesgo no es que Claude falle: es usar un error sin revisarlo. Cada persona marca las reglas que se compromete a cumplir.</p></div>
+      <div class="row between"><span class="score" id="rulesScore">0 de 10 compromisos</span></div>
+      <div class="rules">
+        <div class="card always"><h3>Siempre</h3><ul id="rulesAlways"></ul></div>
+        <div class="card never"><h3>Nunca</h3><ul id="rulesNever"></ul></div>
+      </div>
+      <details><summary>Qué pasa hoy con la cuenta compartida</summary>
+        <ol>
+          <li><b>Historial mezclado:</b> los chats de todas las áreas quedan juntos y todos ven los de los demás.</li>
+          <li><b>Memoria cruzada:</b> Claude puede aplicar preferencias o contexto que dio otra persona.</li>
+          <li><b>Límites compartidos:</b> un trabajo pesado de una persona puede dejar sin uso a las demás.</li>
+        </ol>
+        <p class="muted" style="margin-top:10px">Mientras tanto: cada área trabaja solo en su Proyecto y nadie borra chats ajenos.</p>
+      </details>
+    </section>
+
+    <!-- 4.1 -->
+    <section class="view" data-view="plantillas" hidden>
+      <div class="head"><span class="eyebrow">Práctica · Módulo 4.1</span><h2>Plantillas listas para copiar</h2>
+      <p class="lead">Lo resaltado se reemplaza con tus datos. Filtra por área y copia.</p></div>
+      <div class="tabs" id="tplTabs">
+        <button aria-selected="true" data-f="all">Todas</button>
+        <button aria-selected="false" data-f="gen">Generales</button>
+        <button aria-selected="false" data-f="adm">Administración</button>
+        <button aria-selected="false" data-f="qui">Química</button>
+        <button aria-selected="false" data-f="cal">Calidad</button>
+      </div>
+      <div class="grid g2" id="tpls"></div>
+    </section>
+
+    <!-- 4.2 -->
+    <section class="view" data-view="cierre" hidden>
+      <div class="head"><span class="eyebrow">Práctica · Módulo 4.2</span><h2>¿Con qué te vas hoy?</h2>
+      <p class="lead">Marca lo que ya puedes hacer sola o solo. Lo que quede sin marcar es lo que se refuerza en la siguiente sesión.</p></div>
+      <div class="bar" style="max-width:760px;height:12px"><i id="prog"></i></div>
+      <div class="checks" id="checks"></div>
+      <div class="done-msg" id="doneMsg" hidden>Lista la base. Ahora toca usarlo con casos reales esta semana.</div>
+      <div class="card" style="max-width:760px"><h3><span class="tag">RETO DE LA SEMANA</span></h3>
+        <p>Cada persona elige <b>una</b> tarea de su área (módulo 2.2), la hace con Claude usando una plantilla, y anota dos cosas: cuánto tiempo le tomó y qué tuvo que corregir.</p>
+        <p class="muted">En dos semanas cada área comparte un caso donde Claude ahorró tiempo y uno donde falló. Con eso se arma el nivel avanzado.</p></div>
+    </section>
+
+    <div class="pager">
+      <button id="prev">← Anterior</button>
+      <button class="primary" id="next">Siguiente →</button>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1600)}
+function copy(text){
+  const done=()=>toast('Copiado. Pégalo en Claude.');
+  try{navigator.clipboard.writeText(text).then(done,()=>fallback(text))}catch(e){fallback(text)}
+  function fallback(t){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){toast('Selecciona y copia manualmente')}ta.remove()}
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* Tamaño de texto */
+if(store.get('cetox-big',false))document.body.classList.add('big');
+$('#fontToggle').onclick=()=>{const b=document.body.classList.toggle('big');store.set('cetox-big',b);$('#fontToggle').textContent=b?'Texto normal':'Texto más grande'};
+$('#fontToggle').textContent=document.body.classList.contains('big')?'Texto normal':'Texto más grande';
+
+/* Router */
+const views=$$('section.view').map(s=>s.dataset.view);
+const names={};$$('#steps a').forEach(a=>names[a.getAttribute('href').slice(1)]=a.textContent.replace(/^[\d.]+/,'').trim());
+let seen=new Set(store.get('cetox-seen',[]));
+function show(name){
+  if(!views.includes(name)) name='inicio';
+  $$('section.view').forEach(s=>s.hidden=s.dataset.view!==name);
+  seen.add(name);store.set('cetox-seen',[...seen]);
+  $$('#steps a').forEach(a=>{const h=a.getAttribute('href').slice(1);a.setAttribute('aria-current',h===name?'page':'false');a.classList.toggle('seen',seen.has(h))});
+  const i=views.indexOf(name);
+  $('#prev').disabled=i===0; $('#next').disabled=i===views.length-1;
+  $('#next').textContent=i===views.length-1?'Fin':'Siguiente →';
+  $('#where').textContent=`Módulo ${i+1} de ${views.length}`;$('#whereName').textContent=names[name]||'';
+  $('#topProg').style.width=((i+1)/views.length*100)+'%';
+  window.scrollTo(0,0);
+  if(name==='vitrina'&&!capStarted){capStarted=true;setCap(0)}
+}
+const cur=()=>views.includes(location.hash.slice(1))?location.hash.slice(1):'inicio';
+function go(d){const i=views.indexOf(cur())+d;if(i>=0&&i<views.length)location.hash=views[i]}
+window.addEventListener('hashchange',()=>show(cur()));
+$('#prev').onclick=()=>go(-1); $('#next').onclick=()=>go(1);
+document.addEventListener('keydown',e=>{if(e.target.closest('textarea,input'))return;if(e.key==='ArrowRight')go(1);if(e.key==='ArrowLeft')go(-1)});
+
+/* 00 encuesta */
+const pollOpts=['Nunca lo he usado','Alguna vez, para curiosear','Lo uso en el trabajo cada semana'];
+let poll=store.get('cetox-poll',[0,0,0]);
+function renderPoll(){
+  const tot=poll.reduce((a,b)=>a+b,0)||1;
+  $('#poll').innerHTML=pollOpts.map((o,i)=>`<div class="opt"><span class="lbl">${o}</span><span class="ctr"><button data-p="${i}" data-d="-1" aria-label="Quitar">−</button><b>${poll[i]}</b><button data-p="${i}" data-d="1" aria-label="Sumar">+</button></span><span class="track"><i style="width:${poll[i]/tot*100}%"></i></span></div>`).join('');
+}
+$('#poll').addEventListener('click',e=>{const b=e.target.closest('button[data-p]');if(!b)return;poll[b.dataset.p]=Math.max(0,poll[b.dataset.p]+ +b.dataset.d);store.set('cetox-poll',poll);renderPoll()});
+renderPoll();
+
+/* 1.1 vitrina — chat simulado */
+const caps=[
+ {tag:'ADM',name:'Redactar un correo',prompt:'Soy de Administración de CETOX LAB. Redacta un correo de cobranza para la empresa Minera Andes por la factura F001-234 de S/ 1 200, vencida hace 15 días. Tono cordial pero firme, máximo 6 líneas, sin ofrecer descuentos, y que pida confirmar la fecha de pago.',
+  out:[{t:'p',x:'Asunto: Factura F001-234 pendiente de pago'},{t:'p',x:'Estimados señores de Minera Andes:'},{t:'p',x:'Les escribimos desde CETOX LAB para recordarles que la factura F001-234, por S/ 1 200, venció hace 15 días y aún no registra pago. Agradeceremos nos confirmen la fecha en que se realizará el abono. Si ya fue efectuado, basta con enviarnos el comprobante.'},{t:'p',x:'Quedamos atentos. Saludos cordiales,\nAdministración · CETOX LAB'},{t:'note',x:'Qué verificar: número de factura, monto, razón social y días de atraso.'}]},
+ {tag:'ADM',name:'Notas sueltas → acta',prompt:'Convierte estas notas de reunión en un acta con: asistentes, acuerdos, responsable y fecha límite de cada acuerdo. Si falta un responsable o una fecha, márcalo como PENDIENTE en vez de inventarlo.\n\nNotas: reunión 3 nov, estuvieron Yahaida, Ana Lucía y Lucho. cotizar nuevo equipo refrigeración antes de fin de mes (lucho). ana lucía revisa el procedimiento de muestras, lo manda la otra semana. ver tema de la camioneta. yahaida cierra cobranzas de octubre el viernes.',
+  out:[{t:'p',x:'ACTA DE REUNIÓN · 3 de noviembre\nAsistentes: Yahaida (Administración), Ana Lucía (Calidad), Lucho (Química).'},{t:'table',h:['Acuerdo','Responsable','Fecha límite'],r:[['Cotizar nuevo equipo de refrigeración','Lucho','30 de noviembre'],['Revisar el procedimiento de muestras y enviarlo','Ana Lucía','Semana del 10 de noviembre'],['Cerrar cobranzas de octubre','Yahaida','Viernes 7 de noviembre'],['Tema de la camioneta','PENDIENTE','PENDIENTE']]},{t:'note',x:'Señala al grupo: no inventó un responsable para la camioneta porque se lo pediste así. Eso es el "límite" del pedido funcionando.'}]},
+ {tag:'TODAS',name:'Resumir un PDF largo',prompt:'Resume el procedimiento adjunto en 5 puntos para una persona nueva en Calidad. Indica la página de cada dato. Lista aparte todos los plazos y responsables que menciona.',
+  out:[{t:'ol',x:['Alcance: aplica a todos los equipos de medición del laboratorio, incluidos los de uso ocasional (p. 2).','Frecuencia: la calibración externa es anual y la verificación interna, mensual (p. 4).','Responsable: el coordinador de Calidad programa; el analista a cargo ejecuta la verificación (p. 5).','Registro: cada verificación se anota en el formato F-CAL-03 con fecha, patrón y resultado (p. 7).','Fuera de tolerancia: se etiqueta el equipo, se detiene su uso y se abre una no conformidad (p. 9).']},{t:'p',x:'Plazos y responsables mencionados:\n· Calibración externa anual · Coordinador de Calidad (p. 4)\n· Verificación mensual · Analista a cargo (p. 4–5)\n· Apertura de no conformidad: dentro de las 24 h · Coordinador de Calidad (p. 9)'},{t:'note',x:'Qué verificar en vivo: abre una de las páginas citadas y comprueba que dice eso. Hazlo delante del grupo.'}]},
+ {tag:'ADM',name:'Foto de factura → tabla',prompt:'Pasa esta foto de factura a una tabla con: proveedor, número de factura, fecha, descripción de cada ítem, cantidad, precio unitario y total. Si un dato no se lee bien, escribe "ilegible" en lugar de adivinar.',
+  out:[{t:'p',x:'Proveedor: Suministros Analíticos del Perú S.A.C. · Factura E001-0458 · Fecha: 28/10/2026'},{t:'table',h:['Ítem','Cant.','P. unit. (S/)','Total (S/)'],r:[['Viales ámbar 2 mL, caja ×100','4','185.00','740.00'],['Metanol grado HPLC, 4 L','2','ilegible','ilegible'],['Filtros de jeringa 0.45 µm, ×50','3','96.50','289.50']]},{t:'note',x:'Qué verificar: cada cifra contra la foto, sobre todo las que salieron "ilegible". Es más honesto que un número inventado.'}]},
+ {tag:'ADM',name:'Excel → análisis con gráfico',prompt:'Con el Excel adjunto de cobranzas, resume el total cobrado por mes y por cliente. Calcula con código y muéstrame el código que usaste. Señala si algún mes se sale de la tendencia y haz un gráfico de la evolución mensual.',
+  out:[{t:'table',h:['Mes','Cobrado (S/)','Clientes'],r:[['Julio','48 200','11'],['Agosto','51 900','12'],['Septiembre','29 400','7'],['Octubre','53 100','13']]},{t:'code',x:'import pandas as pd\ndf = pd.read_excel("cobranzas.xlsx")\ndf["mes"] = df["fecha_pago"].dt.to_period("M")\npor_mes = df.groupby("mes")["monto"].agg(["sum","count"])'},{t:'p',x:'Septiembre está un 43 % por debajo del promedio de los otros tres meses. Conviene revisar si hubo facturas que se cobraron en octubre o si faltan registros.'},{t:'note',x:'Qué verificar: un total de un mes contra el Excel. El código visible es lo que permite auditar el cálculo.'}]},
+ {tag:'QUI',name:'Explicar un método',prompt:'Soy analista de Química en un laboratorio toxicológico. Explica el principio de la cromatografía de gases acoplada a espectrometría de masas (GC-MS) para capacitar a un analista nuevo que ya conoce química general. Máximo una página, con principio, pasos generales y 3 errores frecuentes. No cites valores de normas sin indicar la fuente.',
+  out:[{t:'p',x:'Principio. La muestra se vaporiza y un gas portador la arrastra por una columna capilar. Cada compuesto avanza a distinta velocidad según su volatilidad y afinidad con la fase estacionaria, así que llegan separados al detector. El espectrómetro de masas ioniza cada compuesto y lo fragmenta; el patrón de fragmentos funciona como una huella que permite identificarlo y cuantificarlo.'},{t:'ol',x:['Preparación y extracción de la muestra, con estándar interno.','Inyección y separación en la columna según el programa de temperatura.','Ionización, separación de fragmentos por masa/carga y detección.','Comparación del espectro con la biblioteca y cuantificación contra la curva de calibración.']},{t:'p',x:'Errores frecuentes: 1) inyectar una muestra con solvente incompatible con la columna; 2) no correr un blanco entre muestras y arrastrar contaminación; 3) confiar en la coincidencia de biblioteca sin confirmar el tiempo de retención.'},{t:'note',x:'Qué verificar: el contenido técnico lo revisa el analista senior antes de usarlo en una capacitación. Claude explica; no certifica.'}]},
+ {tag:'QUI',name:'Cálculo de apoyo paso a paso',prompt:'Calcula el volumen de un estándar de 1000 mg/L que necesito para preparar 100 mL de una solución de 50 mg/L. Hazlo con código, muestra cada paso y la fórmula usada.',
+  out:[{t:'p',x:'Fórmula de dilución: C₁ · V₁ = C₂ · V₂, despejando V₁ = (C₂ · V₂) / C₁'},{t:'code',x:'C1 = 1000   # mg/L, estándar\nC2 = 50     # mg/L, solución final\nV2 = 100    # mL, volumen final\nV1 = C2 * V2 / C1\nprint(V1)   # 5.0'},{t:'p',x:'Resultado: V₁ = (50 × 100) / 1000 = 5.00 mL del estándar, llevados a 100 mL con el diluyente en la fiola.'},{t:'note',x:'Línea roja: antes de pasar esto a un registro oficial, se recalcula en la hoja validada del laboratorio. Claude es el borrador, no el registro.'}]},
+ {tag:'CAL',name:'Simular una auditoría',prompt:'Actúa como auditor de ISO/IEC 17025. Lee el procedimiento adjunto de calibración de balanzas y dame las 5 preguntas o evidencias que pedirías primero, ordenadas por riesgo, con una línea explicando por qué cada una.',
+  out:[{t:'ol',x:['Muéstreme el certificado de calibración vigente de la balanza y la trazabilidad del patrón usado. Sin trazabilidad, todo lo que pesó queda en duda.','¿Cómo se decide la tolerancia de la verificación diaria y dónde está documentada? Una tolerancia sin criterio es un hallazgo seguro.','Enséñeme el registro de verificación de los últimos 30 días. Busco huecos, firmas faltantes y valores fuera de rango sin acción.','¿Qué pasó la última vez que una verificación salió fuera de tolerancia? Quiero ver la no conformidad y la evaluación de impacto en los resultados emitidos.','¿Quién está autorizado a verificar y dónde consta su competencia? El procedimiento vale lo que vale la persona que lo ejecuta.']},{t:'note',x:'Qué verificar: cada pregunta contra la norma y contra el sistema de gestión de CETOX. Es un ensayo, no la auditoría.'}]}
+];
+let capStarted=false,capIdx=0,capRun=0;
+$('#caps').innerHTML=caps.map((c,i)=>`<button data-c="${i}" aria-pressed="${i===0}"><span>${esc(c.name)}</span><span class="tag">${c.tag}</span></button>`).join('');
+function blockHTML(b){
+  if(b.t==='p')return `<p>${esc(b.x).replace(/\n/g,'<br>')}</p>`;
+  if(b.t==='note')return `<p class="note">${esc(b.x)}</p>`;
+  if(b.t==='code')return `<pre>${esc(b.x)}</pre>`;
+  if(b.t==='ol')return `<ol>${b.x.map(i=>`<li>${esc(i)}</li>`).join('')}</ol>`;
+  if(b.t==='table')return `<div class="tw"><table><thead><tr>${b.h.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.r.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return '';
+}
+async function typeText(el,text,run){
+  const words=text.split(/(\s+)/);let acc='';
+  for(const w of words){if(run!==capRun)return;acc+=w;el.innerHTML=esc(acc).replace(/\n/g,'<br>');await sleep(18)}
+}
+async function setCap(i){
+  capIdx=i;const run=++capRun;const c=caps[i];
+  $$('#caps button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c==i));
+  const chat=$('#capChat');
+  chat.innerHTML=`<div class="msg user"><span class="who">Tú</span><div class="bubble">${esc(c.prompt)}</div></div><div class="msg ai"><span class="who">Claude · respuesta de ejemplo</span><div class="bubble" id="capOut"><p class="cursor muted">Pensando</p></div></div>`;
+  const out=$('#capOut');
+  if(reduced){out.innerHTML=c.out.map(blockHTML).join('');return}
+  await sleep(600);if(run!==capRun)return;out.innerHTML='';
+  for(const b of c.out){
+    if(run!==capRun)return;
+    if(b.t==='p'||b.t==='note'){const p=document.createElement('p');if(b.t==='note')p.className='note';p.classList.add('cursor');out.appendChild(p);await typeText(p,b.x,run);p.classList.remove('cursor')}
+    else{const d=document.createElement('div');d.className='blk';d.innerHTML=blockHTML(b);out.appendChild(d);await sleep(450)}
+  }
+}
+$('#caps').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(b)setCap(+b.dataset.c)});
+$('#capReplay').onclick=()=>setCap(capIdx);
+$('#capCopy').onclick=()=>copy(caps[capIdx].prompt);
+
+/* 1.3 constructor */
+const ids=['p-rol','p-tarea','p-datos','p-formato','p-limites'];
+const labels=['','','','Formato: ','Límites: '];
+const examples={
+  adm:['Soy de Administración de CETOX LAB, laboratorio toxicológico acreditado.','Redacta un correo de cobranza para la empresa Minera Andes.','Factura F001-234 por S/ 1 200, vencida hace 15 días.','Máximo 6 líneas, tono cordial pero firme.','No ofrezcas descuentos. Pide confirmar la fecha de pago.'],
+  qui:['Soy analista del área de Química de CETOX LAB, laboratorio toxicológico acreditado.','Explica el principio de la GC-MS para capacitar a un analista nuevo.','El analista ya conoce química general; es su primera semana en el laboratorio.','Máximo una página, con principio, pasos generales y 3 errores frecuentes en lista.','No cites valores de normas sin indicar la fuente. No inventes parámetros de equipos.'],
+  cal:['Soy coordinadora de Calidad de CETOX LAB, laboratorio acreditado ISO/IEC 17025.','Ayúdame a estructurar el análisis de causa raíz de una no conformidad.','Una verificación mensual de balanza no se registró durante dos meses seguidos.','Usa la técnica de los 5 porqués y entrega una tabla con causa, evidencia y acción propuesta.','Hazme preguntas antes de suponer causas. No propongas sanciones a personas.']
+};
+function build(){
+  const vals=ids.map(i=>$('#'+i).value.trim());
+  const n=vals.filter(Boolean).length;
+  $$('#meter i').forEach((el,i)=>el.classList.toggle('on',i<n));
+  const msg=['Vacío: empieza por la tarea','Muy débil: Claude va a suponer casi todo','Débil: faltan datos o formato','Aceptable: agrega límites o formato','Bueno: falta una pieza','Completo: las cinco piezas'][n];
+  $('#verdict').textContent=n+'/5 · '+msg;
+  $('#assembled').textContent=vals.map((v,i)=>v?labels[i]+v:'').filter(Boolean).join('\n')+(n?'\nSi te falta un dato, pregúntame antes de inventarlo.':'');
+}
+ids.forEach(i=>$('#'+i).addEventListener('input',build));
+$$('button[data-ex]').forEach(b=>b.onclick=()=>{ids.forEach((i,k)=>$('#'+i).value=examples[b.dataset.ex][k]);build()});
+$('#b-clear').onclick=()=>{ids.forEach(i=>$('#'+i).value='');build();$('#p-rol').focus()};
+$('#b-copy').onclick=()=>copy($('#assembled').textContent);
+ids.forEach((i,k)=>$('#'+i).value=examples.adm[k]);build();
+
+/* 1.4 duelo */
+const duels=[
+  {a:'Resume este documento.',b:'Resume el procedimiento adjunto en 5 puntos para el personal nuevo de Calidad. Indica la página de cada dato y lista aparte los plazos que menciona.',w:'b',why:'B dice para quién es, cuántos puntos quiere y pide la página de cada dato: eso permite verificar. A deja todo a criterio de Claude.'},
+  {a:'Calcula cuánto necesito de un estándar de 1000 mg/L para preparar 100 mL a 50 mg/L. Hazlo con código y muestra la fórmula.',b:'¿Cuánto pipeteo para la dilución?',w:'a',why:'A tiene todos los datos y pide el código y la fórmula a la vista. B no tiene concentraciones ni volumen: Claude tendría que inventarlos o preguntar.'},
+  {a:'Dame las preguntas que haría un auditor.',b:'Actúa como auditor ISO/IEC 17025. Lee el procedimiento adjunto de calibración de balanzas y dame 5 preguntas o evidencias que pedirías, ordenadas por riesgo.',w:'b',why:'B fija el rol, el documento, la cantidad y el criterio de orden. A produce una lista genérica que sirve para cualquier empresa y para ninguna.'},
+  {a:'Corrige la ortografía y la claridad de este informe sin cambiar ningún número ni el sentido. Lista los cambios que hiciste.',b:'Mejora este informe.',w:'a',why:'A protege lo importante (los números y el sentido) y pide la lista de cambios para revisarlos. "Mejora" sin límites puede reescribir hasta los resultados.'}
+];
+let dround=0,dscore=0,dpick=null;
+function renderDuel(){
+  if(dround>=duels.length){$('#duel').innerHTML=`<div class="card"><h3>Fin del duelo</h3><p>${dscore} de ${duels.length} aciertos. Lo que gana siempre es lo mismo: rol, tarea, datos, formato y límites.</p></div>`;$('#duelScore').textContent=`Terminado · Aciertos: ${dscore} de ${duels.length}`;return}
+  const d=duels[dround];
+  $('#duelScore').textContent=`Ronda ${dround+1} de ${duels.length} · Aciertos: ${dscore}`;
+  const cls=k=>dpick?(k===d.w?'win':'lose'):'';
+  $('#duel').innerHTML=`<div class="duel"><button class="opt-card ${cls('a')}" data-k="a" ${dpick?'disabled':''}><span class="k">A</span><span>${esc(d.a)}</span></button><button class="opt-card ${cls('b')}" data-k="b" ${dpick?'disabled':''}><span class="k">B</span><span>${esc(d.b)}</span></button></div>${dpick?`<div class="why ${dpick===d.w?'ok':'no'}" style="margin-top:14px"><b>${dpick===d.w?'Correcto.':'Gana '+d.w.toUpperCase()+'.'}</b> ${esc(d.why)}</div><div style="margin-top:12px"><button class="primary" id="duelNext">${dround+1<duels.length?'Siguiente ronda →':'Ver resultado'}</button></div>`:''}`;
+}
+$('#duel').addEventListener('click',e=>{
+  const o=e.target.closest('.opt-card');if(o&&!dpick){dpick=o.dataset.k;if(dpick===duels[dround].w)dscore++;renderDuel();return}
+  if(e.target.id==='duelNext'){dround++;dpick=null;renderDuel()}
+});
+$('#duelReset').onclick=()=>{dround=0;dscore=0;dpick=null;renderDuel()};renderDuel();
+
+/* 2.1 guion demo */
+const steps=[
+  {t:'Crear el Proyecto del área',p:'Instrucciones del proyecto:\nResponde en español formal. Somos CETOX LAB, laboratorio toxicológico acreditado ISO/IEC 17025, en Lima. Cuando no tengas un dato, dilo; no lo inventes. Cuando des cifras o normas, indica la fuente.',say:'Desde ahora, todos los chats de este Proyecto ya saben quiénes somos. No hay que repetirlo.',chk:'Abre un chat nuevo dentro del Proyecto y pregunta "¿quiénes somos?" para mostrar que lo recuerda.'},
+  {t:'Subir un documento y preguntarle',p:'Resume este documento en 5 puntos para alguien nuevo en el área. Dime todos los plazos y responsables que menciona, con la página de cada uno.',say:'Trabaja sobre el documento real, cita páginas y no hace falta leer las 14 páginas para saber qué hay dentro.',chk:'Abre una de las páginas citadas delante del grupo y comprueba que dice eso.'},
+  {t:'Subir un Excel y analizarlo con código',p:'Con este Excel, resume el total por mes y por cliente. Calcula con código y muéstrame el código. Señala si algún mes se sale de la tendencia y haz un gráfico de la evolución.',say:'El código es visible: no es una caja negra, se puede auditar. Y el gráfico salió sin abrir Excel.',chk:'Compara el total de un mes con una suma rápida en el Excel original.'},
+  {t:'Convertir el resultado en un documento o presentación',p:'Convierte este análisis en una presentación de 5 diapositivas para gerencia: situación, tendencia, el mes atípico, posibles causas y siguiente paso.',say:'El archivo se puede editar y exportar a PowerPoint o PDF. Pasamos de datos sueltos a algo presentable en minutos.',chk:'Revisa que las cifras de las diapositivas coincidan con las del análisis.'},
+  {t:'Pedirle que critique su propio trabajo',p:'Revisa la presentación que acabas de hacer como si fueras el gerente general. ¿Qué le falta? ¿Qué pregunta incómoda haría? ¿Qué dato debería verificarse antes de presentarla?',say:'Claude mejora cuando se le pide que se critique. Esto es iterar: estructura, desarrollo, crítica.',chk:'Toma al menos una de sus observaciones y pídele que la corrija.'},
+  {t:'Provocar un error a propósito',p:'¿Cuál es el límite máximo permisible exacto de plomo en sangre según la normativa peruana vigente? Dame el valor y la norma.',say:'Aquí es donde hay que desconfiar: puede dar un valor y una norma con total seguridad. Pídele la fuente y ábrela.',chk:'Si no da una fuente verificable o la fuente no dice eso, el dato no existe. Esa es la lección más importante de la sesión.'}
+];
+let sdone=new Set(store.get('cetox-script',[]));
+function renderScript(){
+  $('#script').innerHTML=steps.map((s,i)=>`<div class="step ${sdone.has(i)?'done':''}"><div class="n">${i+1}</div><div class="body"><div class="title"><span>${esc(s.t)}</span><span class="row"><button class="small" data-copy="${i}">Copiar pedido</button><button class="small ${sdone.has(i)?'primary':''}" data-done="${i}">${sdone.has(i)?'Hecho ✓':'Marcar hecho'}</button></span></div><pre>${esc(s.p)}</pre><div class="hints"><div class="say"><b>Qué señalar al grupo</b>${esc(s.say)}</div><div class="chk"><b>Qué verificar en vivo</b>${esc(s.chk)}</div></div></div></div>`).join('');
+  $('#scriptScore').textContent=`${sdone.size} de ${steps.length} pasos hechos`;
+}
+$('#script').addEventListener('click',e=>{
+  const c=e.target.closest('button[data-copy]');if(c){copy(steps[c.dataset.copy].p);return}
+  const d=e.target.closest('button[data-done]');if(d){const i=+d.dataset.done;sdone.has(i)?sdone.delete(i):sdone.add(i);store.set('cetox-script',[...sdone]);renderScript()}
+});
+$('#scriptReset').onclick=()=>{sdone=new Set();store.set('cetox-script',[]);renderScript()};renderScript();
+
+/* 2.2 áreas con prompt */
+const areas={
+  adm:[['Correos a clientes','Cotizaciones, cobranzas, respuestas a reclamos','Montos, nombres, plazos','Redacta una respuesta al reclamo de [cliente] sobre [tema]. Reconoce el problema sin admitir responsabilidad legal, explica el siguiente paso y da un plazo. Tono profesional, máximo 8 líneas.'],['Cotizaciones','Redactar a partir de la lista de servicios y precios','Que use la lista vigente','Con la lista de servicios adjunta, redacta una cotización para [cliente] por [servicios]. Incluye precio unitario, total, validez de 15 días y condiciones de pago. No agregues servicios que no estén en la lista.'],['Conciliación de pagos','Cruzar un Excel de facturas con un extracto bancario','Muestra de 3 a 5 filas','Cruza el Excel de facturas con el extracto bancario adjunto. Dame tres listas: facturas pagadas con su fecha de abono, facturas sin pago y abonos que no corresponden a ninguna factura. Calcula con código.'],['Reportes','Resumen mensual de ventas o cobranzas con gráfico','Totales contra el sistema','Con el Excel adjunto, resume [ventas/cobranzas] por mes y por cliente. Calcula con código, muestra las fórmulas y haz un gráfico de tendencia. Señala meses atípicos.'],['Actas y minutas','Ordenar notas de reunión en acta con acuerdos y responsables','Que los acuerdos sean reales','Convierte estas notas en un acta con asistentes, acuerdos, responsable y fecha límite. Si falta un dato, escribe PENDIENTE en vez de inventarlo.'],['Proveedores','Comparar 3 cotizaciones en una tabla','Precios y condiciones','Compara las tres cotizaciones adjuntas en una tabla: precio, plazo de entrega, garantía, forma de pago y lo que no incluye cada una. Al final, señala qué diferencias importan más y qué preguntaría a cada proveedor.']],
+  qui:[['Explicar métodos','Resumir un artículo o método analítico en lenguaje simple','Contra la fuente original','Explica el método de [técnica] para [analito] como si se lo enseñaras a un analista nuevo. Incluye principio, pasos y errores frecuentes. Si mencionas valores o normas, indica la fuente.'],['Borradores de procedimientos','Estructura de un procedimiento a partir de notas','Revisión técnica completa','Con estas notas, arma el borrador de un procedimiento con: objetivo, alcance, responsables, materiales, desarrollo paso a paso y registros. Marca con [REVISAR] cada punto donde te falte información técnica.'],['Cálculos de apoyo','Diluciones, curvas de calibración, conversiones, con código y fórmulas visibles','Recalcular en Excel validado','Calcula [dilución/curva/conversión] con estos datos: [datos]. Hazlo con código, muestra cada paso y la fórmula usada.'],['Interpretación de datos','Detectar tendencias o atípicos en series de controles','Criterio del analista','Con esta serie de controles de calidad adjunta, calcula media y desviación estándar, marca los puntos fuera de ±2 y ±3 desviaciones y describe la tendencia. Calcula con código. No concluyas causas; solo describe.'],['Búsqueda bibliográfica','Encontrar artículos y normas con enlaces','Abrir cada fuente','Busca artículos o guías publicados sobre [tema] en los últimos 5 años. Para cada uno dame título, autores, año, enlace y un resumen de 2 líneas. Solo incluye lo que puedas enlazar.'],['Redacción técnica','Corregir el estilo de informes internos, no los resultados','Que no cambie ningún valor','Corrige ortografía, claridad y redacción de este informe interno sin cambiar ningún número, unidad ni conclusión. Lista todos los cambios que hiciste.']],
+  cal:[['Preparar auditorías','Lista de preguntas probables de un auditor sobre un procedimiento','Contra la norma y el sistema de gestión','Actúa como auditor de ISO/IEC 17025. Lee el procedimiento adjunto y dame las 10 preguntas o evidencias que pedirías, ordenadas por riesgo, con una línea de por qué cada una.'],['Revisión de documentos','Detectar incoherencias entre un procedimiento y su formato','Cada hallazgo, uno por uno','Compara el procedimiento y el formato adjuntos. Lista cada paso del procedimiento que exige un registro y dime si el formato tiene un campo para él. Señala campos del formato que el procedimiento no menciona.'],['No conformidades','Estructurar el análisis de causa raíz (5 porqués, Ishikawa)','Causas reales, no sugeridas','Ayúdame a estructurar el análisis de causa raíz de esta no conformidad: [descripción]. Usa 5 porqués. Hazme preguntas en vez de suponer causas.'],['Capacitaciones internas','Material y cuestionarios sobre procedimientos','Contenido técnico','Con el procedimiento adjunto, prepara un cuestionario de 8 preguntas de opción múltiple para evaluar al personal, con la respuesta correcta y la sección del procedimiento que la respalda.'],['Control documental','Resumir cambios entre dos versiones de un documento','Comparación final manual','Compara las dos versiones adjuntas del procedimiento. Lista cada cambio en una tabla: sección, texto anterior, texto nuevo y si el cambio afecta la operación o solo la redacción.']]
+};
+let areaCur='adm';
+function setArea(k){areaCur=k;$$('#areaTabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.area===k));$('#areaBody').innerHTML=areas[k].map((r,i)=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="check">${esc(r[2])}</td><td><button class="small" data-ap="${i}">Copiar pedido</button></td></tr>`).join('')}
+$('#areaTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-area]');if(b)setArea(b.dataset.area)});
+$('#areaBody').addEventListener('click',e=>{const b=e.target.closest('button[data-ap]');if(b)copy(areas[areaCur][b.dataset.ap][3])});
+setArea('adm');
+
+/* 2.3 calculadora */
+const tasks=[['Correos, cotizaciones y cobranzas','adm',4],['Reportes y conciliaciones en Excel','adm',3],['Actas y documentos administrativos','adm',2],['Redactar y revisar procedimientos e informes','qui',3],['Búsqueda bibliográfica y explicación de métodos','qui',2],['Preparar auditorías y revisar documentos','cal',3],['Análisis de no conformidades y capacitaciones','cal',2]];
+let hours=store.get('cetox-hours',tasks.map(t=>t[2]));
+const areaName={adm:'ADMINISTRACIÓN',qui:'QUÍMICA',cal:'CALIDAD'};
+function renderCalc(){
+  $('#calcBody').innerHTML=tasks.map((t,i)=>`<tr><td style="font-weight:400">${esc(t[0])}</td><td><span class="tag ${t[1]}">${areaName[t[1]]}</span></td><td><input type="number" min="0" max="40" step="0.5" id="h${i}" data-h="${i}" value="${hours[i]}"></td></tr>`).join('');
+  calc();
+}
+function calc(){
+  const pct=+$('#calcPct').value;$('#calcPctLbl').textContent=pct+' %';
+  const week=hours.reduce((a,b)=>a+(+b||0),0);
+  const month=week*4.33*pct/100;
+  $('#calcOut').textContent=month.toFixed(0);
+  $('#calcSub').textContent=`${week.toFixed(1)} h/semana hoy en estas tareas · ${(month/8).toFixed(1)} jornadas de 8 h al mes`;
+}
+$('#calcBody').addEventListener('input',e=>{const i=e.target.dataset.h;if(i===undefined)return;hours[i]=+e.target.value||0;store.set('cetox-hours',hours);calc()});
+$('#calcPct').addEventListener('input',calc);renderCalc();
+
+/* 3.1 mitos */
+const myths=[
+  ['Si Claude lo dice con seguridad, es correcto.',false,'Mito. Claude puede dar un dato falso con el mismo tono que uno verdadero. La seguridad del texto no prueba nada.'],
+  ['Claude conoce los procedimientos internos de CETOX.',false,'Mito. Solo sabe lo que le subes o escribes en el chat o en el Proyecto.'],
+  ['Un pedido con contexto y formato da mejores respuestas.',true,'Verdad. Rol, tarea, datos, formato y límites cambian mucho el resultado.'],
+  ['Para un cálculo, es mejor pedir que lo haga con código y muestre las fórmulas.',true,'Verdad. Así el cálculo se puede revisar paso a paso. Igual se recalcula en una herramienta validada antes de un registro oficial.'],
+  ['Puedo pedirle que corrija un resultado analítico que salió raro.',false,'Mito, y línea roja. Claude puede ayudar a pensar causas posibles, pero el resultado no se modifica fuera del procedimiento.'],
+  ['Si la respuesta no sirve, conviene editar mi mensaje en vez de insistir.',true,'Verdad. Editar el pedido original suele funcionar mejor que corregir en varios mensajes.'],
+  ['Con la búsqueda web, cualquier dato que da ya está confirmado.',false,'Mito. Solo está respaldado si trae la fuente, y la fuente hay que abrirla.']
+];
+let mstate={};
+function renderMyths(){
+  $('#myths').innerHTML=myths.map((m,i)=>{
+    const a=mstate[i];let why='';
+    if(a!==undefined){const ok=a===m[1];why=`<div class="why ${ok?'ok':'no'}"><b>${ok?'Correcto.':'Incorrecto.'}</b> ${esc(m[2])}</div>`}
+    return `<div class="mrow"><span class="q" style="font-weight:600">${esc(m[0])}</span><span class="btns"><button data-m="${i}" data-v="1" ${a!==undefined?'disabled':''}>Verdad</button><button data-m="${i}" data-v="0" ${a!==undefined?'disabled':''}>Mito</button></span>${why}</div>`}).join('');
+  const k=Object.keys(mstate);$('#mythScore').textContent=`Aciertos: ${k.filter(i=>mstate[i]===myths[i][1]).length} de ${k.length}`;
+}
+$('#myths').addEventListener('click',e=>{const b=e.target.closest('button[data-m]');if(!b)return;mstate[b.dataset.m]=b.dataset.v==='1';renderMyths()});
+$('#mythReset').onclick=()=>{mstate={};renderMyths()};renderMyths();
+
+/* 3.2 semáforo */
+const sem=[
+  ['Lista de precios de servicios que ya está publicada en la web','v','Verde. Es información pública de CETOX.'],
+  ['Un artículo científico sobre un método de análisis','v','Verde. Es información publicada; igual verifica lo que resuma.'],
+  ['Informe con nombre completo y DNI de un donante','r','Rojo tal cual. Se puede trabajar solo después de anonimizar: "Donante A", sin DNI.'],
+  ['La contraseña del banco para que "revise los movimientos"','r','Rojo. Contraseñas y credenciales nunca se escriben en Claude.'],
+  ['Excel de cobranzas con razón social y montos de empresas clientes','a','Ámbar. Es dato de negocio: úsalo en el Proyecto del área, sin datos bancarios, y recuerda quién ve la cuenta compartida.'],
+  ['Procedimiento interno vigente para pedir una revisión de redacción','a','Ámbar. Se puede, pero es documento controlado: el cambio pasa por control documental, no se reemplaza directo.'],
+  ['Resultado analítico que "salió raro" para que Claude lo corrija','r','Rojo. Claude no corrige resultados. Puede ayudar a listar causas posibles para investigar según procedimiento.'],
+  ['Foto de una factura de proveedor para pasarla a una tabla','v','Verde. Es un buen uso; revisa la transcripción cifra por cifra.']
+];
+let sstate={};
+function renderSem(){
+  $('#sem').innerHTML=sem.map((s,i)=>{
+    const a=sstate[i],ok=a===s[1];
+    const btn=(c,t)=>`<button class="${c}" data-s="${i}" data-v="${c}" ${a?'disabled':''}>${t}</button>`;
+    return `<div class="item ${a?(ok?'done-ok':'done-no'):''}"><span class="q">${esc(s[0])}</span><div class="lights">${btn('v','Verde')}${btn('a','Ámbar')}${btn('r','Rojo')}</div>${a?`<div class="why ${ok?'ok':'no'}"><b>${ok?'Correcto.':'Respuesta:'}</b> ${esc(s[2])}</div>`:''}</div>`}).join('');
+  const k=Object.keys(sstate);$('#semScore').textContent=`Aciertos: ${k.filter(i=>sstate[i]===sem[i][1]).length} de ${k.length}`;
+}
+$('#sem').addEventListener('click',e=>{const b=e.target.closest('button[data-s]');if(!b)return;sstate[b.dataset.s]=b.dataset.v;renderSem()});
+$('#semReset').onclick=()=>{sstate={};renderSem()};renderSem();
+
+/* 3.3 reglas */
+const always=['Verificar todo número, norma, fecha o cita antes de usarlo.','Pedir fuentes cuando se trate de normativa o datos externos.','Revisar el documento final completo antes de enviarlo o firmarlo.','Abrir un chat nuevo por tema y usar el Proyecto del área.','Anonimizar: "Paciente A", "Cliente 01"; quitar DNI, teléfonos y direcciones.'];
+const never=['Subir datos personales de pacientes o donantes sin anonimizar.','Subir contraseñas, datos bancarios o de cuentas.','Generar o alterar resultados analíticos, registros de equipos o datos crudos.','Presentar como propio un texto que no leíste ni validaste.','Copiar un cálculo a un registro oficial sin recalcularlo en una herramienta validada.'];
+let rs=new Set(store.get('cetox-rules',[]));
+function renderRules(){
+  const li=(arr,p)=>arr.map((t,i)=>{const k=p+i;return `<li class="${rs.has(k)?'on':''}"><input type="checkbox" id="r${k}" data-r="${k}" ${rs.has(k)?'checked':''}><label for="r${k}">${esc(t)}</label></li>`}).join('');
+  $('#rulesAlways').innerHTML=li(always,'a');$('#rulesNever').innerHTML=li(never,'n');
+  $('#rulesScore').textContent=`${rs.size} de 10 compromisos`;
+}
+document.querySelector('.rules').addEventListener('change',e=>{const k=e.target.dataset.r;if(!k)return;e.target.checked?rs.add(k):rs.delete(k);store.set('cetox-rules',[...rs]);renderRules()});
+renderRules();
+
+/* 4.1 plantillas */
+const tpls=[
+  ['gen','Pedido general','Soy [cargo] en CETOX LAB, laboratorio toxicológico acreditado ISO/IEC 17025.\nNecesito [tarea]. Usa esta información: [datos].\nFormato: [extensión, tono, tabla/lista].\nNo [límites]. Si te falta un dato, pregúntame antes de inventarlo.'],
+  ['gen','Resumir un documento','Resume el documento adjunto en [N] puntos para [público].\nIncluye plazos, responsables y cifras clave. Indica la página de cada dato.'],
+  ['gen','Corregir sin cambiar sentido','Revisa este texto: corrige ortografía y claridad sin cambiar el sentido\nni ningún número. Muéstrame una lista de los cambios que hiciste.'],
+  ['gen','Que se critique a sí mismo','Revisa lo que acabas de escribir como si fueras [gerente / auditor / cliente].\n¿Qué le falta? ¿Qué pregunta incómoda harías? ¿Qué dato debe verificarse?'],
+  ['adm','Correo de cobranza','Redacta un correo de cobranza para [cliente] por la factura [número] de\nS/ [monto], vencida hace [días] días. Tono cordial pero firme, máximo 6\nlíneas, sin ofrecer descuentos. Pide confirmar fecha de pago.'],
+  ['adm','Reporte desde Excel','Con el Excel adjunto, resume [ventas/cobranzas] por mes y por cliente.\nCalcula con código, muéstrame las fórmulas y haz un gráfico de tendencia.'],
+  ['adm','Notas a acta','Convierte estas notas en un acta con asistentes, acuerdos, responsable y\nfecha límite. Si falta un dato, escribe PENDIENTE en vez de inventarlo.\n\nNotas: [pegar notas]'],
+  ['qui','Explicar un método','Explica el método de [técnica] para [analito] como si se lo enseñaras a\nun analista nuevo. Incluye principio, pasos y errores frecuentes.\nSi mencionas valores o normas, indica la fuente.'],
+  ['qui','Cálculo de apoyo','Calcula [dilución/curva/conversión] con estos datos: [datos].\nHazlo con código, muestra cada paso y la fórmula usada.'],
+  ['cal','Simular auditoría','Actúa como auditor de ISO/IEC 17025. Lee el procedimiento adjunto y dame\nlas 10 preguntas o evidencias que pedirías, ordenadas por riesgo.'],
+  ['cal','Causa raíz','Ayúdame a estructurar el análisis de causa raíz de esta no conformidad:\n[descripción]. Usa 5 porqués. Hazme preguntas en vez de suponer causas.']
+];
+const tagName={gen:'GENERAL',adm:'ADMINISTRACIÓN',qui:'QUÍMICA',cal:'CALIDAD'};
+function renderTpl(f){
+  $$('#tplTabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.f===f));
+  $('#tpls').innerHTML=tpls.map((t,i)=>[t,i]).filter(([t])=>f==='all'||t[0]===f).map(([t,i])=>`<div class="tpl"><header><span class="row"><span class="tag ${t[0]}">${tagName[t[0]]}</span><b>${esc(t[1])}</b></span><button class="small" data-t="${i}">Copiar</button></header><pre>${esc(t[2]).replace(/\[([^\]]+)\]/g,'<mark>[$1]</mark>')}</pre></div>`).join('');
+}
+$('#tplTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)renderTpl(b.dataset.f)});
+$('#tpls').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(b)copy(tpls[b.dataset.t][2])});
+renderTpl('all');
+
+/* 4.2 cierre */
+const checks=['Sé escribir un pedido con rol, tarea, datos, formato y límites.','Sé adjuntar archivos y pedir resúmenes con referencia a la página.','Tengo el Proyecto de mi área creado y configurado.','Sé pedir un documento, hoja de cálculo o presentación como archivo.','Conozco las reglas de "Siempre" y "Nunca".','Vi a Claude equivocarse y sé cómo verificar un dato antes de usarlo.'];
+let cs=store.get('cetox-cierre',[]);
+function paintChecks(){$('#prog').style.width=(cs.length/checks.length*100)+'%';$('#doneMsg').hidden=cs.length<checks.length}
+function renderChecks(){
+  $('#checks').innerHTML=checks.map((c,i)=>`<label for="c${i}"><input type="checkbox" id="c${i}" data-c="${i}" ${cs.includes(i)?'checked':''}><span>${esc(c)}</span></label>`).join('');paintChecks();
+}
+$('#checks').addEventListener('change',e=>{const i=+e.target.dataset.c;cs=e.target.checked?[...new Set([...cs,i])]:cs.filter(x=>x!==i);store.set('cetox-cierre',cs);paintChecks()});
+renderChecks();
+
+show(cur());
+})();
+</script>
+
+</body>
+</html>

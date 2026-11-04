@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de la capacitación en Claude · CETOX LAB</title>
+<style>
+:root{--ink:#11302e;--muted:#536e6a;--line:#cfdcd9;--accent:#13602C;--soft:#eaf4f4;--bg:#ffffff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:820px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:1.9rem;line-height:1.2;color:var(--accent);margin:0 0 4px}
+h1+p{color:var(--muted);margin-top:0}
+h2{font-size:1.35rem;color:var(--accent);margin:2.2em 0 .6em;padding-bottom:6px;border-bottom:2px solid var(--soft)}
+h3{font-size:1.08rem;margin:1.6em 0 .4em}
+p,li{max-width:70ch}
+ul,ol{padding-left:1.3em}
+li{margin:.25em 0}
+.t{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th{background:var(--accent);color:#fff;text-align:left;font-weight:600}
+th,td{padding:7px 10px;border:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--soft)}
+pre{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 14px;white-space:pre-wrap;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
+code{background:var(--soft);padding:1px 5px;border-radius:4px;font-size:.92em}
+@media print{main{padding:0}h2{break-after:avoid}}
+</style>
+</head>
+<body><main>
+<h1>Capacitación Claude – CETOX LAB</h1>
+<p>3 de noviembre de 2026 · Daniel</p>
+<h2>Objetivo y alcance</h2>
+<p>Al terminar la sesión, cada persona debe poder usar Claude sola para redactar, resumir, analizar datos y preparar documentos de su área, sabiendo qué verificar antes de usar el resultado.</p>
+<ul><li><strong>Dirigido a:</strong> Administración, Química y Calidad de CETOX LAB.</li><li><strong>Nivel:</strong> de básico a intermedio. No se requiere experiencia previa con IA.</li><li><strong>Cómo usar este documento:</strong> es la guía de la sesión y queda como material de consulta. Las plantillas de la sección 6 se pueden copiar y adaptar.</li></ul>
+<p>Idea central: Claude es un asistente muy capaz que <strong>redacta y analiza rápido, pero puede equivocarse con seguridad</strong>. La responsabilidad del resultado final sigue siendo de quien lo firma.</p>
+<h2>Nivel 1 – Básico</h2>
+<p>El objetivo de este nivel es perder el miedo y aprender a pedir bien: la calidad de la respuesta depende casi siempre de la calidad del pedido.</p>
+<h3>1.1 Qué es Claude y qué no es</h3>
+<div class="t"><table><thead><tr><th>Hace bien</th><th>Hace mal o con riesgo</th></tr></thead><tbody><tr><td>Redactar y corregir correos, cartas, informes</td><td>Dar datos exactos sin fuente (normas, cifras, fechas)</td></tr><tr><td>Resumir documentos largos (PDF, Word, Excel)</td><td>Cálculos largos hechos &quot;de cabeza&quot; sin código</td></tr><tr><td>Explicar conceptos técnicos con distintos niveles</td><td>Saber cosas internas de CETOX que no le diste</td></tr><tr><td>Ordenar información en tablas y listas</td><td>Reemplazar el criterio técnico del analista</td></tr><tr><td>Proponer borradores de procedimientos</td><td>Garantizar cumplimiento normativo por sí solo</td></tr></tbody></table></div>
+<h3>1.2 La interfaz</h3>
+<ol><li><strong>Nuevo chat:</strong> cada tema distinto, un chat nuevo. Mezclar temas empeora las respuestas.</li><li><strong>Adjuntar archivos:</strong> el clip permite subir PDF, Word, Excel, imágenes y fotos de documentos.</li><li><strong>Editar y regenerar:</strong> si la respuesta no sirve, edita tu mensaje en vez de escribir &quot;no, así no&quot; muchas veces.</li><li><strong>Historial:</strong> los chats quedan guardados y se pueden buscar.</li></ol>
+<h3>1.3 Cómo escribir un buen pedido</h3>
+<p>Un buen pedido tiene cinco piezas. No siempre hacen falta todas, pero cuantas más, mejor resultado.</p>
+<div class="t"><table><thead><tr><th>Pieza</th><th>Pregunta que responde</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Rol / contexto</td><td>¿Quién soy y dónde trabajo?</td><td>&quot;Soy asistente administrativa en un laboratorio toxicológico acreditado&quot;</td></tr><tr><td>Tarea</td><td>¿Qué quiero exactamente?</td><td>&quot;Redacta un correo de cobranza&quot;</td></tr><tr><td>Datos</td><td>¿Con qué información?</td><td>&quot;Factura F001-234, vencida hace 15 días, S/ 1 200&quot;</td></tr><tr><td>Formato</td><td>¿Cómo lo quiero?</td><td>&quot;Máximo 6 líneas, tono cordial pero firme&quot;</td></tr><tr><td>Límites</td><td>¿Qué no debe hacer?</td><td>&quot;No ofrezcas descuentos&quot;</td></tr></tbody></table></div>
+<p><strong>Pedido débil:</strong> &quot;Hazme un correo para un cliente que no paga.&quot;</p>
+<p><strong>Pedido fuerte:</strong> &quot;Soy de Administración de CETOX LAB. Redacta un correo de cobranza para la empresa X por la factura F001-234 de S/ 1 200, vencida hace 15 días. Tono cordial pero firme, máximo 6 líneas, sin ofrecer descuentos, y que pida confirmar la fecha de pago.&quot;</p>
+<h3>1.4 Tres hábitos desde el primer día</h3>
+<ul><li><strong>Pide que pregunte:</strong> &quot;Antes de responder, hazme las preguntas que necesites.&quot;</li><li><strong>Pide alternativas:</strong> &quot;Dame 3 versiones distintas.&quot;</li><li><strong>Corrige en la conversación:</strong> &quot;Más corto&quot;, &quot;más formal&quot;, &quot;quita la segunda parte&quot;. No hace falta empezar de cero.</li></ul>
+<h2>Nivel 2 – Intermedio</h2>
+<p>Este nivel convierte a Claude de &quot;chat para preguntar&quot; en una herramienta de trabajo diario, configurada para el contexto de CETOX.</p>
+<h3>2.1 Proyectos</h3>
+<p>Un Proyecto agrupa chats de un mismo tema y guarda documentos e instrucciones que Claude tiene presentes en cada chat del proyecto.</p>
+<ul><li><strong>Ejemplos para CETOX:</strong> &quot;Cobranzas y facturación&quot;, &quot;Procedimientos de laboratorio&quot;, &quot;Auditoría ISO 17025&quot;.</li><li><strong>Conocimiento del proyecto:</strong> subir una vez los documentos de referencia (plantillas, procedimientos vigentes, lista de servicios) en lugar de adjuntarlos en cada chat.</li><li><strong>Instrucciones del proyecto:</strong> un texto fijo que Claude sigue siempre. Ejemplo: &quot;Responde en español formal. Somos CETOX LAB, laboratorio toxicológico acreditado ISO/IEC 17025. Cuando no tengas un dato, dilo; no lo inventes.&quot;</li></ul>
+<h3>2.2 Generar documentos reales</h3>
+<p>Claude puede entregar el resultado como archivo editable, no solo como texto en el chat.</p>
+<div class="t"><table><thead><tr><th>Pide</th><th>Obtienes</th></tr></thead><tbody><tr><td>&quot;Hazme un documento con…&quot;</td><td>Documento editable, exportable a Word o PDF</td></tr><tr><td>&quot;Arma una hoja de cálculo con…&quot;</td><td>Tabla con fórmulas, exportable a Excel</td></tr><tr><td>&quot;Prepara una presentación de…&quot;</td><td>Diapositivas editables, exportables a PowerPoint</td></tr><tr><td>&quot;Dame un archivo Excel / Word&quot;</td><td>El archivo en ese formato directamente</td></tr></tbody></table></div>
+<h3>2.3 Análisis de datos</h3>
+<ul><li>Sube un Excel o CSV y pide: &quot;Resume por mes&quot;, &quot;Detecta valores atípicos&quot;, &quot;Haz un gráfico de tendencia&quot;.</li><li>Pide que <strong>calcule con código</strong> y que muestre las fórmulas usadas; así los números se pueden revisar.</li><li>Contrasta siempre 2 o 3 cifras del resultado contra el archivo original.</li></ul>
+<h3>2.4 Leer documentos e imágenes</h3>
+<ul><li>PDF largos: &quot;Resume en 10 puntos&quot;, &quot;Extrae todos los plazos y responsables&quot;, &quot;¿Qué dice sobre X? Cita la página&quot;.</li><li>Fotos: una foto de una factura, una etiqueta o una tabla impresa se puede transcribir a texto o a tabla. Revisar siempre la transcripción.</li></ul>
+<h3>2.5 Búsqueda web</h3>
+<p>Cuando la información puede haber cambiado (normativa, proveedores, precios), pedir que busque en la web y que <strong>ponga las fuentes</strong>. Si no da fuente, no es dato confirmado.</p>
+<h3>2.6 Iterar como un profesional</h3>
+<ol><li>Pedir primero la estructura o el índice.</li><li>Aprobar o corregir la estructura.</li><li>Pedir el desarrollo sección por sección.</li><li>Pedirle que critique su propio borrador: &quot;¿Qué le falta? ¿Qué preguntaría un auditor?&quot;</li></ol>
+<h3>2.7 Memoria</h3>
+<p>Claude puede recordar datos entre conversaciones (preferencias, contexto del trabajo). Es útil, pero en una cuenta compartida mezcla lo que dice cada persona. Ver sección 5.</p>
+<h2>Casos de uso por área</h2>
+<p>Cada área sale de la sesión con al menos un caso aplicado a su trabajo real.</p>
+<h3>Administración</h3>
+<div class="t"><table><thead><tr><th>Tarea</th><th>Qué pedirle a Claude</th><th>Qué verificar</th></tr></thead><tbody><tr><td>Correos a clientes</td><td>Cotizaciones, cobranzas, respuestas a reclamos</td><td>Montos, nombres, plazos</td></tr><tr><td>Cotizaciones</td><td>Redactar a partir de la lista de servicios y precios</td><td>Que use la lista vigente</td></tr><tr><td>Conciliación de pagos</td><td>Cruzar un Excel de facturas con un extracto bancario</td><td>Muestra de 3–5 filas</td></tr><tr><td>Reportes</td><td>Resumen mensual de ventas o cobranzas con gráfico</td><td>Totales contra el sistema</td></tr><tr><td>Actas y minutas</td><td>Ordenar notas de reunión en acta con acuerdos y responsables</td><td>Acuerdos reales</td></tr><tr><td>Proveedores</td><td>Comparar 3 cotizaciones en una tabla</td><td>Precios y condiciones</td></tr></tbody></table></div>
+<h3>Química</h3>
+<div class="t"><table><thead><tr><th>Tarea</th><th>Qué pedirle a Claude</th><th>Qué verificar</th></tr></thead><tbody><tr><td>Explicar métodos</td><td>Resumir un artículo o método analítico en lenguaje simple</td><td>Contra la fuente original</td></tr><tr><td>Borradores de procedimientos</td><td>Estructura de un PE/POE a partir de notas</td><td>Revisión técnica completa</td></tr><tr><td>Cálculos de apoyo</td><td>Diluciones, curvas de calibración, conversiones, con código y fórmulas visibles</td><td>Recalcular en Excel validado</td></tr><tr><td>Interpretación de datos</td><td>Detectar tendencias o atípicos en series de controles</td><td>Criterio del analista</td></tr><tr><td>Búsqueda bibliográfica</td><td>Encontrar artículos y normas con enlaces</td><td>Abrir cada fuente</td></tr><tr><td>Redacción técnica</td><td>Corregir estilo de informes internos (no los resultados)</td><td>Que no cambie valores</td></tr></tbody></table></div>
+<h3>Calidad (ISO/IEC 17025)</h3>
+<div class="t"><table><thead><tr><th>Tarea</th><th>Qué pedirle a Claude</th><th>Qué verificar</th></tr></thead><tbody><tr><td>Preparar auditorías</td><td>Lista de preguntas probables de un auditor sobre un procedimiento</td><td>Contra la norma y el SGC</td></tr><tr><td>Revisión de documentos</td><td>Detectar incoherencias entre un procedimiento y su formato</td><td>Hallazgos uno por uno</td></tr><tr><td>No conformidades</td><td>Estructurar análisis de causa raíz (5 porqués, Ishikawa)</td><td>Causas reales, no sugeridas</td></tr><tr><td>Capacitaciones internas</td><td>Material y cuestionarios sobre procedimientos</td><td>Contenido técnico</td></tr><tr><td>Control documental</td><td>Resumir cambios entre dos versiones de un documento</td><td>Comparación final manual</td></tr></tbody></table></div>
+<p><strong>Línea roja para Química y Calidad:</strong> Claude nunca genera, modifica ni &quot;corrige&quot; resultados analíticos ni registros técnicos. Sirve para preparar, revisar y explicar; el dato técnico lo produce y firma el personal autorizado.</p>
+<h2>Reglas de uso en CETOX</h2>
+<p>En un laboratorio acreditado, el riesgo no es que Claude falle: es que alguien use un error sin revisarlo. Estas reglas son obligatorias.</p>
+<h3>Siempre</h3>
+<ul><li>[ ] Verificar todo número, norma, fecha o cita antes de usarlo.</li><li>[ ] Pedir fuentes cuando se trate de normativa o datos externos.</li><li>[ ] Revisar el documento final completo antes de enviarlo o firmarlo.</li><li>[ ] Abrir un chat nuevo por tema y usar el Proyecto del área.</li></ul>
+<h3>Nunca</h3>
+<ul><li>[ ] Subir datos personales de pacientes o donantes (nombres, DNI, resultados individuales) sin anonimizar.</li><li>[ ] Subir contraseñas, datos bancarios o información de cuentas.</li><li>[ ] Usar a Claude para generar o alterar resultados analíticos, registros de equipos o datos crudos.</li><li>[ ] Presentar como propio un texto de Claude sin haberlo leído y validado.</li><li>[ ] Copiar un cálculo de Claude a un registro oficial sin recalcularlo en una herramienta validada.</li></ul>
+<h3>Cómo anonimizar rápido</h3>
+<p>Reemplazar nombres por códigos (&quot;Paciente A&quot;, &quot;Cliente 01&quot;) y quitar DNI, teléfonos y direcciones antes de subir el archivo.</p>
+<h3>Sobre la cuenta compartida</h3>
+<p>Hoy varias personas usan una misma cuenta. Esto tiene tres problemas prácticos:</p>
+<ol><li><strong>Historial mezclado:</strong> los chats de todas las áreas quedan juntos y cualquiera ve lo de los demás.</li><li><strong>Memoria cruzada:</strong> Claude puede aplicar preferencias o contexto que dio otra persona.</li><li><strong>Límites de uso compartidos:</strong> si una persona hace un trabajo pesado, las demás pueden quedarse sin uso disponible ese rato.</li></ol>
+<p>Mientras se mantenga la cuenta compartida: cada área trabaja solo en su propio Proyecto y nadie borra chats ajenos. La recomendación es pasar a cuentas individuales dentro de un plan de equipo.</p>
+<h2>Plantillas de prompts</h2>
+<p>Copiar, reemplazar lo que está entre [corchetes] y ajustar.</p>
+<h3>Generales</h3>
+<pre>Soy [cargo] en CETOX LAB, laboratorio toxicológico acreditado ISO/IEC 17025.
+Necesito [tarea]. Usa esta información: [datos].
+Formato: [extensión, tono, tabla/lista].
+No [límites]. Si te falta un dato, pregúntame antes de inventarlo.</pre>
+<pre>Resume el documento adjunto en [N] puntos para [público].
+Incluye plazos, responsables y cifras clave. Indica la página de cada dato.</pre>
+<pre>Revisa este texto: corrige ortografía y claridad sin cambiar el sentido
+ni ningún número. Muéstrame una lista de los cambios que hiciste.</pre>
+<h3>Administración</h3>
+<pre>Redacta un correo de cobranza para [cliente] por la factura [número] de
+S/ [monto], vencida hace [días] días. Tono cordial pero firme, máximo 6
+líneas, sin ofrecer descuentos. Pide confirmar fecha de pago.</pre>
+<pre>Con el Excel adjunto, resume [ventas/cobranzas] por mes y por cliente.
+Calcula con código, muéstrame las fórmulas y haz un gráfico de tendencia.</pre>
+<h3>Química</h3>
+<pre>Explica el método de [técnica] para [analito] como si se lo enseñaras a
+un analista nuevo. Incluye principio, pasos y errores frecuentes.
+Si mencionas valores o normas, indica la fuente.</pre>
+<pre>Calcula [dilución/curva/conversión] con estos datos: [datos].
+Hazlo con código, muestra cada paso y la fórmula usada.</pre>
+<h3>Calidad</h3>
+<pre>Actúa como auditor de ISO/IEC 17025. Lee el procedimiento adjunto y dame
+las 10 preguntas o evidencias que pedirías, ordenadas por riesgo.</pre>
+<pre>Ayúdame a estructurar el análisis de causa raíz de esta no conformidad:
+[descripción]. Usa 5 porqués. Hazme preguntas en vez de suponer causas.</pre>
+<h2>Ejercicios de la sesión y cierre</h2>
+<p>Cada persona hace los ejercicios con un caso real de su trabajo (anonimizado).</p>
+<div class="t"><table><thead><tr><th>#</th><th>Ejercicio</th><th>Nivel</th><th>Área</th></tr></thead><tbody><tr><td>1</td><td>Reescribir un pedido débil como pedido fuerte (5 piezas)</td><td>Básico</td><td>Todas</td></tr><tr><td>2</td><td>Resumir un PDF real y verificar 3 datos contra el original</td><td>Básico</td><td>Todas</td></tr><tr><td>3</td><td>Detectar un error: pedir a Claude un dato normativo y comprobarlo</td><td>Básico</td><td>Todas</td></tr><tr><td>4</td><td>Crear el Proyecto del área con instrucciones y 2 documentos de referencia</td><td>Intermedio</td><td>Todas</td></tr><tr><td>5</td><td>Analizar un Excel de cobranzas y generar un reporte con gráfico</td><td>Intermedio</td><td>Administración</td></tr><tr><td>6</td><td>Explicar un método y hacer un cálculo de apoyo con fórmulas visibles</td><td>Intermedio</td><td>Química</td></tr><tr><td>7</td><td>Simular preguntas de auditoría sobre un procedimiento vigente</td><td>Intermedio</td><td>Calidad</td></tr></tbody></table></div>
+<h3>Checklist de cierre</h3>
+<ul><li>[ ] Sé escribir un pedido con rol, tarea, datos, formato y límites.</li><li>[ ] Sé adjuntar archivos y pedir resúmenes con referencia a la página.</li><li>[ ] Tengo el Proyecto de mi área creado y configurado.</li><li>[ ] Sé pedir un documento, hoja de cálculo o presentación como archivo.</li><li>[ ] Conozco las reglas de &quot;Siempre&quot; y &quot;Nunca&quot; de la sección 5.</li><li>[ ] Verifiqué al menos un error de Claude durante la sesión.</li></ul>
+<h3>Siguiente paso</h3>
+<p>En dos semanas, cada área comparte un caso donde Claude le ahorró tiempo y uno donde falló. Con eso se arma el nivel avanzado.</p>
+</main></body>
+</html>

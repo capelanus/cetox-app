@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import {
-  LayoutDashboard, Users, Users2, PalmtreeIcon, CalendarDays, FlaskConical, FileText, ClipboardList, TestTube, FileCheck, Package, LogOut, ChevronLeft, ChevronRight, TrendingUp, TableProperties, Microscope, Trash2, ShoppingCart, PackageCheck, RotateCcw, Receipt, CreditCard, Building2, ShoppingBag, Wallet, Wrench, Calendar, History, DollarSign, BarChart2, Shield, Banknote, Landmark, FolderOpen, ClipboardCheck, BookOpen, FileStack, ListChecks, ShieldCheck, MessageSquare, Target, Gauge, ShieldAlert, Rocket, Goal, Route, Globe, Newspaper,
+  LayoutDashboard, Users, Users2, PalmtreeIcon, CalendarDays, FlaskConical, FileText, ClipboardList, TestTube, FileCheck, Package, LogOut, ChevronLeft, ChevronRight, TrendingUp, TableProperties, Microscope, Trash2, ShoppingCart, PackageCheck, RotateCcw, Receipt, CreditCard, Building2, ShoppingBag, Wallet, Wrench, Calendar, History, DollarSign, BarChart2, Shield, Banknote, Landmark, FolderOpen, ClipboardCheck, BookOpen, FileStack, ListChecks, ShieldCheck, MessageSquare, Target, Gauge, ShieldAlert, Rocket, Goal, Route, Globe, Newspaper, LifeBuoy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROL_LABELS, AREA_LABELS } from '@/lib/constants'
@@ -429,6 +429,11 @@ export function Sidebar({ userName, userEmail, userRol, userArea, isVacApprover,
       }
     }
   }
+
+  // Ayuda: capacitaciones y guías, visible para todo el personal.
+  const ayudaItem: NavItem = { href: '/ayuda', label: 'Ayuda', icon: LifeBuoy, roles: [userRol] }
+  if (sections) sections = [...sections, { label: 'Ayuda', items: [ayudaItem] }]
+  else navItems = [...navItems, ayudaItem]
 
   // Módulos bloqueados para este usuario en concreto. Va al final para que
   // gane sobre los accesos que se inyectan arriba (jefe de lab, aprobador).

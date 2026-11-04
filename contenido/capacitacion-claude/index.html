@@ -308,7 +308,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
         </div>
       </div>
       <div class="grid g3">
-        <div class="card"><h3><span class="tag adm">ADMINISTRACIÓN</span></h3><p>Correos, cotizaciones, cobranzas, reportes con gráfico y actas en minutos.</p></div>
+        <div class="card"><h3><span class="tag adm">ADMINISTRACIÓN</span></h3><p>Correos, cotizaciones, cobranzas, reportes con gráfico y respuestas a clientes en minutos.</p></div>
         <div class="card"><h3><span class="tag qui">QUÍMICA</span></h3><p>Explicar métodos, estructurar procedimientos y revisar cálculos de apoyo paso a paso.</p></div>
         <div class="card"><h3><span class="tag cal">CALIDAD</span></h3><p>Simular auditorías, ordenar análisis de causa raíz y comparar versiones de documentos.</p></div>
       </div>
@@ -418,17 +418,25 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
 
     <!-- 2.3 -->
     <section class="view" data-view="tiempo" hidden>
-      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.3 · Actividad</span><h2>¿Cuánto tiempo recupera tu área?</h2>
-      <p class="lead">El grupo estima cuántas horas a la semana se van hoy en cada tarea y qué parte cree que Claude le ahorra. Es su estimación, no un dato medido: sirve para decidir por dónde empezar.</p></div>
+      <div class="head"><span class="eyebrow">Nivel 2 · Módulo 2.3 · Actividad</span><h2>¿Cuánto tiempo puede ahorrar tu área?</h2>
+      <p class="lead">Una cuenta rápida para decidir por qué tareas empezar a usar Claude. No es una medición: son estimaciones del grupo, hechas en tres pasos.</p></div>
+      <ol style="margin:0 0 18px;padding-left:1.3em;display:grid;gap:6px;max-width:72ch">
+        <li><strong>Horas de hoy.</strong> En cada tarea, escribe cuántas horas a la semana le dedica hoy tu área, sin usar Claude. Si una tarea no es de tu área, déjala en 0.</li>
+        <li><strong>Ahorro.</strong> Mueve la barra al porcentaje de ese tiempo que crees que Claude puede ahorrar. Un número prudente, como 20 % o 30 %, convence más que uno optimista.</li>
+        <li><strong>Resultado.</strong> A la derecha ves las horas que se recuperarían al mes, en total y por área, con la cuenta a la vista.</li>
+      </ol>
       <div class="calc">
-        <div class="tablewrap"><table><thead><tr><th>Tarea</th><th>Área</th><th>Horas/semana hoy</th></tr></thead><tbody id="calcBody"></tbody></table></div>
+        <div class="tablewrap"><table><thead><tr><th>Tarea</th><th>Área</th><th>Horas por semana hoy</th></tr></thead><tbody id="calcBody"></tbody></table></div>
         <div class="result">
-          <span class="eyebrow">Horas recuperadas al mes</span>
+          <span class="eyebrow">Horas que se recuperarían al mes</span>
           <div class="big" id="calcOut">0</div>
           <p class="muted" id="calcSub"></p>
-          <label for="calcPct" style="font-weight:700;display:flex;justify-content:space-between">Ahorro estimado <span id="calcPctLbl">40 %</span></label>
-          <input type="range" id="calcPct" min="10" max="80" step="5" value="40">
-          <p class="muted" style="font-size:.9rem">Mueve el ahorro entre 10 % y 80 %. Un número conservador convence más que uno optimista.</p>
+          <div id="calcAreas" style="display:grid;gap:4px;margin:10px 0 14px"></div>
+          <label for="calcPct" style="font-weight:700;display:flex;justify-content:space-between">Ahorro estimado <span id="calcPctLbl">30 %</span></label>
+          <input type="range" id="calcPct" min="10" max="80" step="5" value="30">
+          <p class="muted" style="font-size:.9rem">Qué parte del tiempo de esas tareas crees que Claude ahorra, de 10 % a 80 %.</p>
+          <p class="muted" style="font-size:.85rem;border-top:1px solid var(--line);padding-top:10px;margin-top:10px"><strong>¿Se guarda?</strong> Solo en este navegador, para que no se pierda si cambias de módulo. No se envía al ERP ni lo ven otras personas.</p>
+          <button type="button" id="calcReset" class="btn" style="margin-top:6px">Volver a los valores de ejemplo</button>
         </div>
       </div>
     </section>
@@ -558,8 +566,8 @@ renderPoll();
 const caps=[
  {tag:'ADM',name:'Redactar un correo',prompt:'Soy de Administración de CETOX LAB. Redacta un correo de cobranza para la empresa Minera Andes por la factura F001-234 de S/ 1 200, vencida hace 15 días. Tono cordial pero firme, máximo 6 líneas, sin ofrecer descuentos, y que pida confirmar la fecha de pago.',
   out:[{t:'p',x:'Asunto: Factura F001-234 pendiente de pago'},{t:'p',x:'Estimados señores de Minera Andes:'},{t:'p',x:'Les escribimos desde CETOX LAB para recordarles que la factura F001-234, por S/ 1 200, venció hace 15 días y aún no registra pago. Agradeceremos nos confirmen la fecha en que se realizará el abono. Si ya fue efectuado, basta con enviarnos el comprobante.'},{t:'p',x:'Quedamos atentos. Saludos cordiales,\nAdministración · CETOX LAB'},{t:'note',x:'Qué verificar: número de factura, monto, razón social y días de atraso.'}]},
- {tag:'ADM',name:'Notas sueltas → acta',prompt:'Convierte estas notas de reunión en un acta con: asistentes, acuerdos, responsable y fecha límite de cada acuerdo. Si falta un responsable o una fecha, márcalo como PENDIENTE en vez de inventarlo.\n\nNotas: reunión 3 nov, estuvieron Yahaida, Ana Lucía y Lucho. cotizar nuevo equipo refrigeración antes de fin de mes (lucho). ana lucía revisa el procedimiento de muestras, lo manda la otra semana. ver tema de la camioneta. yahaida cierra cobranzas de octubre el viernes.',
-  out:[{t:'p',x:'ACTA DE REUNIÓN · 3 de noviembre\nAsistentes: Yahaida (Administración), Ana Lucía (Calidad), Lucho (Química).'},{t:'table',h:['Acuerdo','Responsable','Fecha límite'],r:[['Cotizar nuevo equipo de refrigeración','Lucho','30 de noviembre'],['Revisar el procedimiento de muestras y enviarlo','Ana Lucía','Semana del 10 de noviembre'],['Cerrar cobranzas de octubre','Yahaida','Viernes 7 de noviembre'],['Tema de la camioneta','PENDIENTE','PENDIENTE']]},{t:'note',x:'Señala al grupo: no inventó un responsable para la camioneta porque se lo pediste así. Eso es el "límite" del pedido funcionando.'}]},
+ {tag:'ADM',name:'Correo de cliente → datos para cotizar',prompt:'Extrae de este correo de un cliente los datos para cotizar: empresa, contacto, muestra, análisis pedidos, número de muestras y plazo. Ordénalo en una tabla. Si falta un dato, escribe PENDIENTE en vez de inventarlo.\n\nCorreo: "Buenas tardes, somos Agroexport del Sur. Necesitamos analizar residuos de plaguicidas en palta para exportar a Europa, son 3 lotes. ¿Cuánto demoran? Saludos, Carla Ríos."',
+  out:[{t:'p',x:'DATOS PARA LA COTIZACIÓN'},{t:'table',h:['Dato','Valor'],r:[['Empresa','Agroexport del Sur'],['Contacto','Carla Ríos'],['Muestra','Palta'],['Análisis','Residuos de plaguicidas (destino: Europa)'],['N° de muestras','3 lotes'],['Plazo requerido','PENDIENTE (el cliente pregunta el plazo, no lo indica)'],['Teléfono o correo','PENDIENTE']]},{t:'note',x:'Señala al grupo: no inventó el plazo ni el teléfono porque se le pidió marcar PENDIENTE. Eso es el "límite" del pedido funcionando.'}]},
  {tag:'TODAS',name:'Resumir un PDF largo',prompt:'Resume el procedimiento adjunto en 5 puntos para una persona nueva en Calidad. Indica la página de cada dato. Lista aparte todos los plazos y responsables que menciona.',
   out:[{t:'ol',x:['Alcance: aplica a todos los equipos de medición del laboratorio, incluidos los de uso ocasional (p. 2).','Frecuencia: la calibración externa es anual y la verificación interna, mensual (p. 4).','Responsable: el coordinador de Calidad programa; el analista a cargo ejecuta la verificación (p. 5).','Registro: cada verificación se anota en el formato F-CAL-03 con fecha, patrón y resultado (p. 7).','Fuera de tolerancia: se etiqueta el equipo, se detiene su uso y se abre una no conformidad (p. 9).']},{t:'p',x:'Plazos y responsables mencionados:\n· Calibración externa anual · Coordinador de Calidad (p. 4)\n· Verificación mensual · Analista a cargo (p. 4–5)\n· Apertura de no conformidad: dentro de las 24 h · Coordinador de Calidad (p. 9)'},{t:'note',x:'Qué verificar en vivo: abre una de las páginas citadas y comprueba que dice eso. Hazlo delante del grupo.'}]},
  {tag:'ADM',name:'Foto de factura → tabla',prompt:'Pasa esta foto de factura a una tabla con: proveedor, número de factura, fecha, descripción de cada ítem, cantidad, precio unitario y total. Si un dato no se lee bien, escribe "ilegible" en lugar de adivinar.',
@@ -670,7 +678,7 @@ $('#scriptReset').onclick=()=>{sdone=new Set();store.set('cetox-script',[]);rend
 
 /* 2.2 áreas con prompt */
 const areas={
-  adm:[['Correos a clientes','Cotizaciones, cobranzas, respuestas a reclamos','Montos, nombres, plazos','Redacta una respuesta al reclamo de [cliente] sobre [tema]. Reconoce el problema sin admitir responsabilidad legal, explica el siguiente paso y da un plazo. Tono profesional, máximo 8 líneas.'],['Cotizaciones','Redactar a partir de la lista de servicios y precios','Que use la lista vigente','Con la lista de servicios adjunta, redacta una cotización para [cliente] por [servicios]. Incluye precio unitario, total, validez de 15 días y condiciones de pago. No agregues servicios que no estén en la lista.'],['Conciliación de pagos','Cruzar un Excel de facturas con un extracto bancario','Muestra de 3 a 5 filas','Cruza el Excel de facturas con el extracto bancario adjunto. Dame tres listas: facturas pagadas con su fecha de abono, facturas sin pago y abonos que no corresponden a ninguna factura. Calcula con código.'],['Reportes','Resumen mensual de ventas o cobranzas con gráfico','Totales contra el sistema','Con el Excel adjunto, resume [ventas/cobranzas] por mes y por cliente. Calcula con código, muestra las fórmulas y haz un gráfico de tendencia. Señala meses atípicos.'],['Actas y minutas','Ordenar notas de reunión en acta con acuerdos y responsables','Que los acuerdos sean reales','Convierte estas notas en un acta con asistentes, acuerdos, responsable y fecha límite. Si falta un dato, escribe PENDIENTE en vez de inventarlo.'],['Proveedores','Comparar 3 cotizaciones en una tabla','Precios y condiciones','Compara las tres cotizaciones adjuntas en una tabla: precio, plazo de entrega, garantía, forma de pago y lo que no incluye cada una. Al final, señala qué diferencias importan más y qué preguntaría a cada proveedor.']],
+  adm:[['Correos a clientes','Cotizaciones, cobranzas, respuestas a reclamos','Montos, nombres, plazos','Redacta una respuesta al reclamo de [cliente] sobre [tema]. Reconoce el problema sin admitir responsabilidad legal, explica el siguiente paso y da un plazo. Tono profesional, máximo 8 líneas.'],['Cotizaciones','Redactar a partir de la lista de servicios y precios','Que use la lista vigente','Con la lista de servicios adjunta, redacta una cotización para [cliente] por [servicios]. Incluye precio unitario, total, validez de 15 días y condiciones de pago. No agregues servicios que no estén en la lista.'],['Seguimiento de cobranzas','Ordenar facturas vencidas y priorizar a quién llamar','Montos y fechas contra Facturación','Con la lista de facturas adjunta, ordena las vencidas por días de atraso y por monto. Agrupa por cliente y sugiere el orden de contacto. Calcula con código.'],['Reportes','Resumen mensual de ventas o cobranzas con gráfico','Totales contra el sistema','Con el Excel adjunto, resume [ventas/cobranzas] por mes y por cliente. Calcula con código, muestra las fórmulas y haz un gráfico de tendencia. Señala meses atípicos.'],['Consultas de clientes','Responder dudas sobre requisitos de muestra y plazos','Que requisitos y plazos sean los vigentes','Redacta una respuesta a [cliente], que pregunta por [análisis]. Usa solo los requisitos de muestra y plazos del documento adjunto. Si algo no está en el documento, dilo en vez de suponerlo. Máximo 8 líneas.'],['Proveedores','Comparar 3 cotizaciones en una tabla','Precios y condiciones','Compara las tres cotizaciones adjuntas en una tabla: precio, plazo de entrega, garantía, forma de pago y lo que no incluye cada una. Al final, señala qué diferencias importan más y qué preguntaría a cada proveedor.']],
   qui:[['Explicar métodos','Resumir un artículo o método analítico en lenguaje simple','Contra la fuente original','Explica el método de [técnica] para [analito] como si se lo enseñaras a un analista nuevo. Incluye principio, pasos y errores frecuentes. Si mencionas valores o normas, indica la fuente.'],['Borradores de procedimientos','Estructura de un procedimiento a partir de notas','Revisión técnica completa','Con estas notas, arma el borrador de un procedimiento con: objetivo, alcance, responsables, materiales, desarrollo paso a paso y registros. Marca con [REVISAR] cada punto donde te falte información técnica.'],['Cálculos de apoyo','Diluciones, curvas de calibración, conversiones, con código y fórmulas visibles','Recalcular en Excel validado','Calcula [dilución/curva/conversión] con estos datos: [datos]. Hazlo con código, muestra cada paso y la fórmula usada.'],['Interpretación de datos','Detectar tendencias o atípicos en series de controles','Criterio del analista','Con esta serie de controles de calidad adjunta, calcula media y desviación estándar, marca los puntos fuera de ±2 y ±3 desviaciones y describe la tendencia. Calcula con código. No concluyas causas; solo describe.'],['Búsqueda bibliográfica','Encontrar artículos y normas con enlaces','Abrir cada fuente','Busca artículos o guías publicados sobre [tema] en los últimos 5 años. Para cada uno dame título, autores, año, enlace y un resumen de 2 líneas. Solo incluye lo que puedas enlazar.'],['Redacción técnica','Corregir el estilo de informes internos, no los resultados','Que no cambie ningún valor','Corrige ortografía, claridad y redacción de este informe interno sin cambiar ningún número, unidad ni conclusión. Lista todos los cambios que hiciste.']],
   cal:[['Preparar auditorías','Lista de preguntas probables de un auditor sobre un procedimiento','Contra la norma y el sistema de gestión','Actúa como auditor de ISO/IEC 17025. Lee el procedimiento adjunto y dame las 10 preguntas o evidencias que pedirías, ordenadas por riesgo, con una línea de por qué cada una.'],['Revisión de documentos','Detectar incoherencias entre un procedimiento y su formato','Cada hallazgo, uno por uno','Compara el procedimiento y el formato adjuntos. Lista cada paso del procedimiento que exige un registro y dime si el formato tiene un campo para él. Señala campos del formato que el procedimiento no menciona.'],['No conformidades','Estructurar el análisis de causa raíz (5 porqués, Ishikawa)','Causas reales, no sugeridas','Ayúdame a estructurar el análisis de causa raíz de esta no conformidad: [descripción]. Usa 5 porqués. Hazme preguntas en vez de suponer causas.'],['Capacitaciones internas','Material y cuestionarios sobre procedimientos','Contenido técnico','Con el procedimiento adjunto, prepara un cuestionario de 8 preguntas de opción múltiple para evaluar al personal, con la respuesta correcta y la sección del procedimiento que la respalda.'],['Control documental','Resumir cambios entre dos versiones de un documento','Comparación final manual','Compara las dos versiones adjuntas del procedimiento. Lista cada cambio en una tabla: sección, texto anterior, texto nuevo y si el cambio afecta la operación o solo la redacción.']]
 };
@@ -681,22 +689,33 @@ $('#areaBody').addEventListener('click',e=>{const b=e.target.closest('button[dat
 setArea('adm');
 
 /* 2.3 calculadora */
-const tasks=[['Correos, cotizaciones y cobranzas','adm',4],['Reportes y conciliaciones en Excel','adm',3],['Actas y documentos administrativos','adm',2],['Redactar y revisar procedimientos e informes','qui',3],['Búsqueda bibliográfica y explicación de métodos','qui',2],['Preparar auditorías y revisar documentos','cal',3],['Análisis de no conformidades y capacitaciones','cal',2]];
+const tasks=[['Correos, cotizaciones y cobranzas','adm',4],['Reportes de ingresos y cobranzas en Excel','adm',3],['Respuestas a consultas de clientes','adm',2],['Redactar y revisar procedimientos e informes','qui',3],['Búsqueda bibliográfica y explicación de métodos','qui',2],['Preparar auditorías y revisar documentos','cal',3],['Análisis de no conformidades y capacitaciones','cal',2]];
+const SEMANAS=4.33;
 let hours=store.get('cetox-hours',tasks.map(t=>t[2]));
+if(hours.length!==tasks.length)hours=tasks.map(t=>t[2]);
+let pct=store.get('cetox-pct',30);
 const areaName={adm:'ADMINISTRACIÓN',qui:'QUÍMICA',cal:'CALIDAD'};
+const n1=v=>v.toLocaleString('es-PE',{maximumFractionDigits:1});
 function renderCalc(){
-  $('#calcBody').innerHTML=tasks.map((t,i)=>`<tr><td style="font-weight:400">${esc(t[0])}</td><td><span class="tag ${t[1]}">${areaName[t[1]]}</span></td><td><input type="number" min="0" max="40" step="0.5" id="h${i}" data-h="${i}" value="${hours[i]}"></td></tr>`).join('');
+  $('#calcBody').innerHTML=tasks.map((t,i)=>`<tr><td style="font-weight:400">${esc(t[0])}</td><td><span class="tag ${t[1]}">${areaName[t[1]]}</span></td><td><input type="number" min="0" max="40" step="0.5" id="h${i}" data-h="${i}" value="${hours[i]}" aria-label="Horas por semana: ${esc(t[0])}"></td></tr>`).join('');
+  $('#calcPct').value=pct;
   calc();
 }
 function calc(){
-  const pct=+$('#calcPct').value;$('#calcPctLbl').textContent=pct+' %';
+  pct=+$('#calcPct').value;$('#calcPctLbl').textContent=pct+' %';
   const week=hours.reduce((a,b)=>a+(+b||0),0);
-  const month=week*4.33*pct/100;
-  $('#calcOut').textContent=month.toFixed(0);
-  $('#calcSub').textContent=`${week.toFixed(1)} h/semana hoy en estas tareas · ${(month/8).toFixed(1)} jornadas de 8 h al mes`;
+  const month=week*SEMANAS*pct/100;
+  $('#calcOut').textContent=Math.round(month);
+  $('#calcSub').textContent=`${n1(week)} h por semana × ${SEMANAS.toLocaleString('es-PE')} semanas × ${pct} % = ${n1(month)} h al mes (unas ${n1(month/8)} jornadas de 8 h).`;
+  $('#calcAreas').innerHTML=Object.keys(areaName).map(k=>{
+    const w=tasks.reduce((a,t,i)=>a+(t[1]===k?(+hours[i]||0):0),0);
+    return `<div style="display:flex;justify-content:space-between;gap:8px"><span class="tag ${k}">${areaName[k]}</span><span><strong>${n1(w*SEMANAS*pct/100)} h</strong> al mes</span></div>`;
+  }).join('');
 }
 $('#calcBody').addEventListener('input',e=>{const i=e.target.dataset.h;if(i===undefined)return;hours[i]=+e.target.value||0;store.set('cetox-hours',hours);calc()});
-$('#calcPct').addEventListener('input',calc);renderCalc();
+$('#calcPct').addEventListener('input',()=>{calc();store.set('cetox-pct',pct)});
+$('#calcReset').addEventListener('click',()=>{hours=tasks.map(t=>t[2]);pct=30;store.set('cetox-hours',hours);store.set('cetox-pct',pct);renderCalc();toast('Valores de ejemplo restaurados')});
+renderCalc();
 
 /* 3.1 mitos */
 const myths=[
@@ -761,7 +780,7 @@ const tpls=[
   ['gen','Que se critique a sí mismo','Revisa lo que acabas de escribir como si fueras [gerente / auditor / cliente].\n¿Qué le falta? ¿Qué pregunta incómoda harías? ¿Qué dato debe verificarse?'],
   ['adm','Correo de cobranza','Redacta un correo de cobranza para [cliente] por la factura [número] de\nS/ [monto], vencida hace [días] días. Tono cordial pero firme, máximo 6\nlíneas, sin ofrecer descuentos. Pide confirmar fecha de pago.'],
   ['adm','Reporte desde Excel','Con el Excel adjunto, resume [ventas/cobranzas] por mes y por cliente.\nCalcula con código, muéstrame las fórmulas y haz un gráfico de tendencia.'],
-  ['adm','Notas a acta','Convierte estas notas en un acta con asistentes, acuerdos, responsable y\nfecha límite. Si falta un dato, escribe PENDIENTE en vez de inventarlo.\n\nNotas: [pegar notas]'],
+  ['adm','Correo a datos de cotización','Extrae de este correo los datos para cotizar: empresa, contacto, muestra,\nanálisis, número de muestras y plazo. Ordénalo en una tabla. Si falta un\ndato, escribe PENDIENTE en vez de inventarlo.\n\nCorreo: [pegar correo]'],
   ['qui','Explicar un método','Explica el método de [técnica] para [analito] como si se lo enseñaras a\nun analista nuevo. Incluye principio, pasos y errores frecuentes.\nSi mencionas valores o normas, indica la fuente.'],
   ['qui','Cálculo de apoyo','Calcula [dilución/curva/conversión] con estos datos: [datos].\nHazlo con código, muestra cada paso y la fórmula usada.'],
   ['cal','Simular auditoría','Actúa como auditor de ISO/IEC 17025. Lee el procedimiento adjunto y dame\nlas 10 preguntas o evidencias que pedirías, ordenadas por riesgo.'],

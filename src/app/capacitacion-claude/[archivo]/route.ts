@@ -11,9 +11,10 @@ const ARCHIVOS: Record<string, string> = {
   'guia.html': 'guia.html',     // documento resumen
 }
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ archivo: string }> }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ archivo: string }> }) {
   const session = await auth()
-  if (!session) return NextResponse.redirect(new URL('/login', req.url))
+  // Redirección relativa: detrás del proxy del VPS req.url trae localhost:3000.
+  if (!session) return new NextResponse(null, { status: 307, headers: { Location: '/login' } })
 
   const { archivo } = await params
   const nombre = ARCHIVOS[archivo]

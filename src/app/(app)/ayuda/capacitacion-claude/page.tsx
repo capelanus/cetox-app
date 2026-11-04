@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, FileText } from 'lucide-react'
+import { ArrowLeft, ExternalLink, FileText, Trophy } from 'lucide-react'
 
 export const metadata = { title: 'Capacitación: Claude en CETOX' }
 
@@ -16,6 +16,10 @@ export default function CapacitacionClaudePage() {
           <ArrowLeft className="w-4 h-4" /> Ayuda
         </Link>
         <h1 className="text-lg font-bold text-slate-900 flex-1">Capacitación: Claude en CETOX</h1>
+        <Link href="/ayuda/capacitacion-claude/notas"
+          className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700">
+          <Trophy className="w-4 h-4" /> Notas
+        </Link>
         <a href="/capacitacion-claude/guia.html" target="_blank" rel="noopener"
           className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700">
           <FileText className="w-4 h-4" /> Guía escrita

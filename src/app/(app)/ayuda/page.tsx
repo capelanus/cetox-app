@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
-import { LifeBuoy, Sparkles, BookOpen, FileText, ArrowRight } from 'lucide-react'
+import { LifeBuoy, Sparkles, BookOpen, FileText, ArrowRight, Trophy } from 'lucide-react'
 
 export const metadata = { title: 'Ayuda · CETOX' }
 
@@ -20,6 +20,13 @@ export default async function AyudaPage() {
       titulo: 'Capacitación: Claude en CETOX',
       texto: 'Clase interactiva de 13 módulos para Administración, Química y Calidad: cómo pedirle bien a Claude, casos por área, uso responsable de datos y plantillas listas para copiar.',
       etiqueta: 'Clase interactiva',
+    },
+    {
+      href: '/ayuda/capacitacion-claude/notas',
+      icon: Trophy,
+      titulo: 'Notas de la capacitación',
+      texto: 'Las notas del 0 al 20 del Duelo de pedidos y del Semáforo de datos de todo el personal, con la nota final de cada persona.',
+      etiqueta: 'Notas',
     },
     {
       href: '/capacitacion-claude/guia.html',

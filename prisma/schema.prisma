@@ -62,6 +62,7 @@ model Usuario {
   movimientosInventario     InventarioMovimiento[]       @relation("InventarioMovimientoUsuario")
   auditorias                Auditoria[]                  @relation("AuditoriaCreadaPor")
   documentosCalidad         DocumentoCalidad[]            @relation("DocCalidadSubidoPor")
+  notasCapacitacion CapacitacionNota[]
 }
 
 /// Matriz N:M de aprobadores de vacaciones.
@@ -1452,4 +1453,24 @@ model BlogArticulo {
   updatedAt          DateTime  @updatedAt
 
   @@index([estado])
+}
+
+// Notas de las actividades puntuadas de la capacitación en Claude (Ayuda →
+// Capacitación): Duelo de pedidos (1.4) y Semáforo de datos (3.2). La nota
+// oficial es la del primer intento completo; los siguientes solo suman a
+// `intentos`. La nota la calcula el servidor con la clave de respuestas.
+model CapacitacionNota {
+  id         String   @id @default(cuid())
+  usuarioId  String
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  actividad  String   // duelo | semaforo
+  aciertos   Int
+  total      Int
+  nota       Float    // 0 a 20
+  respuestas String[]
+  intentos   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([usuarioId, actividad])
 }

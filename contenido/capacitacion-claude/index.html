@@ -34,6 +34,11 @@
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.nota-box{margin-top:16px;padding:16px 18px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.nota-box .n{font-family:var(--f-display);font-size:2.4rem;font-weight:800;line-height:1;color:var(--accent)}
+.nota-box .n small{font-size:1rem;color:var(--muted);font-weight:600}
+.nota-box p{flex:1;min-width:220px}
+.nota-box a{font-weight:700}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:var(--fs);line-height:1.55}
 body.big{--fs:21px}
@@ -388,9 +393,10 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
     <!-- 1.4 -->
     <section class="view" data-view="duelo" hidden>
       <div class="head"><span class="eyebrow">Nivel 1 · Módulo 1.4 · Actividad</span><h2>Duelo de pedidos</h2>
-      <p class="lead">Dos personas piden lo mismo. ¿Cuál pedido va a dar mejor resultado? El grupo vota tocando una tarjeta.</p></div>
+      <p class="lead">Dos personas piden lo mismo. ¿Cuál pedido va a dar mejor resultado? Toca una tarjeta en cada ronda. Al terminar recibes una nota del 0 al 20.</p></div>
       <div class="row between"><span class="score" id="duelScore">Ronda 1 de 4 · Aciertos: 0</span><button id="duelReset">Reiniciar</button></div>
       <div id="duel"></div>
+      <div class="nota-box" id="duelNota" hidden></div>
     </section>
 
     <!-- 2.1 -->
@@ -452,9 +458,10 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
     <!-- 3.2 -->
     <section class="view" data-view="semaforo" hidden>
       <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.2 · Actividad</span><h2>Semáforo de datos: ¿lo subo a Claude?</h2>
-      <p class="lead">Para cada caso, el grupo decide: verde (se puede), ámbar (con cuidado o anonimizando) o rojo (no).</p></div>
+      <p class="lead">Para cada caso decide: verde (se puede), ámbar (con cuidado o anonimizando) o rojo (no). Al responder los 8 casos recibes una nota del 0 al 20.</p></div>
       <div class="row between"><span class="score" id="semScore">Aciertos: 0 de 0</span><button id="semReset">Reiniciar</button></div>
       <div class="sem" id="sem"></div>
+      <div class="nota-box" id="semNota" hidden></div>
     </section>
 
     <!-- 3.3 -->
@@ -635,6 +642,22 @@ $('#b-clear').onclick=()=>{ids.forEach(i=>$('#'+i).value='');build();$('#p-rol')
 $('#b-copy').onclick=()=>copy($('#assembled').textContent);
 ids.forEach((i,k)=>$('#'+i).value=examples.adm[k]);build();
 
+/* notas: el ERP calcula la nota con la clave de respuestas (lib/capacitacion.ts) */
+const NOTAS_URL='/ayuda/capacitacion-claude/notas';
+function fmtNota(n){return n.toLocaleString('es-PE',{maximumFractionDigits:1})}
+async function registrarNota(actividad,respuestas,boxSel){
+  const box=$(boxSel);box.hidden=false;box.innerHTML='<p class="muted">Registrando tu nota…</p>';
+  try{
+    const r=await fetch('/api/capacitacion/notas',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({actividad,respuestas})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.ok)throw new Error(d.error||'No se pudo registrar la nota.');
+    const msg=d.oficial
+      ?`<b>Nota registrada.</b> ${d.aciertos} de ${d.total} aciertos. Es tu nota oficial: los siguientes intentos quedan como práctica.`
+      :`<b>Intento de práctica:</b> ${d.aciertos} de ${d.total} aciertos (${fmtNota(d.nota)}/20). Tu nota oficial sigue siendo <b>${fmtNota(d.notaOficial)}/20</b>, la del primer intento.`;
+    box.innerHTML=`<span class="n">${fmtNota(d.oficial?d.nota:d.notaOficial)}<small> /20</small></span><p>${msg}</p><a href="${NOTAS_URL}" target="_top">Ver las notas de todos →</a>`;
+  }catch(e){box.innerHTML=`<p><b>No se registró la nota.</b> ${esc(e.message)} Abre la clase desde el ERP (Ayuda → Capacitación) con tu usuario.</p>`}
+}
+
 /* 1.4 duelo */
 const duels=[
   {a:'Resume este documento.',b:'Resume el procedimiento adjunto en 5 puntos para el personal nuevo de Calidad. Indica la página de cada dato y lista aparte los plazos que menciona.',w:'b',why:'B dice para quién es, cuántos puntos quiere y pide la página de cada dato: eso permite verificar. A deja todo a criterio de Claude.'},
@@ -642,19 +665,19 @@ const duels=[
   {a:'Dame las preguntas que haría un auditor.',b:'Actúa como auditor ISO/IEC 17025. Lee el procedimiento adjunto de calibración de balanzas y dame 5 preguntas o evidencias que pedirías, ordenadas por riesgo.',w:'b',why:'B fija el rol, el documento, la cantidad y el criterio de orden. A produce una lista genérica que sirve para cualquier empresa y para ninguna.'},
   {a:'Corrige la ortografía y la claridad de este informe sin cambiar ningún número ni el sentido. Lista los cambios que hiciste.',b:'Mejora este informe.',w:'a',why:'A protege lo importante (los números y el sentido) y pide la lista de cambios para revisarlos. "Mejora" sin límites puede reescribir hasta los resultados.'}
 ];
-let dround=0,dscore=0,dpick=null;
+let dround=0,dscore=0,dpick=null,dpicks=[],dsent=false;
 function renderDuel(){
-  if(dround>=duels.length){$('#duel').innerHTML=`<div class="card"><h3>Fin del duelo</h3><p>${dscore} de ${duels.length} aciertos. Lo que gana siempre es lo mismo: rol, tarea, datos, formato y límites.</p></div>`;$('#duelScore').textContent=`Terminado · Aciertos: ${dscore} de ${duels.length}`;return}
+  if(dround>=duels.length){if(!dsent){dsent=true;registrarNota('duelo',dpicks,'#duelNota')}$('#duel').innerHTML=`<div class="card"><h3>Fin del duelo</h3><p>${dscore} de ${duels.length} aciertos. Lo que gana siempre es lo mismo: rol, tarea, datos, formato y límites.</p></div>`;$('#duelScore').textContent=`Terminado · Aciertos: ${dscore} de ${duels.length}`;return}
   const d=duels[dround];
   $('#duelScore').textContent=`Ronda ${dround+1} de ${duels.length} · Aciertos: ${dscore}`;
   const cls=k=>dpick?(k===d.w?'win':'lose'):'';
   $('#duel').innerHTML=`<div class="duel"><button class="opt-card ${cls('a')}" data-k="a" ${dpick?'disabled':''}><span class="k">A</span><span>${esc(d.a)}</span></button><button class="opt-card ${cls('b')}" data-k="b" ${dpick?'disabled':''}><span class="k">B</span><span>${esc(d.b)}</span></button></div>${dpick?`<div class="why ${dpick===d.w?'ok':'no'}" style="margin-top:14px"><b>${dpick===d.w?'Correcto.':'Gana '+d.w.toUpperCase()+'.'}</b> ${esc(d.why)}</div><div style="margin-top:12px"><button class="primary" id="duelNext">${dround+1<duels.length?'Siguiente ronda →':'Ver resultado'}</button></div>`:''}`;
 }
 $('#duel').addEventListener('click',e=>{
-  const o=e.target.closest('.opt-card');if(o&&!dpick){dpick=o.dataset.k;if(dpick===duels[dround].w)dscore++;renderDuel();return}
+  const o=e.target.closest('.opt-card');if(o&&!dpick){dpick=o.dataset.k;dpicks[dround]=dpick;if(dpick===duels[dround].w)dscore++;renderDuel();return}
   if(e.target.id==='duelNext'){dround++;dpick=null;renderDuel()}
 });
-$('#duelReset').onclick=()=>{dround=0;dscore=0;dpick=null;renderDuel()};renderDuel();
+$('#duelReset').onclick=()=>{dround=0;dscore=0;dpick=null;dpicks=[];dsent=false;$('#duelNota').hidden=true;renderDuel()};renderDuel();
 
 /* 2.1 guion demo */
 const steps=[
@@ -749,16 +772,17 @@ const sem=[
   ['Resultado analítico que "salió raro" para que Claude lo corrija','r','Rojo. Claude no corrige resultados. Puede ayudar a listar causas posibles para investigar según procedimiento.'],
   ['Foto de una factura de proveedor para pasarla a una tabla','v','Verde. Es un buen uso; revisa la transcripción cifra por cifra.']
 ];
-let sstate={};
+let sstate={},ssent=false;
 function renderSem(){
   $('#sem').innerHTML=sem.map((s,i)=>{
     const a=sstate[i],ok=a===s[1];
     const btn=(c,t)=>`<button class="${c}" data-s="${i}" data-v="${c}" ${a?'disabled':''}>${t}</button>`;
     return `<div class="item ${a?(ok?'done-ok':'done-no'):''}"><span class="q">${esc(s[0])}</span><div class="lights">${btn('v','Verde')}${btn('a','Ámbar')}${btn('r','Rojo')}</div>${a?`<div class="why ${ok?'ok':'no'}"><b>${ok?'Correcto.':'Respuesta:'}</b> ${esc(s[2])}</div>`:''}</div>`}).join('');
   const k=Object.keys(sstate);$('#semScore').textContent=`Aciertos: ${k.filter(i=>sstate[i]===sem[i][1]).length} de ${k.length}`;
+  if(k.length===sem.length&&!ssent){ssent=true;registrarNota('semaforo',sem.map((_,i)=>sstate[i]),'#semNota')}
 }
 $('#sem').addEventListener('click',e=>{const b=e.target.closest('button[data-s]');if(!b)return;sstate[b.dataset.s]=b.dataset.v;renderSem()});
-$('#semReset').onclick=()=>{sstate={};renderSem()};renderSem();
+$('#semReset').onclick=()=>{sstate={};ssent=false;$('#semNota').hidden=true;renderSem()};renderSem();
 
 /* 3.3 reglas */
 const always=['Verificar todo número, norma, fecha o cita antes de usarlo.','Pedir fuentes cuando se trate de normativa o datos externos.','Revisar el documento final completo antes de enviarlo o firmarlo.','Abrir un chat nuevo por tema y usar el Proyecto del área.','Anonimizar: "Paciente A", "Cliente 01"; quitar DNI, teléfonos y direcciones.'];

@@ -24,9 +24,9 @@ export default async function AyudaPage() {
     {
       href: '/ayuda/capacitacion-claude/notas',
       icon: Trophy,
-      titulo: 'Notas de la capacitación',
-      texto: 'Las notas del 0 al 20 del Duelo de pedidos y del Semáforo de datos de todo el personal, con la nota final de cada persona.',
-      etiqueta: 'Notas',
+      titulo: 'Ranking de la capacitación',
+      texto: 'Las notas de la evaluación final de todo el personal: tres pruebas del 0 al 20, nota final y podio.',
+      etiqueta: 'Ranking',
     },
     {
       href: '/capacitacion-claude/guia.html',

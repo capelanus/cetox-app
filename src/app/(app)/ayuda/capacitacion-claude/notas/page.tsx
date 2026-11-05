@@ -1,18 +1,15 @@
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
-import { ArrowLeft, Trophy } from 'lucide-react'
-import { ACTIVIDADES, type Actividad } from '@/lib/capacitacion'
-import { AREA_LABELS, ROL_LABELS } from '@/lib/constants'
+import { ArrowLeft, Trophy, Medal } from 'lucide-react'
+import { ACTIVIDADES, ORDEN_ACTIVIDADES } from '@/lib/capacitacion'
+import { obtenerRanking } from '@/lib/capacitacion-ranking'
 import { formatFecha } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Notas de la capacitación · CETOX' }
+export const metadata = { title: 'Ranking de la capacitación · CETOX' }
 
-// Notas publicadas para todo el personal: una fila por persona que hizo al
-// menos una actividad puntuada. Nota final = promedio de las dos
-// actividades; solo existe cuando ambas están hechas.
-const ORDEN: Actividad[] = ['duelo', 'semaforo']
+// Ranking público de la evaluación final de la capacitación en Claude: el
+// mismo que ve cada persona al final de la clase (lib/capacitacion-ranking).
 
 function colorNota(n: number) {
   if (n >= 14) return { color: '#13602C', bg: '#ecfdf5' }
@@ -21,8 +18,8 @@ function colorNota(n: number) {
 }
 const fmt = (n: number) => n.toLocaleString('es-PE', { maximumFractionDigits: 1 })
 
-function Nota({ n, grande = false }: { n: number | null; grande?: boolean }) {
-  if (n === null) return <span className="text-xs text-slate-400">Pendiente</span>
+function Nota({ n, grande = false }: { n: number | null | undefined; grande?: boolean }) {
+  if (n === null || n === undefined) return <span className="text-xs text-slate-400">—</span>
   const c = colorNota(n)
   return (
     <span className={`inline-block rounded-md font-bold tabular-nums ${grande ? 'px-2.5 py-1 text-base' : 'px-2 py-0.5 text-sm'}`}
@@ -32,37 +29,16 @@ function Nota({ n, grande = false }: { n: number | null; grande?: boolean }) {
   )
 }
 
+const MEDALLAS = [
+  { puesto: 2, color: '#9aa5ad', alto: 'pt-5' },
+  { puesto: 1, color: '#c9a227', alto: 'pt-9' },
+  { puesto: 3, color: '#b07240', alto: 'pt-3' },
+]
+
 export default async function NotasCapacitacionPage() {
   const session = await auth()
-  const notas = await prisma.capacitacionNota.findMany({
-    include: { usuario: { select: { id: true, nombre: true, rol: true, area: true } } },
-  })
-
-  const porPersona = new Map<string, {
-    id: string; nombre: string; area: string; notas: Partial<Record<Actividad, number>>; ultima: Date
-  }>()
-  for (const n of notas) {
-    const u = n.usuario
-    const p = porPersona.get(u.id) ?? {
-      id: u.id, nombre: u.nombre,
-      area: (u.area && AREA_LABELS[u.area]) || ROL_LABELS[u.rol] || u.rol,
-      notas: {}, ultima: n.createdAt,
-    }
-    p.notas[n.actividad as Actividad] = n.nota
-    if (n.createdAt > p.ultima) p.ultima = n.createdAt
-    porPersona.set(u.id, p)
-  }
-  const filas = [...porPersona.values()].map(p => {
-    const hechas = ORDEN.filter(a => p.notas[a] !== undefined)
-    const final = hechas.length === ORDEN.length
-      ? Math.round((ORDEN.reduce((s, a) => s + (p.notas[a] ?? 0), 0) / ORDEN.length) * 10) / 10
-      : null
-    return { ...p, final }
-  }).sort((a, b) =>
-    (b.final ?? -1) - (a.final ?? -1) || a.nombre.localeCompare(b.nombre, 'es'))
-
-  const completas = filas.filter(f => f.final !== null)
-  const promedio = completas.length ? completas.reduce((s, f) => s + (f.final ?? 0), 0) / completas.length : null
+  const { ranking, resumen } = await obtenerRanking()
+  const yo = ranking.find(f => f.usuarioId === session?.user.id)
 
   return (
     <div className="max-w-5xl">
@@ -73,18 +49,26 @@ export default async function NotasCapacitacionPage() {
         <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-widest mb-1">
           <Trophy className="w-4 h-4" /> Capacitación: Claude en CETOX
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Notas de la capacitación</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Ranking de la evaluación final</h1>
         <p className="text-sm text-slate-500 max-w-3xl">
-          Notas del 0 al 20 de las actividades puntuadas: {ORDEN.map(a => `${ACTIVIDADES[a].nombre} (${ACTIVIDADES[a].modulo})`).join(' y ')}.
-          Cuenta el primer intento completo de cada persona; los siguientes son de práctica. La nota final es el promedio de las dos.
+          Tres pruebas con nota del 0 al 20: {ORDEN_ACTIVIDADES.map(a => ACTIVIDADES[a].nombre).join(', ')}.
+          La nota final es el promedio. Cuenta el primer intento de cada prueba y, a igual nota, queda arriba quien terminó primero.
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-5 max-w-xl">
+      {yo && (
+        <div className="mb-5 rounded-xl px-5 py-4 text-white font-semibold" style={{ backgroundColor: '#13602C' }}>
+          {yo.final !== null
+            ? <>Tu nota final es {fmt(yo.final)}/20: puesto {yo.puesto} de {resumen.conFinal}.</>
+            : <>{(f => `Te ${f === 1 ? 'falta 1 prueba' : `faltan ${f} pruebas`} de ${ORDEN_ACTIVIDADES.length} para entrar al ranking.`)(ORDEN_ACTIVIDADES.length - Object.keys(yo.notas).length)}</>}
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-3 mb-6 max-w-xl">
         {[
-          ['Participantes', String(filas.length)],
-          ['Con nota final', String(completas.length)],
-          ['Promedio final', promedio === null ? '—' : fmt(Math.round(promedio * 10) / 10)],
+          ['Participan', String(resumen.participantes)],
+          ['Terminaron', String(resumen.conFinal)],
+          ['Promedio final', resumen.promedio === null ? '—' : fmt(resumen.promedio)],
         ].map(([l, v]) => (
           <div key={l} className="bg-white rounded-xl border border-slate-200 px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{l}</p>
@@ -93,9 +77,26 @@ export default async function NotasCapacitacionPage() {
         ))}
       </div>
 
-      {filas.length === 0 ? (
+      {/* Podio */}
+      <div className="grid grid-cols-3 gap-3 items-end max-w-2xl mb-6">
+        {MEDALLAS.map(m => {
+          const f = ranking.find(x => x.puesto === m.puesto)
+          return (
+            <div key={m.puesto} className={`bg-white rounded-xl border border-slate-200 px-3 pb-4 ${m.alto} text-center ${f ? '' : 'opacity-50'}`}
+              style={{ borderTop: `6px solid ${m.color}` }}>
+              <Medal className="w-5 h-5 mx-auto mb-1" style={{ color: m.color }} />
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{m.puesto}.º puesto</p>
+              <p className="font-bold text-slate-900 truncate">{f ? f.nombre : 'Libre'}</p>
+              {f && <p className="text-xs text-slate-500 truncate">{f.area}</p>}
+              {f && <p className="text-2xl font-extrabold tabular-nums mt-1" style={{ color: '#13602C' }}>{fmt(f.final!)}</p>}
+            </div>
+          )
+        })}
+      </div>
+
+      {ranking.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-500">
-          Todavía nadie ha completado una actividad puntuada. Las notas aparecen aquí apenas alguien termina el Duelo de pedidos o el Semáforo de datos.
+          Todavía nadie ha rendido la evaluación final. Las notas aparecen aquí apenas alguien termina una prueba.
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
@@ -105,22 +106,24 @@ export default async function NotasCapacitacionPage() {
                 <th className="px-4 py-3 w-10">#</th>
                 <th className="px-4 py-3">Persona</th>
                 <th className="px-4 py-3">Área</th>
-                {ORDEN.map(a => <th key={a} className="px-4 py-3 text-center">{ACTIVIDADES[a].nombre}</th>)}
+                {ORDEN_ACTIVIDADES.map(a => <th key={a} className="px-4 py-3 text-center">{ACTIVIDADES[a].corto}</th>)}
                 <th className="px-4 py-3 text-center">Nota final</th>
                 <th className="px-4 py-3">Fecha</th>
               </tr>
             </thead>
             <tbody>
-              {filas.map((f, i) => {
-                const yo = f.id === session?.user.id
+              {ranking.map(f => {
+                const esYo = f.usuarioId === session?.user.id
                 return (
-                  <tr key={f.id} className={`border-b border-slate-100 last:border-0 ${yo ? 'bg-emerald-50/60' : ''}`}>
-                    <td className="px-4 py-3 text-slate-400 tabular-nums">{f.final !== null ? i + 1 : '—'}</td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{f.nombre}{yo && <span className="ml-2 text-[11px] font-semibold text-emerald-700">Tú</span>}</td>
+                  <tr key={f.usuarioId} className={`border-b border-slate-100 last:border-0 ${esYo ? 'bg-emerald-50/60' : ''}`}>
+                    <td className="px-4 py-3 text-slate-400 tabular-nums">{f.puesto ?? '—'}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900">{f.nombre}{esYo && <span className="ml-2 text-[11px] font-semibold text-emerald-700">Tú</span>}</td>
                     <td className="px-4 py-3 text-slate-500">{f.area}</td>
-                    {ORDEN.map(a => <td key={a} className="px-4 py-3 text-center"><Nota n={f.notas[a] ?? null} /></td>)}
-                    <td className="px-4 py-3 text-center"><Nota n={f.final} grande /></td>
-                    <td className="px-4 py-3 text-slate-500 tabular-nums">{formatFecha(f.ultima)}</td>
+                    {ORDEN_ACTIVIDADES.map(a => <td key={a} className="px-4 py-3 text-center"><Nota n={f.notas[a]} /></td>)}
+                    <td className="px-4 py-3 text-center">
+                      {f.final !== null ? <Nota n={f.final} grande /> : <span className="text-xs text-slate-400">En curso</span>}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 tabular-nums">{formatFecha(f.terminadoEn ?? f.ultimaActividad)}</td>
                   </tr>
                 )
               })}

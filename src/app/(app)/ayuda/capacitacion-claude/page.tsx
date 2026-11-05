@@ -18,7 +18,7 @@ export default function CapacitacionClaudePage() {
         <h1 className="text-lg font-bold text-slate-900 flex-1">Capacitación: Claude en CETOX</h1>
         <Link href="/ayuda/capacitacion-claude/notas"
           className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700">
-          <Trophy className="w-4 h-4" /> Notas
+          <Trophy className="w-4 h-4" /> Ranking
         </Link>
         <a href="/capacitacion-claude/guia.html" target="_blank" rel="noopener"
           className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700">

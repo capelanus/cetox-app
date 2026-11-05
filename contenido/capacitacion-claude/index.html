@@ -39,6 +39,35 @@
 .nota-box .n small{font-size:1rem;color:var(--muted);font-weight:600}
 .nota-box p{flex:1;min-width:220px}
 .nota-box a{font-weight:700}
+.nota-box .sig{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ya-rendida{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 var(--r) var(--r) 0;max-width:760px}
+.aviso-eval{border-left-color:var(--accent);background:var(--accent-soft)}
+.card.aviso-eval{border-left:4px solid var(--accent)}
+.prueba{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.prueba:last-child{border-bottom:0}
+.prueba .est{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+.prueba .est b{font-family:var(--f-display);font-size:1.3rem;color:var(--accent)}
+.marcador{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.marcador div{display:flex;flex-direction:column;gap:2px}
+.marcador .v{font-family:var(--f-display);font-size:1.8rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.marcador .l{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lider{background:var(--amber-soft);border-radius:8px;padding:10px 12px}
+.podio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;max-width:760px}
+.podio .p{background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--line);border-radius:var(--r);padding:16px;text-align:center;display:flex;flex-direction:column;gap:4px;min-width:0}
+.podio .p.oro{border-top-color:#c9a227;padding-block:26px}
+.podio .p.plata{border-top-color:#9aa5ad}
+.podio .p.bronce{border-top-color:#b07240}
+.podio .p .pos{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.1em;color:var(--muted)}
+.podio .p .nom{font-weight:700;overflow-wrap:anywhere}
+.podio .p .nf{font-family:var(--f-display);font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
+.podio .p.vacio{opacity:.5}
+.rk table{min-width:640px}
+.rk th,.rk td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.rk th{display:table-cell}
+.rk tr.yo td{background:var(--accent-soft);font-weight:600}
+.rk td.fin{font-family:var(--f-display);font-weight:800;font-size:1.1rem;color:var(--accent)}
+.yo-box{background:var(--accent);color:var(--accent-ink);border-radius:var(--r);padding:18px 22px;font-family:var(--f-display);font-size:1.3rem;font-weight:700;max-width:760px}
+@media (max-width:640px){.podio{grid-template-columns:1fr}.podio .p.oro{order:-1}.marcador{grid-template-columns:1fr 1fr}}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:var(--fs);line-height:1.55}
 body.big{--fs:21px}
@@ -271,17 +300,20 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <li><a href="#vitrina"><span class="code">1.1</span>Claude en acción</a></li>
       <li><a href="#pedir"><span class="code">1.2</span>Antes y después</a></li>
       <li><a href="#constructor"><span class="code">1.3</span>Constructor de pedidos</a></li>
-      <li><a href="#duelo"><span class="code">1.4</span>Duelo de pedidos</a></li>
       <li class="lvl">Nivel 2 · Intermedio</li>
       <li><a href="#areas"><span class="code">2.1</span>Casos por área</a></li>
       <li><a href="#tiempo"><span class="code">2.2</span>Tiempo recuperado</a></li>
       <li class="lvl">Uso responsable</li>
-      <li><a href="#mitos"><span class="code">3.1</span>¿Mito o verdad?</a></li>
-      <li><a href="#semaforo"><span class="code">3.2</span>Semáforo de datos</a></li>
-      <li><a href="#reglas"><span class="code">3.3</span>Reglas CETOX</a></li>
+      <li><a href="#reglas"><span class="code">3.1</span>Reglas CETOX</a></li>
       <li class="lvl">Práctica</li>
       <li><a href="#plantillas"><span class="code">4.1</span>Plantillas</a></li>
       <li><a href="#cierre"><span class="code">4.2</span>Cierre</a></li>
+      <li class="lvl">Evaluación final · con nota</li>
+      <li><a href="#reto"><span class="code">5.1</span>El reto</a></li>
+      <li><a href="#duelo"><span class="code">5.2</span>Duelo de pedidos</a></li>
+      <li><a href="#mitos"><span class="code">5.3</span>¿Mito o verdad?</a></li>
+      <li><a href="#semaforo"><span class="code">5.4</span>Semáforo de datos</a></li>
+      <li><a href="#ranking"><span class="code">5.5</span>Ranking</a></li>
     </ol>
     <div class="sidefoot">
       <span><kbd>←</kbd> <kbd>→</kbd> cambian de módulo</span>
@@ -303,6 +335,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
           <h1>Hoy vas a ver a Claude trabajar. Y lo vas a poner a trabajar tú.</h1>
           <p class="lead">En esta sesión no vamos a hablar de inteligencia artificial en abstracto. Vamos a redactar, resumir, calcular y preparar documentos reales de Administración, Química y Calidad, y a aprender qué revisar antes de usar el resultado.</p>
           <div class="idea"><b>La regla del día:</b> Claude es rápido y muy capaz, pero puede equivocarse con total seguridad. Quien firma, revisa.</div>
+          <div class="idea aviso-eval"><b>Al final hay evaluación.</b> Tres pruebas con nota del 0 al 20 y un ranking que verá todo el personal de CETOX. Atención a cada módulo.</div>
         </div>
         <div class="poll">
           <span class="eyebrow">Para empezar · manos arriba</span>
@@ -389,14 +422,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       </div>
     </section>
 
-    <!-- 1.4 -->
-    <section class="view" data-view="duelo" hidden>
-      <div class="head"><span class="eyebrow">Nivel 1 · Módulo 1.4 · Actividad</span><h2>Duelo de pedidos</h2>
-      <p class="lead">Dos personas piden lo mismo. ¿Cuál pedido va a dar mejor resultado? Toca una tarjeta en cada ronda. Al terminar recibes una nota del 0 al 20.</p></div>
-      <div class="row between"><span class="score" id="duelScore">Ronda 1 de 4 · Aciertos: 0</span><button id="duelReset">Reiniciar</button></div>
-      <div id="duel"></div>
-      <div class="nota-box" id="duelNota" hidden></div>
-    </section>
+
 
     <!-- 2.1 -->
     <section class="view" data-view="areas" hidden>
@@ -436,26 +462,13 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       </div>
     </section>
 
+
+
+
+
     <!-- 3.1 -->
-    <section class="view" data-view="mitos" hidden>
-      <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.1 · Actividad</span><h2>¿Mito o verdad?</h2>
-      <p class="lead">Lee cada frase en voz alta. El grupo vota y luego se revela la respuesta.</p></div>
-      <div class="row between"><span class="score" id="mythScore">Aciertos: 0 de 0</span><button id="mythReset">Reiniciar</button></div>
-      <div class="myth" id="myths"></div>
-    </section>
-
-    <!-- 3.2 -->
-    <section class="view" data-view="semaforo" hidden>
-      <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.2 · Actividad</span><h2>Semáforo de datos: ¿lo subo a Claude?</h2>
-      <p class="lead">Para cada caso decide: verde (se puede), ámbar (con cuidado o anonimizando) o rojo (no). Al responder los 8 casos recibes una nota del 0 al 20.</p></div>
-      <div class="row between"><span class="score" id="semScore">Aciertos: 0 de 0</span><button id="semReset">Reiniciar</button></div>
-      <div class="sem" id="sem"></div>
-      <div class="nota-box" id="semNota" hidden></div>
-    </section>
-
-    <!-- 3.3 -->
     <section class="view" data-view="reglas" hidden>
-      <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.3</span><h2>Reglas de uso en CETOX</h2>
+      <div class="head"><span class="eyebrow">Uso responsable · Módulo 3.1</span><h2>Reglas de uso en CETOX</h2>
       <p class="lead">En un laboratorio acreditado, el riesgo no es que Claude falle: es usar un error sin revisarlo. Cada persona marca las reglas que se compromete a cumplir.</p></div>
       <div class="row between"><span class="score" id="rulesScore">0 de 10 compromisos</span></div>
       <div class="rules">
@@ -496,7 +509,68 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <div class="card" style="max-width:760px"><h3><span class="tag">RETO DE LA SEMANA</span></h3>
         <p>Cada persona elige <b>una</b> tarea de su área (módulo 2.1), la hace con Claude usando una plantilla, y anota dos cosas: cuánto tiempo le tomó y qué tuvo que corregir.</p>
         <p class="muted">En dos semanas cada área comparte un caso donde Claude ahorró tiempo y uno donde falló. Con eso se arma el nivel avanzado.</p></div>
+          <div class="card aviso-eval" style="max-width:760px"><h3><span class="tag">AHORA</span> Evaluación final</h3>
+        <p>Tres pruebas, nota del 0 al 20 y ranking público. Solo cuenta el primer intento.</p>
+        <div><button class="primary" id="irAlReto">Ir al reto →</button></div></div>
     </section>
+
+    <!-- 5.1 -->
+    <section class="view" data-view="reto" hidden>
+      <div class="head"><span class="eyebrow">Evaluación final · Módulo 5.1</span><h2>Llegó la hora: tu nota se publica</h2>
+      <p class="lead">Tres pruebas cortas sobre lo que viste hoy. Cada una vale de 0 a 20 y tu nota final es el promedio. El ranking con las notas de todo el personal de CETOX queda publicado en el ERP.</p></div>
+      <div class="grid g3">
+        <div class="card"><h3><span class="tag">UN INTENTO</span></h3><p><b>Cuenta el primero.</b> La primera vez que terminas una prueba, esa es tu nota oficial. Puedes repetirla para practicar, pero ya no cambia.</p></div>
+        <div class="card"><h3><span class="tag">PÚBLICO</span></h3><p><b>Lo ve toda la empresa.</b> El ranking muestra el nombre, el área y la nota de cada persona, en Ayuda → Ranking del ERP.</p></div>
+        <div class="card"><h3><span class="tag">DESEMPATE</span></h3><p><b>A igual nota, gana quien terminó primero.</b> Responde con calma, pero no lo dejes para mañana.</p></div>
+      </div>
+      <div class="grid g2">
+        <div class="card" id="retoMio"><span class="eyebrow">Tus pruebas</span><p class="muted">Cargando…</p></div>
+        <div class="card" id="retoMarcador"><span class="eyebrow">El marcador ahora</span><p class="muted">Cargando…</p></div>
+      </div>
+      <div class="row"><button class="primary" id="retoEmpezar" data-ir="#duelo">Empezar la prueba 1 →</button></div>
+    </section>
+
+    <!-- 5.2 -->
+    <section class="view" data-view="duelo" hidden>
+      <div class="head"><span class="eyebrow">Evaluación final · Prueba 1 de 3 · Módulo 5.2</span><h2>Duelo de pedidos</h2>
+      <p class="lead">Dos personas piden lo mismo. ¿Qué pedido dará mejor resultado? Elige una tarjeta en cada una de las 4 rondas. Nota del 0 al 20.</p></div>
+      <div class="ya-rendida" data-act="duelo" hidden></div>
+      <div class="row between"><span class="score" id="duelScore">Ronda 1 de 4 · Aciertos: 0</span><button id="duelReset">Reiniciar</button></div>
+      <div id="duel"></div>
+      <div class="nota-box" id="duelNota" hidden></div>
+    </section>
+
+    <!-- 5.3 -->
+    <section class="view" data-view="mitos" hidden>
+      <div class="head"><span class="eyebrow">Evaluación final · Prueba 2 de 3 · Módulo 5.3</span><h2>¿Mito o verdad?</h2>
+      <p class="lead">Siete frases sobre Claude. Decide si cada una es verdad o mito. Al responder las siete recibes una nota del 0 al 20.</p></div>
+      <div class="ya-rendida" data-act="mitos" hidden></div>
+      <div class="row between"><span class="score" id="mythScore">Aciertos: 0 de 0</span><button id="mythReset">Reiniciar</button></div>
+      <div class="myth" id="myths"></div>
+      <div class="nota-box" id="mythNota" hidden></div>
+    </section>
+
+    <!-- 5.4 -->
+    <section class="view" data-view="semaforo" hidden>
+      <div class="head"><span class="eyebrow">Evaluación final · Prueba 3 de 3 · Módulo 5.4</span><h2>Semáforo de datos: ¿lo subo a Claude?</h2>
+      <p class="lead">Ocho casos reales. Para cada uno decide: verde (se puede subir), ámbar (con cuidado o anonimizando) o rojo (no). Nota del 0 al 20.</p></div>
+      <div class="ya-rendida" data-act="semaforo" hidden></div>
+      <div class="row between"><span class="score" id="semScore">Aciertos: 0 de 0</span><button id="semReset">Reiniciar</button></div>
+      <div class="sem" id="sem"></div>
+      <div class="nota-box" id="semNota" hidden></div>
+    </section>
+
+    <!-- 5.5 -->
+    <section class="view" data-view="ranking" hidden>
+      <div class="head"><span class="eyebrow">Evaluación final · Módulo 5.5</span><h2>Ranking CETOX</h2>
+      <p class="lead">Así va el personal. Entra al ranking quien termina las tres pruebas; a igual nota, queda arriba quien terminó primero.</p></div>
+      <div class="yo-box" id="rkYo" hidden></div>
+      <div class="podio" id="rkPodio"></div>
+      <div class="tablewrap rk"><table><thead><tr><th>#</th><th>Persona</th><th>Área</th><th>Duelo</th><th>Mito o verdad</th><th>Semáforo</th><th>Final</th></tr></thead><tbody id="rkBody"></tbody></table></div>
+      <p class="muted" id="rkResumen"></p>
+      <div class="row between"><button id="rkRefresh">Actualizar</button><a href="/ayuda/capacitacion-claude/notas" target="_top">Ver el ranking en el ERP →</a></div>
+    </section>
+
 
     <div class="pager">
       <button id="prev">← Anterior</button>
@@ -541,6 +615,7 @@ function show(name){
   $('#topProg').style.width=((i+1)/views.length*100)+'%';
   window.scrollTo(0,0);
   if(name==='vitrina'&&!capStarted){capStarted=true;setCap(0)}
+  if(['reto','ranking','duelo','mitos','semaforo'].includes(name))cargarMarcador();
 }
 const cur=()=>views.includes(location.hash.slice(1))?location.hash.slice(1):'inicio';
 function go(d){const i=views.indexOf(cur())+d;if(i>=0&&i<views.length)location.hash=views[i]}
@@ -634,20 +709,75 @@ ids.forEach((i,k)=>$('#'+i).value=examples.adm[k]);build();
 /* notas: el ERP calcula la nota con la clave de respuestas (lib/capacitacion.ts) */
 const NOTAS_URL='/ayuda/capacitacion-claude/notas';
 function fmtNota(n){return n.toLocaleString('es-PE',{maximumFractionDigits:1})}
+const SIGUIENTE={duelo:['#mitos','Siguiente: prueba 2 de 3 →'],mitos:['#semaforo','Siguiente: prueba 3 de 3 →'],semaforo:['#ranking','Ver el ranking →']};
 async function registrarNota(actividad,respuestas,boxSel){
   const box=$(boxSel);box.hidden=false;box.innerHTML='<p class="muted">Registrando tu nota…</p>';
+  const [sigHref,sigTxt]=SIGUIENTE[actividad];
   try{
     const r=await fetch('/api/capacitacion/notas',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({actividad,respuestas})});
     const d=await r.json().catch(()=>({}));
     if(!r.ok||!d.ok)throw new Error(d.error||'No se pudo registrar la nota.');
     const msg=d.oficial
-      ?`<b>Nota registrada.</b> ${d.aciertos} de ${d.total} aciertos. Es tu nota oficial: los siguientes intentos quedan como práctica.`
+      ?`<b>Nota registrada.</b> ${d.aciertos} de ${d.total} aciertos. Es tu nota oficial y ya aparece en el ranking.`
       :`<b>Intento de práctica:</b> ${d.aciertos} de ${d.total} aciertos (${fmtNota(d.nota)}/20). Tu nota oficial sigue siendo <b>${fmtNota(d.notaOficial)}/20</b>, la del primer intento.`;
-    box.innerHTML=`<span class="n">${fmtNota(d.oficial?d.nota:d.notaOficial)}<small> /20</small></span><p>${msg}</p><a href="${NOTAS_URL}" target="_top">Ver las notas de todos →</a>`;
+    box.innerHTML=`<span class="n">${fmtNota(d.oficial?d.nota:d.notaOficial)}<small> /20</small></span><p>${msg}</p><span class="sig"><button class="primary" data-ir="${sigHref}">${sigTxt}</button></span>`;
+    cargarMarcador();
   }catch(e){box.innerHTML=`<p><b>No se registró la nota.</b> ${esc(e.message)} Abre la clase desde el ERP (Ayuda → Capacitación) con tu usuario.</p>`}
 }
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ir]');if(b)location.hash=b.dataset.ir.slice(1)});
 
-/* 1.4 duelo */
+/* evaluación final: marcador en vivo (GET /api/capacitacion/notas) */
+const PRUEBAS=[['duelo','Duelo de pedidos'],['mitos','¿Mito o verdad?'],['semaforo','Semáforo de datos']];
+let marcador=null;
+async function cargarMarcador(){
+  try{
+    const r=await fetch('/api/capacitacion/notas',{credentials:'same-origin',cache:'no-store'});
+    if(!r.ok)throw new Error();
+    marcador=await r.json();
+  }catch(e){marcador={error:true}}
+  renderReto();renderRanking();renderYaRendidas();
+}
+const misNotas=()=>(marcador&&marcador.yo&&marcador.yo.notas)||{};
+function renderYaRendidas(){
+  $$('.ya-rendida').forEach(el=>{
+    const n=misNotas()[el.dataset.act];
+    el.hidden=n===undefined;
+    if(n!==undefined)el.innerHTML=`<b>Ya rendiste esta prueba: tu nota oficial es ${fmtNota(n)}/20.</b> Si la haces de nuevo, es solo práctica y no cambia tu nota.`;
+  });
+}
+function renderReto(){
+  if(!marcador)return;
+  if(marcador.error){$('#retoMio').innerHTML='<span class="eyebrow">Tus pruebas</span><p>No se pudo leer el marcador. Abre la clase desde el ERP con tu usuario para que tu nota cuente.</p>';$('#retoMarcador').hidden=true;return}
+  const mn=misNotas();
+  const hechas=PRUEBAS.filter(([k])=>mn[k]!==undefined).length;
+  $('#retoMio').innerHTML=`<span class="eyebrow">Tus pruebas · ${hechas} de 3</span>`+PRUEBAS.map(([k,nom],i)=>`<div class="prueba"><span><b>${i+1}.</b> ${esc(nom)}</span><span class="est">${mn[k]!==undefined?`<b>${fmtNota(mn[k])}</b> /20`:'Pendiente'}</span></div>`).join('')
+    +(marcador.yo&&marcador.yo.final!=null?`<p><b>Tu nota final: ${fmtNota(marcador.yo.final)}/20</b> · puesto ${marcador.yo.puesto} de ${marcador.resumen.conFinal}.</p>`:'');
+  const r=marcador.resumen,lider=marcador.ranking.find(f=>f.puesto===1);
+  $('#retoMarcador').hidden=false;
+  $('#retoMarcador').innerHTML=`<span class="eyebrow">El marcador ahora</span><div class="marcador"><div><span class="v">${r.participantes}</span><span class="l">Participan</span></div><div><span class="v">${r.conFinal}</span><span class="l">Terminaron</span></div><div><span class="v">${r.promedio==null?'—':fmtNota(r.promedio)}</span><span class="l">Promedio</span></div></div>`
+    +(lider?`<p class="lider">Nota a superar: <b>${fmtNota(lider.final)}/20</b>, de ${esc(lider.nombre)} (${esc(lider.area)}).</p>`:'<p class="lider">Nadie ha terminado todavía. El primer puesto está libre.</p>');
+  const pendiente=PRUEBAS.findIndex(([k])=>mn[k]===undefined);
+  $('#retoEmpezar').textContent=pendiente<0?'Ver el ranking →':`${hechas?'Seguir con':'Empezar'} la prueba ${pendiente+1} →`;
+  $('#retoEmpezar').dataset.ir=pendiente<0?'#ranking':'#'+PRUEBAS[pendiente][0];
+}
+function renderRanking(){
+  if(!marcador)return;
+  if(marcador.error){$('#rkBody').innerHTML='<tr><td colspan="7">No se pudo leer el ranking. Abre la clase desde el ERP con tu usuario.</td></tr>';return}
+  const filas=marcador.ranking,top=filas.filter(f=>f.puesto);
+  const med=[['plata',2],['oro',1],['bronce',3]];
+  $('#rkPodio').innerHTML=med.map(([c,p])=>{const f=top.find(x=>x.puesto===p);
+    return f?`<div class="p ${c}"><span class="pos">${p}.º PUESTO</span><span class="nom">${esc(f.nombre)}</span><span class="muted" style="font-size:.85rem">${esc(f.area)}</span><span class="nf">${fmtNota(f.final)}</span></div>`
+            :`<div class="p ${c} vacio"><span class="pos">${p}.º PUESTO</span><span class="nom">Libre</span></div>`}).join('');
+  const nota=v=>v==null?'<span class="muted">—</span>':fmtNota(v);
+  $('#rkBody').innerHTML=filas.length?filas.map(f=>`<tr class="${f.esYo?'yo':''}"><td>${f.puesto??'—'}</td><td>${esc(f.nombre)}${f.esYo?' · tú':''}</td><td>${esc(f.area)}</td><td>${nota(f.notas.duelo)}</td><td>${nota(f.notas.mitos)}</td><td>${nota(f.notas.semaforo)}</td><td class="fin">${f.final==null?'<span class="muted" style="font-size:.85rem;font-weight:400">En curso</span>':fmtNota(f.final)}</td></tr>`).join('')
+    :'<tr><td colspan="7">Todavía nadie ha rendido una prueba. Sé la primera persona.</td></tr>';
+  const yo=marcador.yo,r=marcador.resumen;
+  $('#rkYo').hidden=!yo;
+  if(yo)$('#rkYo').textContent=yo.final!=null?`Tu nota final es ${fmtNota(yo.final)}/20: puesto ${yo.puesto} de ${r.conFinal}.`:(f=>`Te ${f===1?'falta 1 prueba':'faltan '+f+' pruebas'} de 3 para entrar al ranking.`)(3-Object.keys(yo.notas).length);
+  $('#rkResumen').textContent=`${r.participantes} personas participan · ${r.conFinal} terminaron las tres pruebas · promedio final: ${r.promedio==null?'—':fmtNota(r.promedio)+'/20'}.`;
+}
+
+/* 5.2 duelo (prueba 1) */
 const duels=[
   {a:'Resume este documento.',b:'Resume el procedimiento adjunto en 5 puntos para el personal nuevo de Calidad. Indica la página de cada dato y lista aparte los plazos que menciona.',w:'b',why:'B dice para quién es, cuántos puntos quiere y pide la página de cada dato: eso permite verificar. A deja todo a criterio de Claude.'},
   {a:'Calcula cuánto necesito de un estándar de 1000 mg/L para preparar 100 mL a 50 mg/L. Hazlo con código y muestra la fórmula.',b:'¿Cuánto pipeteo para la dilución?',w:'a',why:'A tiene todos los datos y pide el código y la fórmula a la vista. B no tiene concentraciones ni volumen: Claude tendría que inventarlos o preguntar.'},
@@ -709,7 +839,7 @@ $('#calcPct').addEventListener('input',()=>{calc();store.set('cetox-pct',pct)});
 $('#calcReset').addEventListener('click',()=>{hours=tasks.map(t=>t[2]);pct=30;store.set('cetox-hours',hours);store.set('cetox-pct',pct);renderCalc();toast('Valores de ejemplo restaurados')});
 renderCalc();
 
-/* 3.1 mitos */
+/* 5.3 mito o verdad (prueba 2) */
 const myths=[
   ['Si Claude lo dice con seguridad, es correcto.',false,'Mito. Claude puede dar un dato falso con el mismo tono que uno verdadero. La seguridad del texto no prueba nada.'],
   ['Claude conoce los procedimientos internos de CETOX.',false,'Mito. Solo sabe lo que le subes o escribes en el chat o en el Proyecto.'],
@@ -719,18 +849,19 @@ const myths=[
   ['Si la respuesta no sirve, conviene editar mi mensaje en vez de insistir.',true,'Verdad. Editar el pedido original suele funcionar mejor que corregir en varios mensajes.'],
   ['Con la búsqueda web, cualquier dato que da ya está confirmado.',false,'Mito. Solo está respaldado si trae la fuente, y la fuente hay que abrirla.']
 ];
-let mstate={};
+let mstate={},msent=false;
 function renderMyths(){
   $('#myths').innerHTML=myths.map((m,i)=>{
     const a=mstate[i];let why='';
     if(a!==undefined){const ok=a===m[1];why=`<div class="why ${ok?'ok':'no'}"><b>${ok?'Correcto.':'Incorrecto.'}</b> ${esc(m[2])}</div>`}
     return `<div class="mrow"><span class="q" style="font-weight:600">${esc(m[0])}</span><span class="btns"><button data-m="${i}" data-v="1" ${a!==undefined?'disabled':''}>Verdad</button><button data-m="${i}" data-v="0" ${a!==undefined?'disabled':''}>Mito</button></span>${why}</div>`}).join('');
   const k=Object.keys(mstate);$('#mythScore').textContent=`Aciertos: ${k.filter(i=>mstate[i]===myths[i][1]).length} de ${k.length}`;
+  if(k.length===myths.length&&!msent){msent=true;registrarNota('mitos',myths.map((_,i)=>mstate[i]?'1':'0'),'#mythNota')}
 }
 $('#myths').addEventListener('click',e=>{const b=e.target.closest('button[data-m]');if(!b)return;mstate[b.dataset.m]=b.dataset.v==='1';renderMyths()});
-$('#mythReset').onclick=()=>{mstate={};renderMyths()};renderMyths();
+$('#mythReset').onclick=()=>{mstate={};msent=false;$('#mythNota').hidden=true;renderMyths()};renderMyths();
 
-/* 3.2 semáforo */
+/* 5.4 semáforo (prueba 3) */
 const sem=[
   ['Lista de precios de servicios que ya está publicada en la web','v','Verde. Es información pública de CETOX.'],
   ['Un artículo científico sobre un método de análisis','v','Verde. Es información publicada; igual verifica lo que resuma.'],
@@ -797,6 +928,8 @@ function renderChecks(){
 }
 $('#checks').addEventListener('change',e=>{const i=+e.target.dataset.c;cs=e.target.checked?[...new Set([...cs,i])]:cs.filter(x=>x!==i);store.set('cetox-cierre',cs);paintChecks()});
 renderChecks();
+$('#irAlReto').onclick=()=>{location.hash='reto'};
+$('#rkRefresh').onclick=()=>cargarMarcador();
 
 show(cur());
 })();

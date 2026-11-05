@@ -2,9 +2,10 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { ACTIVIDADES, notaSobre20, type Actividad } from '@/lib/capacitacion'
+import { obtenerRanking } from '@/lib/capacitacion-ranking'
 
 // La clase (contenido/capacitacion-claude/index.html) envía aquí las
-// respuestas al terminar una actividad puntuada. El primer intento completo
+// respuestas al terminar una prueba de la evaluación final. El primer intento completo
 // queda como nota oficial; los siguientes solo cuentan como práctica.
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -33,4 +34,17 @@ export async function POST(req: NextRequest) {
   }
   await prisma.capacitacionNota.create({ data: { usuarioId, actividad, aciertos, total, nota, respuestas } })
   return NextResponse.json({ ok: true, oficial: true, nota, notaOficial: nota, aciertos, total })
+}
+
+// Marcador de la clase: el ranking de todo el personal (público dentro del
+// ERP, igual que /ayuda/capacitacion-claude/notas) y las notas de quien pide.
+export async function GET() {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Inicia sesión en el ERP.' }, { status: 401 })
+  const { ranking, resumen } = await obtenerRanking()
+  const yo = ranking.find(f => f.usuarioId === session.user.id) ?? null
+  return NextResponse.json(
+    { ranking: ranking.map(f => ({ ...f, esYo: f.usuarioId === session.user.id })), resumen, yo },
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
 }
